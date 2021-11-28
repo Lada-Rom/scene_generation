@@ -17,13 +17,13 @@ public:
     void draw();
 
 private:
-    unsigned int x_{ };
-    unsigned int y_{ };
-    unsigned int z_{ };
-    double radius_{ 0.1 };
+    unsigned int x_     { };
+    unsigned int y_     { };
+    unsigned int z_     { };
+    double radius_      { 0.1 };
 
-    unsigned int slices_{ 15 };
-    unsigned int stacks_{ 15 };
+    const unsigned int slices_{ 15 };
+    const unsigned int stacks_{ 15 };
 };
 
 #endif
