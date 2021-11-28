@@ -1,6 +1,7 @@
+#include <iostream>
 #include "glut.h"
+#include "jitter.h"
 
-// aquarium params
 float aquarium_width = 16.5;
 float aquarium_height = 14.5;
 float aquarium_depth = 2.5;
@@ -23,44 +24,45 @@ void init() {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glColor3f(0.0, 0.0, 0.0);
 
     glLoadIdentity();
     gluLookAt(0.0, 0.0, 9.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-    // near surface
+    //glLoadIdentity();
     glPushMatrix();
     glBegin(GL_LINE_LOOP);
-    glVertex3f(aquarium_points[0], aquarium_points[1], aquarium_points[2]);
-    glVertex3f(aquarium_points[3], aquarium_points[4], aquarium_points[5]);
-    glVertex3f(aquarium_points[6], aquarium_points[7], aquarium_points[8]);
-    glVertex3f(aquarium_points[9], aquarium_points[10], aquarium_points[11]);
+        glColor3f(0.0, 0.0, 0.0);
+        glVertex3f(aquarium_points[0], aquarium_points[1], aquarium_points[2]);
+        glVertex3f(aquarium_points[3], aquarium_points[4], aquarium_points[5]);
+        glVertex3f(aquarium_points[6], aquarium_points[7], aquarium_points[8]);
+        glVertex3f(aquarium_points[9], aquarium_points[10], aquarium_points[11]);
     glEnd();
 
-    // far surface
     glBegin(GL_LINE_LOOP);
-    glVertex3f(aquarium_points[12], aquarium_points[13], aquarium_points[14]);
-    glVertex3f(aquarium_points[15], aquarium_points[16], aquarium_points[17]);
-    glVertex3f(aquarium_points[18], aquarium_points[19], aquarium_points[20]);
-    glVertex3f(aquarium_points[21], aquarium_points[22], aquarium_points[23]);
+        glVertex3f(aquarium_points[12], aquarium_points[13], aquarium_points[14]);
+        glVertex3f(aquarium_points[15], aquarium_points[16], aquarium_points[17]);
+        glVertex3f(aquarium_points[18], aquarium_points[19], aquarium_points[20]);
+        glVertex3f(aquarium_points[21], aquarium_points[22], aquarium_points[23]);
     glEnd();
 
-    // side edges
     glBegin(GL_LINES);
-    glVertex3f(aquarium_points[0], aquarium_points[1], aquarium_points[2]);
-    glVertex3f(aquarium_points[12], aquarium_points[13], aquarium_points[14]);
-    glVertex3f(aquarium_points[3], aquarium_points[4], aquarium_points[5]);
-    glVertex3f(aquarium_points[15], aquarium_points[16], aquarium_points[17]);
-    glVertex3f(aquarium_points[6], aquarium_points[7], aquarium_points[8]);
-    glVertex3f(aquarium_points[18], aquarium_points[19], aquarium_points[20]);
-    glVertex3f(aquarium_points[9], aquarium_points[10], aquarium_points[11]);
-    glVertex3f(aquarium_points[21], aquarium_points[22], aquarium_points[23]);
+        glVertex3f(aquarium_points[0], aquarium_points[1], aquarium_points[2]);
+        glVertex3f(aquarium_points[12], aquarium_points[13], aquarium_points[14]);
+        glVertex3f(aquarium_points[3], aquarium_points[4], aquarium_points[5]);
+        glVertex3f(aquarium_points[15], aquarium_points[16], aquarium_points[17]);
+        glVertex3f(aquarium_points[6], aquarium_points[7], aquarium_points[8]);
+        glVertex3f(aquarium_points[18], aquarium_points[19], aquarium_points[20]);
+        glVertex3f(aquarium_points[9], aquarium_points[10], aquarium_points[11]);
+        glVertex3f(aquarium_points[21], aquarium_points[22], aquarium_points[23]);
     glEnd();
 
     glPopMatrix();
-    
+
+
+
     glutSwapBuffers();
     glutPostRedisplay();
+    //glFlush();
 }
 
 void reshape(int w, int h) {
