@@ -16,7 +16,20 @@ Aquarium::Aquarium() {
     };
 }
 
-void Aquarium::draw() {
+double Aquarium::getWidth() {
+    return width_;
+}
+
+double Aquarium::getHeight() {
+    return height_;
+}
+
+double Aquarium::getDepth() {
+    return depth_;
+}
+
+void Aquarium::draw(bool draw_axes) {
+    // aquarium
     glPushMatrix();
         // near surface
         glBegin(GL_LINE_LOOP);
@@ -49,4 +62,23 @@ void Aquarium::draw() {
             glVertex3f(this->vertices_[21], this->vertices_[22], this->vertices_[23]);
         glEnd();
     glPopMatrix();
+
+    // axes
+    if (draw_axes) {
+        glPushMatrix();
+            glBegin(GL_LINES);
+                glColor3f(1, 0, 0); //x-axis
+                glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_);
+                glVertex3f(-0.5 * width_ - 0.5 + 2, -0.5 * height_ - 0.5, -depth_);
+
+                glColor3f(0, 1, 0); //y-axis
+                glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_);
+                glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5 + 2, -depth_);
+
+                glColor3f(0, 0, 1); //z-axis
+                glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_);
+                glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_ + 2);
+            glEnd();
+        glPopMatrix();
+    }
 }

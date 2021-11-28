@@ -3,3 +3,4 @@ Release
 .vs
 *.vsproj.filter
 *.vsproj.user
+cpp_test

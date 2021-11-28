@@ -8,7 +8,11 @@ public:
     Aquarium();
     ~Aquarium() = default;
 
-    void draw();
+    double getWidth();
+    double getHeight();
+    double getDepth();
+
+    void draw(bool draw_axes = false);
 
 private:
     const double width_    { 16.5 };

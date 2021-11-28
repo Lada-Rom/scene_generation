@@ -1,10 +1,12 @@
+#include <iostream>
+
 #include "daphnia.h"
 #include "aquarium.h"
 #include "glut.h"
 
 
-Aquarium a;         // aquarium
-Daphnia d{ 0.1 };   // daphnia
+Aquarium a;             // aquarium
+Daphnia d{ 0, 0, 1 };   // daphnia
 
 void init() {
     glClearColor(1.0, 1.0, 1.0, 0.0);
@@ -16,10 +18,11 @@ void display() {
     glColor3f(0.0, 0.0, 0.0);
 
     glLoadIdentity();
-    gluLookAt(0.0, 0.0, 9.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    //gluLookAt(0.0, 0.0, 9.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(0.0, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0);
 
     // drawing content
-    a.draw();
+    a.draw(true);
     d.draw();
     
     glutSwapBuffers();
@@ -35,6 +38,8 @@ void reshape(int w, int h) {
 }
 
 void main() {
+    d.setRange(a.getWidth() * 0.5, a.getHeight() * 0.5, a.getDepth() * 0.5);
+
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(500, 500);
     glutInitWindowPosition(100, 100);
