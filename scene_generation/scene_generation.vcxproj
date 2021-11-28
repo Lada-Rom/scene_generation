@@ -163,7 +163,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="daphnia.cpp" />
     <ClCompile Include="scene_generation.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="daphnia.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
