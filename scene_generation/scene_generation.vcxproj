@@ -165,11 +165,13 @@
   <ItemGroup>
     <ClCompile Include="aquarium.cpp" />
     <ClCompile Include="daphnia.cpp" />
+    <ClCompile Include="scene.cpp" />
     <ClCompile Include="scene_generation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aquarium.h" />
     <ClInclude Include="daphnia.h" />
+    <ClInclude Include="scene.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

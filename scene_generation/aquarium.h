@@ -12,7 +12,7 @@ public:
     double getHeight();
     double getDepth();
 
-    void draw(bool draw_axes = false);
+    void draw(bool draw_axes = false, bool center_axes = true);
 
 private:
     const double width_    { 16.5 };

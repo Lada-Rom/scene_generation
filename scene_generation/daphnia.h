@@ -1,9 +1,12 @@
 #ifndef DAPHNIA_DAPHNIA_H_20212811
 #define DAPHNIA_DAPHNIA_H_20212811
 
+#include <random>
+
 class Daphnia {
 public:
     Daphnia() = default;
+    Daphnia(const Daphnia&);
     ~Daphnia() = default;
 
     Daphnia(double radius);
@@ -12,12 +15,12 @@ public:
 
     void setRange(double x, double y, double z);
 
-    double getX();
-    double getY();
-    double getZ();
-    double getRadius();
+    double getX() const;
+    double getY() const;
+    double getZ() const;
+    double getRadius() const;
 
-    void renewParams();
+    void renewParams(bool print = false);
     void draw();
 
 private:
@@ -32,6 +35,8 @@ private:
     double x_range_{ };
     double y_range_{ };
     double z_range_{ };
+
+    std::random_device random_device_;
 };
 
 #endif

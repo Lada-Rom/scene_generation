@@ -28,7 +28,7 @@ double Aquarium::getDepth() {
     return depth_;
 }
 
-void Aquarium::draw(bool draw_axes) {
+void Aquarium::draw(bool draw_axes, bool center_axes) {
     // aquarium
     glPushMatrix();
         // near surface
@@ -65,20 +65,39 @@ void Aquarium::draw(bool draw_axes) {
 
     // axes
     if (draw_axes) {
-        glPushMatrix();
+        if (center_axes) {
+            glPushMatrix();
             glBegin(GL_LINES);
-                glColor3f(1, 0, 0); //x-axis
-                glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_);
-                glVertex3f(-0.5 * width_ - 0.5 + 2, -0.5 * height_ - 0.5, -depth_);
+            glColor3f(1, 0, 0); //x-axis
+            glVertex3f(0, 0, 0);
+            glVertex3f(2, 0, 0);
 
-                glColor3f(0, 1, 0); //y-axis
-                glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_);
-                glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5 + 2, -depth_);
+            glColor3f(0, 1, 0); //y-axis
+            glVertex3f(0, 0, 0);
+            glVertex3f(0, 2, 0);
 
-                glColor3f(0, 0, 1); //z-axis
-                glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_);
-                glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_ + 2);
+            glColor3f(0, 0, 1); //z-axis
+            glVertex3f(0, 0, 0);
+            glVertex3f(0, 0, 2);
             glEnd();
-        glPopMatrix();
+            glPopMatrix();
+        }
+        else {
+            glPushMatrix();
+                glBegin(GL_LINES);
+                    glColor3f(1, 0, 0); //x-axis
+                    glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_);
+                    glVertex3f(-0.5 * width_ - 0.5 + 2, -0.5 * height_ - 0.5, -depth_);
+
+                    glColor3f(0, 1, 0); //y-axis
+                    glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_);
+                    glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5 + 2, -depth_);
+
+                    glColor3f(0, 0, 1); //z-axis
+                    glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_);
+                    glVertex3f(-0.5 * width_ - 0.5, -0.5 * height_ - 0.5, -depth_ + 2);
+                glEnd();
+            glPopMatrix();
+        }
     }
 }
