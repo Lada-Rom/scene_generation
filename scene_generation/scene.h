@@ -6,6 +6,7 @@
 
 #include "aquarium.h"
 #include "daphnia.h"
+#include "glut.h"
 
 class Scene {
 public:
@@ -20,6 +21,8 @@ public:
 
     void generateDaphnias(size_t, float radius = 0.1);
 
+    void loadTexture(const std::string&);
+
 private:
     Aquarium aquarium_;
     std::vector<Daphnia> daphnias_;
@@ -29,12 +32,19 @@ private:
     float roll_{ };     //крен
 
     float camera_distance_{ };
-    float camera_new_angle_{ 90 };
-    float camera_prev_angle_{ 90 };
+    float camera_new_angle_{ 75 };
+    float camera_prev_angle_{ };
+    float camera_initial_z_{ 9 };
+    float z_near_{ 1 };
+    float z_far_{ 50 };
 
     std::random_device random_device_;
-    //std::mt19937 generator_;
 
+    int image_width_{ };
+    int image_height_{ };
+    int image_comp_{ };
+    float texture_height_{ };
+    GLuint texture_id_;
 };
 
 #endif

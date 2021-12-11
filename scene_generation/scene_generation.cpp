@@ -24,13 +24,16 @@ void arrow(int key, int x, int y) {
 }
 
 void main() {
-    main_scene.generateDaphnias(2);
+    main_scene.generateDaphnias(3);
 
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(500, 500);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+    glutInitWindowSize(800, 600);
     glutInitWindowPosition(100, 100);
     glutCreateWindow("Scene");
+
     main_scene.initializeGLUT();
+    main_scene.loadTexture("../data/source_image_1.png");
+
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
