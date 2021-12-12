@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "daphnia.h"
-#include "glut.h"
+#include <GL/glut.h>
 
 std::piecewise_linear_distribution<double> motion_distribution(double min, double peak, double max) {
     std::vector<double> x{ min, -peak, 0, peak, max };

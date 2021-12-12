@@ -6,7 +6,7 @@
 
 #include "aquarium.h"
 #include "daphnia.h"
-#include "glut.h"
+#include <GL/glut.h>
 
 class Scene {
 public:

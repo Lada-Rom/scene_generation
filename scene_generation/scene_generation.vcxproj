@@ -91,16 +91,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\imgui;$(SolutionDir)thirdparty\GLUT\include;$(SolutionDir)thirdparty\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>
       </AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\GLUT\lib\x86\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>freeglut_staticd.lib;freeglutd.lib;freeglutd.exp;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -114,11 +113,13 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalUsingDirectories>
       </AdditionalUsingDirectories>
-      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\stb;%(AdditionalUsingDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\imgui;$(SolutionDir)thirdparty\GLUT\include;$(SolutionDir)thirdparty\stb;%(AdditionalUsingDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\GLUT\lib\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>freeglut_staticd.lib;freeglutd.lib;freeglutd.exp;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -132,7 +133,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\imgui;$(SolutionDir)thirdparty\GLUT\include;$(SolutionDir)thirdparty\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>
       </AdditionalUsingDirectories>
     </ClCompile>
@@ -141,8 +142,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\GLUT\lib\x86\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>freeglut.lib;freeglut_static.lib;freeglut.exp;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -156,7 +157,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\stb;%(AdditionalUsingDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty\imgui;$(SolutionDir)thirdparty\GLUT\include;$(SolutionDir)thirdparty\stb;%(AdditionalUsingDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>
       </AdditionalUsingDirectories>
     </ClCompile>
@@ -165,19 +166,32 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)thirdparty\GLUT\lib\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>freeglut.lib;freeglut_static.lib;freeglut.exp;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\thirdparty\imgui\imgui.cpp" />
+    <ClCompile Include="..\thirdparty\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\thirdparty\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\thirdparty\imgui\imgui_impl_glut.cpp" />
+    <ClCompile Include="..\thirdparty\imgui\imgui_impl_opengl2.cpp" />
+    <ClCompile Include="..\thirdparty\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\thirdparty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="aquarium.cpp" />
     <ClCompile Include="daphnia.cpp" />
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="scene_generation.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\thirdparty\imgui\imconfig.h" />
+    <ClInclude Include="..\thirdparty\imgui\imgui.h" />
+    <ClInclude Include="..\thirdparty\imgui\imgui_impl_glut.h" />
+    <ClInclude Include="..\thirdparty\imgui\imgui_impl_opengl2.h" />
+    <ClInclude Include="..\thirdparty\imgui\imgui_internal.h" />
+    <ClInclude Include="..\thirdparty\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\thirdparty\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\thirdparty\imgui\imstb_truetype.h" />
     <ClInclude Include="aquarium.h" />
     <ClInclude Include="daphnia.h" />
     <ClInclude Include="scene.h" />
