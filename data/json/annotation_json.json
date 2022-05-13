@@ -1,0 +1,43 @@
+{
+    "cp.src1.png1010197": {
+        "filename": "cp.src1.png",
+        "size": 1010197,
+        "regions": [{
+                "shape_attributes": {
+                    "name": "polygon",
+                    "all_points_x": [113, 1157, 1159, 116],
+                    "all_points_y": [64, 48, 960, 956]
+                },
+                "region_attributes": {
+                    "name": "not_defined",
+                    "type": "unknown",
+                    "image_quality": {
+                        "good": true,
+                        "frontal": true,
+                        "good_illumination": true
+                    }
+                }
+            }, {
+                "shape_attributes": {
+                    "name": "polygon",
+                    "all_points_x": [63, 1194, 1191, 75],
+                    "all_points_y": [22, 12, 992, 986]
+                },
+                "region_attributes": {
+                    "name": "not_defined",
+                    "type": "unknown",
+                    "image_quality": {
+                        "good": true,
+                        "frontal": true,
+                        "good_illumination": true
+                    }
+                }
+            }
+        ],
+        "file_attributes": {
+            "caption": "",
+            "public_domain": "no",
+            "image_url": ""
+        }
+    }
+}
