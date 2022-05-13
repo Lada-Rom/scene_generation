@@ -33,7 +33,7 @@ try {
     //showDifferentDepth(src, objpoints, imgpoints, camera_mat, 10, 0.1, 0, 0);
 
     //check point correspondence
-    showPointCorrespondencev2(src, objpoints[0], imgpoints[0], camera_mat, {10, 8});
+    showPointCorrespondence(src, objpoints[0], imgpoints[0], camera_mat, {10, 8});
 
     //select eye param
     //paramsSelectionInnerGL(src, objpoints[0], imgpoints[0], camera_mat, { 2, 2 },

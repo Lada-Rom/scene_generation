@@ -286,7 +286,7 @@ void showPointCorrespondence(const cv::Mat& src,
     glutMainLoop();
 
     //merging glut and opencv
-    cv::Mat grid_glut = cv::imread("../../data/grid_glut.png", cv::IMREAD_GRAYSCALE);
+    cv::Mat grid_glut = cv::imread("../../data/grid/grid_glut.png", cv::IMREAD_GRAYSCALE);
 
     cv::Mat grid_merged_1c;
     cv::bitwise_and(src, grid_glut, grid_merged_1c, grid_glut);
@@ -302,7 +302,7 @@ void showPointCorrespondence(const cv::Mat& src,
             cv::Point2d{ point.x, point.y - 2 }, cv::Point2d{ point.x, point.y + 2 }, {0, 0, 255});
     }
 
-    cv::imwrite("../../data/grid_merged_3c.png", grid_merged_3c);
+    cv::imwrite("../../data/grid/grid_merged_3c.png", grid_merged_3c);
 
     std::cout << "Hello!" << std::endl;
 }

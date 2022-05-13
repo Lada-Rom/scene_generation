@@ -65,7 +65,7 @@ void Scene::displayPointCorrespondence() {
     aquarium_.draw();
 
     //write to file
-    std::string filename = "../../data/grid_glut.png";
+    std::string filename = "../../data/grid/grid_glut.png";
     saveImage(viewport[2], viewport[3], filename);
 
     glutSwapBuffers();
