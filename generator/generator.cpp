@@ -80,7 +80,7 @@ void Generator::addInputToMainJSON(
 void Generator::addCameraParamsToMainJSON() {
 	//get imgpoints
 
-	//calc camera params
+	//calc outer camera params
 
 	//write result to main json
 }
