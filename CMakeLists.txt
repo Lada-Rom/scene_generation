@@ -22,7 +22,7 @@ include_directories(prj.thirdparty
 
 add_subdirectory(camera_params)
 add_subdirectory(scene_generation)
+add_subdirectory(generator)
 add_subdirectory(glut_test)
 add_subdirectory(cpp_test)
 add_subdirectory(thirdparty)
-#add_subdirectory(imgui)
