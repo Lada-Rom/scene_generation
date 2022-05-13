@@ -36,7 +36,7 @@ public:
     void calcLookAtArray();
 
 private:
-    Aquarium aquarium_;
+    Aquarium aquarium_{ };
     std::vector<Daphnia> daphnias_;
     bool draw_aquarium_{ true };
     bool draw_texture_{ false };

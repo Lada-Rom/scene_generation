@@ -3,6 +3,7 @@ Release/
 build/
 .vs/
 bin.*/
-data/params_selection/
 *.bak
 *.vcxproj.user
+data/params_selection/
+data/grid/

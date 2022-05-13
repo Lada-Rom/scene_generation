@@ -38,7 +38,7 @@ void main(int argc, char** argv) {
     glutCreateWindow("Scene");
 
     main_scene.initializeGLUT();
-    main_scene.loadTexture("../data/src.1.png");
+    main_scene.loadTexture("../../data/src/src.1.png");
     main_scene.calcLookAtArray();
 
     //IMGUI_CHECKVERSION();

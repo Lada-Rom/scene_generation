@@ -9,7 +9,7 @@
 void main(int argc, char** argv) {
 try {
     glutInit(&argc, argv);
-    cv::Mat src = cv::imread("../../data/src.1.png", cv::IMREAD_GRAYSCALE);
+    cv::Mat src = cv::imread("../../data/src/src.1.png", cv::IMREAD_GRAYSCALE);
     if (src.empty())
         throw std::exception("Source image not found");
 
@@ -22,7 +22,7 @@ try {
     objpoints.push_back( getObjPoints() );
 
     //2D points
-    std::vector<std::vector<cv::Point2d>> imgpoints = getImgpointsFromJSON("../../data/annotation.json");
+    std::vector<std::vector<cv::Point2d>> imgpoints = getImgpointsFromJSON("../../data/json/annotation.json");
 
     //camera params
     double camera_data[] = { 1509.434, 0, (1280 - 1) * 0.5, 0, 1509.434, (1024 - 1) * 0.5, 0, 0, 1 };
@@ -33,13 +33,13 @@ try {
     //showDifferentDepth(src, objpoints, imgpoints, camera_mat, 10, 0.1, 0, 0);
 
     //check point correspondence
-    showPointCorrespondencev2(src, objpoints[0], imgpoints[0], camera_mat, {10, 8});
+    //showPointCorrespondencev2(src, objpoints[0], imgpoints[0], camera_mat, {10, 8});
 
     //select eye param
     //paramsSelectionInnerGL(src, objpoints[0], imgpoints[0], camera_mat, { 2, 2 },
     //    { 1., 1., 1. }, { -1, 0 }, { -1, 0 }, { -1, 0 }, "../../data/params_selection/", argc, argv);
-    //paramsSelectionOuterGL(src, objpoints[0], imgpoints[0], camera_mat, { 8, 8 },
-    //    { 0.1, 0.1, 0.1 }, { -2, 1 }, { 0, 0 }, { 0, 0 }, "../../data/params_selection/");
+    paramsSelectionOuterGL(src, objpoints[0], imgpoints[0], camera_mat, { 8, 8 },
+        { 0.1, 0.1, 0.1 }, { -2, 1 }, { 0, 0 }, { 0, 0 }, "../../data/params_selection/");
 
     //testdisplay(objpoints[0], imgpoints[0], camera_mat);
 }

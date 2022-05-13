@@ -286,7 +286,7 @@ void showPointCorrespondence(const cv::Mat& src,
     glutMainLoop();
 
     //merging glut and opencv
-    cv::Mat grid_glut = cv::imread("../../data/grid_glut.png", cv::IMREAD_GRAYSCALE);
+    cv::Mat grid_glut = cv::imread("../../data/grid/grid_glut.png", cv::IMREAD_GRAYSCALE);
 
     cv::Mat grid_merged_1c;
     cv::bitwise_and(src, grid_glut, grid_merged_1c, grid_glut);
@@ -302,7 +302,7 @@ void showPointCorrespondence(const cv::Mat& src,
             cv::Point2d{ point.x, point.y - 2 }, cv::Point2d{ point.x, point.y + 2 }, {0, 0, 255});
     }
 
-    cv::imwrite("../../data/grid_merged_3c.png", grid_merged_3c);
+    cv::imwrite("../../data/grid/grid_merged_3c.png", grid_merged_3c);
 
     std::cout << "Hello!" << std::endl;
 }
@@ -367,7 +367,7 @@ void showPointCorrespondencev2(const cv::Mat& src,
     glutMainLoop();
 
     //merging glut and opencv
-    cv::Mat grid_glut = cv::imread("../../data/grid_glut.png", cv::IMREAD_GRAYSCALE);
+    cv::Mat grid_glut = cv::imread("../../data/grid/grid_glut.png", cv::IMREAD_GRAYSCALE);
     //cv::Mat grid_glut_flipped;
     //cv::flip(grid_glut, grid_glut_flipped, 0);
 
@@ -382,7 +382,7 @@ void showPointCorrespondencev2(const cv::Mat& src,
         cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
     }
 
-    cv::imwrite("../../data/grid_merged_3c.png", grid_merged_3c);
+    cv::imwrite("../../data/grid/grid_merged_3c.png", grid_merged_3c);
 
     std::cout << "Hello!" << std::endl;
 }
@@ -474,12 +474,14 @@ void paramsSelectionInnerGL(const cv::Mat& src,
     size_t count { 1 };
     std::stringstream sstream_4_names;
     std::string filename_glut;
+    const std::string opengl_suffix = "opengl/";
+    const std::string opencv_suffix = "opencv/";
     for (int i{ }; i < xrange.size(); ++i) {
         for (int j{ }; j < yrange.size(); ++j) {
             for (int k{ }; k < zrange.size(); ++k) {
                 
                 //construct filename and refresh lootAt params
-                filename_glut = getFilenameParamsSelection(sstream_4_names, path, count,
+                filename_glut = getFilenameParamsSelection(sstream_4_names, path + opengl_suffix, count,
                     xrange[i], yrange[j], zrange[k], ".png");
                 std::cout << filename_glut << std::endl;
                 main_scene.setFilenameParamsSelection(filename_glut);
@@ -513,7 +515,7 @@ void paramsSelectionInnerGL(const cv::Mat& src,
             for (int k{ }; k < zrange.size(); ++k) {
 
                 //read glut output
-                filename_glut = getFilenameParamsSelection(sstream_4_names, path, count,
+                filename_glut = getFilenameParamsSelection(sstream_4_names, path + opengl_suffix, count,
                     xrange[i], yrange[j], zrange[k], ".png");
                 grid_glut = cv::imread(filename_glut, cv::IMREAD_GRAYSCALE);
 
@@ -530,7 +532,7 @@ void paramsSelectionInnerGL(const cv::Mat& src,
                     cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
 
                 //writing opencv result
-                filename_opencv = getFilenameParamsSelection(sstream_4_names, path, count,
+                filename_opencv = getFilenameParamsSelection(sstream_4_names, path + opencv_suffix, count,
                     xrange[i], yrange[j], zrange[k], "_merged.png");
                 std::cout << filename_opencv << std::endl;
                 cv::imwrite(filename_opencv, grid_merged_3c);
