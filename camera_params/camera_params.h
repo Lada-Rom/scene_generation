@@ -367,7 +367,7 @@ void showPointCorrespondencev2(const cv::Mat& src,
     glutMainLoop();
 
     //merging glut and opencv
-    cv::Mat grid_glut = cv::imread("../../data/grid_glut.png", cv::IMREAD_GRAYSCALE);
+    cv::Mat grid_glut = cv::imread("../../data/grid/grid_glut.png", cv::IMREAD_GRAYSCALE);
     //cv::Mat grid_glut_flipped;
     //cv::flip(grid_glut, grid_glut_flipped, 0);
 
@@ -382,7 +382,7 @@ void showPointCorrespondencev2(const cv::Mat& src,
         cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
     }
 
-    cv::imwrite("../../data/grid_merged_3c.png", grid_merged_3c);
+    cv::imwrite("../../data/grid/grid_merged_3c.png", grid_merged_3c);
 
     std::cout << "Hello!" << std::endl;
 }

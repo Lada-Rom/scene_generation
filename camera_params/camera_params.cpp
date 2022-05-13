@@ -9,7 +9,7 @@
 void main(int argc, char** argv) {
 try {
     glutInit(&argc, argv);
-    cv::Mat src = cv::imread("../../data/src.1.png", cv::IMREAD_GRAYSCALE);
+    cv::Mat src = cv::imread("../../data/src/src.1.png", cv::IMREAD_GRAYSCALE);
     if (src.empty())
         throw std::exception("Source image not found");
 
@@ -22,7 +22,7 @@ try {
     objpoints.push_back( getObjPoints() );
 
     //2D points
-    std::vector<std::vector<cv::Point2d>> imgpoints = getImgpointsFromJSON("../../data/annotation.json");
+    std::vector<std::vector<cv::Point2d>> imgpoints = getImgpointsFromJSON("../../data/json/annotation.json");
 
     //camera params
     double camera_data[] = { 1509.434, 0, (1280 - 1) * 0.5, 0, 1509.434, (1024 - 1) * 0.5, 0, 0, 1 };
