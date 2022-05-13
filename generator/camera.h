@@ -8,8 +8,10 @@ public:
 	Camera() = default;
 	~Camera() = default;
 
+	void setOpticalCenter(const cv::Size2d&);
+
 private:
-	cv::Size2d focal_length_{ };
+	cv::Size2d focal_length_{ 8000 / 5.3, 8000 / 5.3 };
 	cv::Point2d optical_center_{ };
 };
 

@@ -3,13 +3,21 @@
 
 #include <vector>
 
+#include "camera.h"
+
+#include <opencv2/opencv.hpp>
+
 class Scene {
 public:
-	Scene() = default;
+	Scene();
 	~Scene() = default;
 
 private:
-	std::vector<double> aquarium_size_{ 16.5, 14.5, 2.5 };
+	cv::Size2i render_image_size_{ 1280, 1024 };
+
+	Camera camera_{ };
+
+	//std::vector<double> aquarium_size_{ 16.5, 14.5, 2.5 };
 };
 
 #endif

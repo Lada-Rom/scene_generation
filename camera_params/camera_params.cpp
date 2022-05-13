@@ -22,10 +22,12 @@ try {
     objpoints.push_back( getObjPoints() );
 
     //2D points
-    std::vector<std::vector<cv::Point2d>> imgpoints = getImgpointsFromJSON("../../data/json/annotation.json");
+    std::vector<std::vector<cv::Point2d>> imgpoints = getImgpointsFromJSON("../../data/json/annotation_json.json");
 
     //camera params
-    double camera_data[] = { 1509.434, 0, (1280 - 1) * 0.5, 0, 1509.434, (1024 - 1) * 0.5, 0, 0, 1 };
+    //double camera_data[] = { 1509.434, 0, (1280 - 1) * 0.5, 0, 1509.434, (1024 - 1) * 0.5, 0, 0, 1 };
+    double camera_data[] = { 8000 / 5.3, 0, (1280 - 1) * 0.5, 0, 8000 / 5.3, (1024 - 1) * 0.5, 0, 0, 1 };
+    //double camera_data[] = { 8 * 1280 / 6.78, 0, (1280 - 1) * 0.5, 0, 8 * 1024 / 5.43, (1024 - 1) * 0.5, 0, 0, 1 };
     cv::Mat camera_mat = cv::Mat(3, 3, CV_64FC1, camera_data);
 
     //draw 5 different results
@@ -33,13 +35,13 @@ try {
     //showDifferentDepth(src, objpoints, imgpoints, camera_mat, 10, 0.1, 0, 0);
 
     //check point correspondence
-    //showPointCorrespondencev2(src, objpoints[0], imgpoints[0], camera_mat, {10, 8});
+    showPointCorrespondencev2(src, objpoints[0], imgpoints[0], camera_mat, {10, 8});
 
     //select eye param
     //paramsSelectionInnerGL(src, objpoints[0], imgpoints[0], camera_mat, { 2, 2 },
     //    { 1., 1., 1. }, { -1, 0 }, { -1, 0 }, { -1, 0 }, "../../data/params_selection/", argc, argv);
-    paramsSelectionOuterGL(src, objpoints[0], imgpoints[0], camera_mat, { 8, 8 },
-        { 0.1, 0.1, 0.1 }, { -2, 1 }, { 0, 0 }, { 0, 0 }, "../../data/params_selection/");
+    //paramsSelectionOuterGL(src, objpoints[0], imgpoints[0], camera_mat, { 8, 8 },
+    //    { 0.1, 0.1, 0.1 }, { -2, 1 }, { 0, 0 }, { 0, 0 }, "../../data/params_selection/");
 
     //testdisplay(objpoints[0], imgpoints[0], camera_mat);
 }

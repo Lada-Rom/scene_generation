@@ -67,7 +67,7 @@ std::vector<std::vector<cv::Point2d>> getImgpointsFromJSON(const std::string& fi
     project_annotation_fstream >> project_annotation;
 
     //getting data arrays
-    json regions = project_annotation["_via_img_metadata"]["cp.src1.png1010197"]["regions"];
+    json regions = project_annotation["cp.src1.png1010197"]["regions"];
     json first_part = regions[0]["shape_attributes"];
     json second_part = regions[1]["shape_attributes"];
 
