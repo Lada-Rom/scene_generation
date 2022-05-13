@@ -2,6 +2,7 @@
 #define AQUARIUM_AQUARIUM_H_20212811
 
 #include <vector>
+#include <GL/freeglut.h>
 
 class Aquarium {
 public:

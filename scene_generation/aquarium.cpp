@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "aquarium.h"
-#include <GL/glut.h>
 
 Aquarium::Aquarium() {
     this->vertices_ = {

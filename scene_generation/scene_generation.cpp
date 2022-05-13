@@ -8,7 +8,7 @@
 #include "imgui_impl_glut.h"
 #include "imgui_impl_opengl2.h"
 
-#include <GL/glut.h>
+#include <GL/freeglut.h>
 
 Scene main_scene;
 
@@ -33,20 +33,21 @@ void main(int argc, char** argv) {
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-    glutInitWindowSize(800, 600);
+    glutInitWindowSize(1280, 1024);
     glutInitWindowPosition(100, 100);
     glutCreateWindow("Scene");
 
     main_scene.initializeGLUT();
-    main_scene.loadTexture("../data/source_image_1.png");
+    main_scene.loadTexture("../data/src.1.png");
+    main_scene.calcLookAtArray();
 
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImGui::StyleColorsClassic();
-    ImGui_ImplGLUT_Init();
-    ImGui_ImplGLUT_InstallFuncs();
-    ImGui_ImplOpenGL2_Init();
+    //IMGUI_CHECKVERSION();
+    //ImGui::CreateContext();
+    //ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //ImGui::StyleColorsClassic();
+    //ImGui_ImplGLUT_Init();
+    //ImGui_ImplGLUT_InstallFuncs();
+    //ImGui_ImplOpenGL2_Init();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
@@ -54,7 +55,7 @@ void main(int argc, char** argv) {
     glutSpecialFunc(arrow);
     glutMainLoop();
 
-    ImGui_ImplOpenGL2_Shutdown();
-    ImGui_ImplGLUT_Shutdown();
-    ImGui::DestroyContext();
+    //ImGui_ImplOpenGL2_Shutdown();
+    //ImGui_ImplGLUT_Shutdown();
+    //ImGui::DestroyContext();
 }

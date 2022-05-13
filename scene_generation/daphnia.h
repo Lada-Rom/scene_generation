@@ -2,6 +2,7 @@
 #define DAPHNIA_DAPHNIA_H_20212811
 
 #include <random>
+#include <GL/freeglut.h>
 
 class Daphnia {
 public:
@@ -27,10 +28,10 @@ private:
     double x_     { };
     double y_     { };
     double z_     { };
-    double radius_{ 0.1 };
+    double radius_{ 0.02 };
 
-    const unsigned int slices_{ 15 };
-    const unsigned int stacks_{ 15 };
+    const unsigned int slices_{ 10 };
+    const unsigned int stacks_{ 10 };
 
     double x_range_{ };
     double y_range_{ };

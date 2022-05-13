@@ -2,7 +2,6 @@
 #include <vector>
 
 #include "daphnia.h"
-#include <GL/glut.h>
 
 std::piecewise_linear_distribution<double> motion_distribution(double min, double peak, double max) {
     std::vector<double> x{ min, -peak, 0, peak, max };
@@ -125,7 +124,7 @@ void Daphnia::renewParams(bool print) {
 void Daphnia::draw() {
     glColor3f(0, 0, 0);
     glPushMatrix();
-        renewParams();
+        renewParams(false);
         glTranslatef(x_, y_, z_);
         glutSolidSphere(radius_, slices_, stacks_);
     glPopMatrix();
