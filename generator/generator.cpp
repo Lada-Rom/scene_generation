@@ -22,9 +22,20 @@ void Generator::loadMainJSON() {
 	file >> main_json_;
 }
 
+////////// checkIfInputExists //////////
+bool Generator::checkIfInputExists(const std::string& image) {
+	for (auto& element : main_json_["input"])
+		if (element["image"] == image)
+			return true;
+	return false;
+}
+
 ////////// addInputToMainJSON //////////
 void Generator::addInputToMainJSON(
 	const std::string& annotation, const std::string& image) {
+
+	if (checkIfInputExists(image))
+		return;
 
 	//parse annotation
 	std::ifstream file(annotation);

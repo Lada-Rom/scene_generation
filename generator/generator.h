@@ -19,6 +19,7 @@ public:
 
 	void constructMainJSON();
 	void loadMainJSON();
+	bool checkIfInputExists(const std::string&);
 	void addInputToMainJSON(const std::string&, const std::string&);
 
 private:
