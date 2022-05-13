@@ -68,3 +68,12 @@ void Generator::addInputToMainJSON(
 	std::ofstream main_json_file(getMainJSONFilename());
 	main_json_file << main_json_.dump(4) << std::endl;
 }
+
+////////// addCameraParamsToMainJSON //////////
+void Generator::addCameraParamsToMainJSON() {
+	//get imgpoints
+
+	//calc camera params
+
+	//write result to main json
+}
