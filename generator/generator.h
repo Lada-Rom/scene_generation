@@ -14,12 +14,12 @@ using json = nlohmann::json;
 
 class Generator {
 public:
-	Generator() = default;
+	Generator();
 	~Generator() = default;
 
 	std::string getMainJSONFilename();
 
-	void constructMainJSON();
+	void constructMainJSON(bool load = true);
 	void loadMainJSON();
 	bool checkIfInputExists(const std::string&);
 	void addInputToMainJSON(const std::string&, const std::string&);

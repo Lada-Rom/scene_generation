@@ -1,12 +1,17 @@
 #include "generator.h"
 
+////////// Generator //////////
+Generator::Generator() {
+	loadMainJSON();
+}
+
 ////////// getMainJSONFilename //////////
 std::string Generator::getMainJSONFilename() {
 	return main_json_filename_;
 }
 
 ////////// constructMainJSON //////////
-void Generator::constructMainJSON() {
+void Generator::constructMainJSON(bool load) {
 	json params;
 	params["input"] = json::array();
 	params["camera"] = json::array();
@@ -14,6 +19,8 @@ void Generator::constructMainJSON() {
 	std::ofstream file(getMainJSONFilename());
 	file << params.dump(4) << std::endl;
 
+	if (load)
+		loadMainJSON();
 }
 
 ////////// constructMainJSON //////////
