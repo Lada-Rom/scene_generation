@@ -23,10 +23,38 @@ void Generator::constructMainJSON(bool load) {
 		loadMainJSON();
 }
 
-////////// constructMainJSON //////////
+////////// loadMainJSON //////////
 void Generator::loadMainJSON() {
 	std::ifstream file(getMainJSONFilename());
 	file >> main_json_;
+}
+
+////////// saveMainJSON //////////
+void Generator::saveMainJSON() {
+	std::ofstream file(getMainJSONFilename());
+	file << main_json_.dump(4) << std::endl;
+}
+
+////////// readInputImgpoints //////////
+std::vector<cv::Point2d> Generator::readInputImgpoints(size_t i) {
+	json x_coords = main_json_["input"][i]["x_coords"];
+	json y_coords = main_json_["input"][i]["y_coords"];
+
+	std::vector<cv::Point2d> imgpoints;
+	for (int j{}; j < x_coords.size(); ++j)
+		imgpoints.push_back(cv::Point2d{ (double)x_coords[j], (double)y_coords[j] });
+
+	return imgpoints;
+}
+
+////////// writeRotationMatrix //////////
+void Generator::writeRotationMatrix(const cv::Mat& rmat, size_t i) {
+	main_json_["camera"][i]["rmat"] = cvtMatToVector(rmat);
+}
+
+////////// writeTranslationVector //////////
+void Generator::writeTranslationVector(const cv::Mat& rvec, size_t i) {
+	main_json_["camera"][i]["rvec"] = cvtMatToVector(rvec);
 }
 
 ////////// checkIfInputExists //////////
@@ -72,15 +100,40 @@ void Generator::addInputToMainJSON(
 	main_json_["input"].push_back(element);
 
 	//writting changes
-	std::ofstream main_json_file(getMainJSONFilename());
-	main_json_file << main_json_.dump(4) << std::endl;
+	saveMainJSON();
 }
 
 ////////// addCameraParamsToMainJSON //////////
-void Generator::addCameraParamsToMainJSON() {
+void Generator::addCameraParamsToMainJSON(size_t i) {
 	//get imgpoints
+	std::vector<cv::Point2d> imgpoints = readInputImgpoints(i);
 
 	//calc outer camera params
+	cv::Mat camera_mat = cv::Mat(3, 3, CV_64FC1, main_scene_.getIntrinsicCameraMatrix().data());
+	cv::Mat dcoeffs, rvec, rmat, tvec;
+
+	main_scene_.calcOuterCameraParams(imgpoints, camera_mat, dcoeffs, rvec, tvec);
+	cv::Rodrigues(rvec, rmat);
 
 	//write result to main json
+	if (main_json_["camera"].size() < i) //difference more than 1 element
+		throw std::out_of_range("Too short main_json[\"camera\"] array");
+	if (main_json_["camera"].size() == i) //difference exactly 1 element
+		main_json_["camera"].push_back(json::object());
+	writeRotationMatrix(rmat, i);
+	writeTranslationVector(tvec, i);
+	saveMainJSON();
+}
+
+std::vector<double> Generator::cvtMatToVector(const cv::Mat& mat) {
+	std::vector<double> array;
+	if (mat.isContinuous()) {
+		array.assign((double*)mat.data, (double*)mat.data + mat.total() * mat.channels());
+	}
+	else {
+		for (int i = 0; i < mat.rows; ++i) {
+			array.insert(array.end(), mat.ptr<double>(i), mat.ptr<double>(i) + mat.cols * mat.channels());
+		}
+	}
+	return array;
 }

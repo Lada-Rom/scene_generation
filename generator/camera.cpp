@@ -1,5 +1,10 @@
 #include "camera.h"
 
+////////// getIntrinsicMatrix //////////
+std::array<double, 9> Camera::getIntrinsicMatrix() {
+	return intrinsic_matrix_;
+}
+
 ////////// setOpticalCenter //////////
 void Camera::setOpticalCenter(const cv::Size2d& image_size) {
 	optical_center_ = {

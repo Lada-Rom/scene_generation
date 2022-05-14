@@ -9,6 +9,8 @@ public:
 	Camera() = default;
 	~Camera() = default;
 
+	std::array<double, 9> getIntrinsicMatrix();
+
 	void setOpticalCenter(const cv::Size2d&);
 	void calcIntrinsicMatrix();
 
