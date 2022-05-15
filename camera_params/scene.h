@@ -60,6 +60,7 @@ public:
 private:
     Aquarium aquarium_;
     bool draw_aquarium_{ true };
+    //double scaling_factor_{ 1 };
     double scaling_factor_{ 0.9 };
 
     std::string filename_params_selection_{ };
@@ -73,7 +74,7 @@ private:
     double camera_x_pose_{ };
     double camera_y_pose_{ };
     double camera_z_pose_{ };
-    double z_near_{ 1 };
+    double z_near_{ 0.8 };
     double z_far_{ 1000 };
 
     glm::dmat3 rotation_ = {
