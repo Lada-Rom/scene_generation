@@ -15,7 +15,6 @@ Generator::Generator(int argc, char** argv) {
 	argv_ = argv;
 }
 
-
 ////////// getMainJSONFilename //////////
 std::string Generator::getMainJSONFilename() {
 	return main_json_filename_;
@@ -192,7 +191,8 @@ void Generator::predictPoints(std::vector<cv::Point2d>& imgpoints,
 }
 
 ////////// showPointGrid //////////
-void Generator::showPointGrid(size_t index, const cv::Size& quantity){
+void Generator::showPointGrid(size_t index, const cv::Size& quantity,
+	const std::array<double, 3>& shift, bool save){
 	//read info from json
 	std::string image_filename = readInputImage(index);
 	std::array<double, 9> rmat = readCameraRMat(index);
@@ -215,6 +215,7 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity){
 	}
 	main_scene_.setObjGridPoints(objgridpoints);
 	main_scene_.setGridFilename(grid_glut_filename_);
+	main_scene_.setGridShift(shift);
 
 	//glut rendering 3D points
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -250,6 +251,12 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity){
 	for (auto& point : imggridpoints)
 		cv::cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
 	cv::imwrite(grid_merged_filename, grid_merged_3c);
+
+	if (save) {
+		writeShiftVector(shift, index);
+		saveMainJSON();
+	}
+
 	std::cout << "Successful end of program!" << std::endl;
 }
 

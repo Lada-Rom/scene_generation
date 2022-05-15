@@ -44,7 +44,8 @@ public:
 	void predictPoints(std::vector<cv::Point2d>&, const std::vector<cv::Point3d>&,
 		const std::array<double, 9>&,
 		const std::array<double, 9>&, const std::array<double, 3>&);
-	void showPointGrid(size_t, const cv::Size&);
+	void showPointGrid(size_t, const cv::Size&,
+		const std::array<double, 3>& shift = { 0., 0., 0. }, bool save = false);
 
 	std::vector<double> cvtMatToVector(const cv::Mat&);
 

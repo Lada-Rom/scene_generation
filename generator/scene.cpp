@@ -49,6 +49,11 @@ void Scene::setGridFilename(const std::string& filename) {
     grid_filename_ = filename;
 }
 
+////////// setGridShift //////////
+void Scene::setGridShift(const std::array<double, 3>& shift) {
+    grid_shift_ = shift;
+}
+
 ////////// calcOuterCameraParams //////////
 void Scene::calcOuterCameraParams(const std::vector<cv::Point2d>& imgpoints,
     const cv::Mat& camera_mat, cv::Mat& dist_coeffs, cv::Mat& rvec, cv::Mat& tvec) {
@@ -138,7 +143,10 @@ void Scene::displayPointGrid() {
          camera_.getTVec()[0],
         -camera_.getTVec()[1],
         -abs(camera_.getTVec()[2]));
-    glTranslated(-0.7, 0.21, 0);
+    glTranslated(
+        grid_shift_[0],
+        grid_shift_[1],
+        grid_shift_[2]);
 
     //object grid
     glColor3f(0, 0, 0);

@@ -29,6 +29,7 @@ public:
 	void setCameraTVec(const std::array<double, 3>&);
 	void setObjGridPoints(const std::vector<cv::Point3d>&);
 	void setGridFilename(const std::string&);
+	void setGridShift(const std::array<double, 3>&);
 
 	void calcOuterCameraParams(const std::vector<cv::Point2d>&,
 		const cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
@@ -48,6 +49,7 @@ private:
 	Aquarium aquarium_{ };
 
 	std::vector<cv::Point3d> objgridpoints_{ };
+	std::array<double, 3> grid_shift_{ };
 	std::string grid_filename_{ };
 };
 
