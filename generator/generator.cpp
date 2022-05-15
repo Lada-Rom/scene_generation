@@ -200,6 +200,10 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 	main_scene_.setCameraRMat(rmat);
 	main_scene_.setCameraTVec(tvec);
 
+	std::cout << "Rotation matrix:\n" << rmat << std::endl;
+	std::cout << "Translation vector:\t" << tvec << std::endl;
+	std::cout << "Shift vector:\t\t" << shift << std::endl;
+
 	//constructing 3D points
 	std::vector<cv::Point3d> objgridpoints;
 	double aquarium_width = main_scene_.getAquariumSize()[0];
@@ -216,6 +220,15 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 	main_scene_.setObjGridPoints(objgridpoints);
 	main_scene_.setGridFilename(grid_glut_filename_);
 	main_scene_.setGridShift(shift);
+
+	std::cout << "\nHorizontal values: \t";
+	for (int i{}; i < objgridpoints.size(); i += quantity.height)
+		std::cout << objgridpoints[i].x << ", ";
+
+	std::cout << "\nVertical values: \t";
+	for (int i{}; i < quantity.height; ++i)
+		std::cout << objgridpoints[i].y << ", ";
+	std::cout << std::endl;
 
 	//glut rendering 3D points
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
