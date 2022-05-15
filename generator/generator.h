@@ -8,6 +8,7 @@
 #include <fstream>
 
 #include "scene.h"
+#include "utils.h"
 
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
