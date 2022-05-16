@@ -45,6 +45,26 @@ void Generator::saveMainJSON() {
 	file << main_json_.dump(4) << std::endl;
 }
 
+////////// saveGenRCOJSON //////////
+void Generator::saveGenRCOJSON(const std::string& path,
+	const std::vector<std::vector<std::array<double, 3>>>& objpoints,
+	const std::vector<std::vector<std::array<double, 2>>>& imgpoints) {
+	
+	gen_RCO_json_["3D_points"] = json::array();
+	gen_RCO_json_["2D_points"] = json::array();
+
+	for (int frame{}; frame < objpoints.size(); ++frame) {
+		gen_RCO_json_["3D_points"].push_back(json::array());
+		for (int object{}; object < objpoints[frame].size(); ++object) {
+			gen_RCO_json_["3D_points"][frame].push_back(objpoints[frame][object]);
+			gen_RCO_json_["2D_points"][frame].push_back(imgpoints[frame][object]);
+		}
+	}
+
+	std::ofstream file(path + generation_json_name_);
+	file << gen_RCO_json_.dump(4) << std::endl;
+}
+
 ////////// readInputImgpoints //////////
 std::vector<cv::Point2d> Generator::readInputImgpoints(size_t index) {
 	json x_coords = main_json_["input"][index]["x_coords"];
@@ -389,6 +409,7 @@ void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_object
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
 
 	//saving objoints and imgpoints to json
+	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;

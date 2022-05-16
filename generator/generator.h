@@ -28,6 +28,9 @@ public:
 	void constructMainJSON(bool load = true);
 	void loadMainJSON();
 	void saveMainJSON();
+	void saveGenRCOJSON(const std::string&,
+		const std::vector<std::vector<std::array<double, 3>>>&,
+		const std::vector<std::vector<std::array<double, 2>>>&);
 
 	std::vector<cv::Point2d> readInputImgpoints(size_t);
 	std::string readInputImage(size_t);
@@ -78,6 +81,7 @@ private:
 	const std::string generation_json_dir_		{ "json/" };
 	const std::string frames_glut_dir_			{ "glut/" };
 	const std::string frames_merged_dir_		{ "merged/" };
+	const std::string generation_json_name_		{ "gen_annotation.json" };
 
 	json main_json_{ };
 	Scene main_scene_{ };
