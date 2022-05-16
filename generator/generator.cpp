@@ -72,19 +72,24 @@ std::array<double, 3> Generator::readCameraTVec(size_t index) {
 	return main_json_["camera"][index]["tvec"].get<std::array<double, 3>>();
 }
 
-////////// writeRotationMatrix //////////
-void Generator::writeRotationMatrix(const cv::Mat& rmat, size_t i) {
+////////// readCameraSVec //////////
+std::array<double, 3> Generator::readCameraSVec(size_t index) {
+	return main_json_["camera"][index]["svec"].get<std::array<double, 3>>();
+}
+
+////////// writeCameraRMat //////////
+void Generator::writeCameraRMat(const cv::Mat& rmat, size_t i) {
 	main_json_["camera"][i]["rmat"] = cvtMatToVector(rmat);
 }
 
-////////// writeTranslationVector //////////
-void Generator::writeTranslationVector(const cv::Mat& rvec, size_t i) {
+////////// writeCameraTVec //////////
+void Generator::writeCameraTVec(const cv::Mat& rvec, size_t i) {
 	main_json_["camera"][i]["tvec"] = cvtMatToVector(rvec);
 }
 
-////////// writeShiftVector //////////
-void Generator::writeShiftVector(std::array<double, 3> vec, size_t i) {
-	main_json_["camera"][i]["shift"] = vec;
+////////// writeCameraSVec //////////
+void Generator::writeCameraSVec(std::array<double, 3> svec, size_t i) {
+	main_json_["camera"][i]["svec"] = svec;
 }
 
 ////////// checkIfInputExists //////////
@@ -150,9 +155,9 @@ void Generator::addCameraParamsToMainJSON(size_t index) {
 		throw std::out_of_range("Too short main_json[\"camera\"] array");
 	if (main_json_["camera"].size() == index) //difference exactly 1 element
 		main_json_["camera"].push_back(json::object());
-	writeRotationMatrix(rmat, index);
-	writeTranslationVector(tvec, index);
-	writeShiftVector({0., 0., 0.}, index);
+	writeCameraRMat(rmat, index);
+	writeCameraTVec(tvec, index);
+	writeCameraSVec({0., 0., 0.}, index);
 	saveMainJSON();
 }
 
@@ -190,6 +195,43 @@ void Generator::predictPoints(std::vector<cv::Point2d>& imgpoints,
 
 }
 
+////////// predictPoints //////////
+void Generator::predictPoints(std::vector<std::vector<std::array<double, 2>>>& imgpoints,
+	const std::vector<std::vector<std::array<double, 3>>>& objpoints,
+	const std::array<double, 9>& cmat,
+	const std::array<double, 9>& rmat,
+	const std::array<double, 3>& tvec) {
+
+	cv::Mat cv_cmat = cv::Mat(3, 3, CV_64FC1, (double*)cmat.data());
+	cv::Mat cv_rmat = cv::Mat(3, 3, CV_64FC1, (double*)rmat.data());
+	cv::Mat cv_tvec = cv::Mat(3, 1, CV_64FC1, (double*)tvec.data());
+
+	cv::Mat objpoint_mat;
+	cv::Mat imgpoint_mat;
+	cv::Point3d imgpoint;
+	std::array<double, 3> point;
+
+	imgpoints = std::vector<std::vector<std::array<double, 2>>>{objpoints.size()};
+	for (int frame = {}; frame < objpoints.size(); ++frame) {
+		imgpoints[frame] = std::vector<std::array<double, 2>>{objpoints[frame].size()};
+		for (int object = {}; object < objpoints[frame].size(); ++object) {
+			point = objpoints[frame][object];
+
+			//convert point to mat
+			objpoint_mat = cv::Mat(3, 1, CV_64FC1, (double*)point.data());
+
+			//calc prediction mat
+			imgpoint_mat = cv_cmat * (cv_rmat * objpoint_mat + cv_tvec);
+
+			//build point from prediction
+			imgpoint.x = imgpoint_mat.at<double>(0, 0);
+			imgpoint.y = imgpoint_mat.at<double>(1, 0);
+			imgpoint.z = imgpoint_mat.at<double>(2, 0);
+			imgpoints[frame][object] = { imgpoint.x / imgpoint.z, imgpoint.y / imgpoint.z };
+		}
+	}
+}
+
 ////////// showPointGrid //////////
 void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 	const std::array<double, 3>& shift, bool save){
@@ -199,6 +241,7 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 	std::array<double, 3> tvec = readCameraTVec(index);
 	main_scene_.setCameraRMat(rmat);
 	main_scene_.setCameraTVec(tvec);
+	main_scene_.setCameraSVec(shift);
 
 	std::cout << "Rotation matrix:\n" << rmat << std::endl;
 	std::cout << "Translation vector:\t" << tvec << std::endl;
@@ -219,7 +262,6 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 	}
 	main_scene_.setObjGridPoints(objgridpoints);
 	main_scene_.setGridFilename(grid_glut_filename_);
-	main_scene_.setGridShift(shift);
 
 	std::cout << "\nHorizontal values: \t";
 	for (int i{}; i < objgridpoints.size(); i += quantity.height)
@@ -262,13 +304,95 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 		{ grid_merged_1c, grid_merged_1c, grid_merged_1c }, grid_merged_3c);
 
 	for (auto& point : imggridpoints)
-		cv::cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
-	cv::imwrite(grid_merged_filename, grid_merged_3c);
+		add_cv::cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
+	cv::imwrite(grid_merged_filename_, grid_merged_3c);
 
 	if (save) {
-		writeShiftVector(shift, index);
+		writeCameraSVec(shift, index);
 		saveMainJSON();
 	}
+
+	std::cout << "Successful end of program!" << std::endl;
+}
+
+////////// genRandomClip //////////
+void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_objects,
+	const std::string& path) {
+
+	//read info from json and set params
+	std::string image_filename = readInputImage(index);
+	std::array<double, 9> rmat = readCameraRMat(index);
+	std::array<double, 3> tvec = readCameraTVec(index);
+	std::array<double, 3> svec = readCameraSVec(index);
+	main_scene_.setCameraRMat(rmat);
+	main_scene_.setCameraTVec(tvec);
+	main_scene_.setCameraSVec(svec);
+
+	std::cout << "Rotation matrix:\n" << rmat << std::endl;
+	std::cout << "Translation vector:\t" << tvec << std::endl;
+	std::cout << "Shift vector:\t\t" << svec << std::endl;
+
+	//construct 3D params - coords, angles
+	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
+
+	std::uniform_real_distribution<> x_dis(-aq_size[0], aq_size[0]);
+	std::uniform_real_distribution<> y_dis(-aq_size[1], aq_size[1]);
+	std::uniform_real_distribution<> z_dis(-aq_size[2], 0);
+	std::uniform_real_distribution<> angles_dis(0., 180.);
+
+	//Daphnia current;
+	std::array<double, 3> buffer;
+	main_scene_.setRCOFrames(num_frames);
+	for (int frame = {}; frame < num_frames; ++frame) {
+		main_scene_.setRCOObjects(frame, num_objects);
+		std::cout << "\nFrame " << frame << ":" << std::endl;
+		for (int object = {}; object < num_objects; ++object) {
+			std::cout << "\tobject " << object << ": ";
+			//current = main_scene_.getRCODaphnia(frame, object);
+
+			//gen coords - x, y, z
+			buffer = { x_dis(rd_), y_dis(rd_), z_dis(rd_) };
+			main_scene_.setRCODaphniaCoords(frame, object, buffer);
+			//current.setCoords(buffer);
+			std::cout << buffer << ",  ";
+
+			//gen angles - apha, beta, gamma
+			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
+			main_scene_.setRCODaphniaAngles(frame, object, buffer);
+			//current.setAngles(buffer);
+			std::cout << buffer << std::endl;
+		}
+	}
+
+	//calc 2D coords from 3D
+	std::vector<std::vector<std::array<double, 3>>> objpoints{num_frames};
+	for (int frame{}; frame < num_frames; ++frame) {
+		objpoints[frame] = std::vector<std::array<double, 3>>{num_objects};
+		for (int object = {}; object < num_objects; ++object) {
+			objpoints[frame][object] =
+				main_scene_.getRCODaphnia(frame, object).getCoords();
+		}
+	}
+
+	std::vector<std::vector<std::array<double, 2>>> imgpoints;
+	predictPoints(imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
+
+	//glut rendering
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Point array");
+
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayRandomClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT();
+	glutMainLoop();
 
 	std::cout << "Successful end of program!" << std::endl;
 }
@@ -290,6 +414,11 @@ std::vector<double> Generator::cvtMatToVector(const cv::Mat& mat) {
 ////////// displayPointGrid //////////
 void Generator::displayPointGrid() {
 	curr_this_->main_scene_.displayPointGrid();
+}
+
+////////// displayRandomClip //////////
+void Generator::displayRandomClip() {
+	curr_this_->main_scene_.displayRandomClip();
 }
 
 ////////// reshape //////////

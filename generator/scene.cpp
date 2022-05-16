@@ -29,6 +29,11 @@ double Scene::getScale() {
     return scale_;
 }
 
+////////// getRCODaphnia //////////
+Daphnia Scene::getRCODaphnia(size_t frame, size_t object) {
+    return random_clip_objects_[frame][object];
+}
+
 ////////// setCameraRMat //////////
 void Scene::setCameraRMat(const std::array<double, 9>& rmat) {
     camera_.setRMat(rmat);
@@ -37,6 +42,11 @@ void Scene::setCameraRMat(const std::array<double, 9>& rmat) {
 ////////// setCameraTVec //////////
 void Scene::setCameraTVec(const std::array<double, 3>& tvec) {
     camera_.setTVec(tvec);
+}
+
+////////// setCameraSVec //////////
+void Scene::setCameraSVec(const std::array<double, 3>& svec) {
+    camera_.setSVec(svec);
 }
 
 ////////// setObjGridPoints //////////
@@ -49,15 +59,39 @@ void Scene::setGridFilename(const std::string& filename) {
     grid_filename_ = filename;
 }
 
-////////// setGridShift //////////
-void Scene::setGridShift(const std::array<double, 3>& shift) {
-    grid_shift_ = shift;
+////////// setRCOFrames //////////
+void Scene::setRCOFrames(const size_t& num_frames) {
+    random_clip_objects_ = std::vector<std::vector<Daphnia>>{ num_frames };
+}
+
+////////// setRCOObjects //////////
+void Scene::setRCOObjects(const size_t& index, const size_t& num_objects) {
+    random_clip_objects_[index] = std::vector<Daphnia>{ num_objects };
+}
+
+////////// setRCODaphniaCoords //////////
+void Scene::setRCODaphniaCoords(const size_t& frame, const size_t& object,
+    const std::array<double, 3>& coords) {
+    random_clip_objects_[frame][object].setCoords(coords);
+}
+
+////////// setRCODaphniaAngles //////////
+void Scene::setRCODaphniaAngles(const size_t& frame, const size_t& object,
+    const std::array<double, 3>& angles) {
+    random_clip_objects_[frame][object].setAngles(angles);
+}
+
+////////// resetFrameCount //////////
+void Scene::resetFrameCount() {
+    frame_count_ = 0;
 }
 
 ////////// calcOuterCameraParams //////////
 void Scene::calcOuterCameraParams(const std::vector<cv::Point2d>& imgpoints,
     const cv::Mat& camera_mat, cv::Mat& dist_coeffs, cv::Mat& rvec, cv::Mat& tvec) {
     std::vector<cv::Point3d> objpoints = aquarium_.getObjpoints(scale_);
+    std::cout << "Scaled verticies:\n" << objpoints << std::endl;
+    std::cout << "Vertices:\n" << aquarium_.getVertices() << "\n" << std::endl;
 
     std::vector<cv::Point3d> objpoints_4;
     std::vector<cv::Point2d> imgpoints_4;
@@ -144,9 +178,9 @@ void Scene::displayPointGrid() {
         -camera_.getTVec()[1],
         -abs(camera_.getTVec()[2]));
     glTranslated(
-        grid_shift_[0],
-        grid_shift_[1],
-        grid_shift_[2]);
+        camera_.getSVec()[0],
+        camera_.getSVec()[1],
+        camera_.getSVec()[2]);
 
     //object grid
     glColor3f(0, 0, 0);
@@ -170,4 +204,42 @@ void Scene::displayPointGrid() {
     glutLeaveMainLoop();
 }
 
+////////// displayRandomClip //////////
+void Scene::displayRandomClip() {
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glClear(GL_COLOR_BUFFER_BIT);
 
+    glLoadIdentity();
+    gluLookAt(0, 0, 0,
+              0, 0, -1,
+              0, 1, 0);
+
+    glLoadMatrixd(&camera_.getRMat()[0][0]);
+    glTranslated(
+        camera_.getTVec()[0],
+        -camera_.getTVec()[1],
+        -abs(camera_.getTVec()[2]));
+    glTranslated(
+        camera_.getSVec()[0],
+        camera_.getSVec()[1],
+        camera_.getSVec()[2]);
+
+    //object grid
+    glColor3f(0, 0, 0);
+    for (auto& daphnia : random_clip_objects_[frame_count_])
+        daphnia.draw();
+
+    //aquarium with axis
+    aquarium_.draw();
+
+    //write to file
+    saveImage(viewport[2], viewport[3], grid_filename_);
+    ++frame_count_;
+
+    glutSwapBuffers();
+    glutPostRedisplay();
+
+    if (frame_count_ == random_clip_objects_.size())
+        glutLeaveMainLoop();
+}

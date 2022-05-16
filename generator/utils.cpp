@@ -1,6 +1,6 @@
 #include "utils.h"
 
-namespace cv {
+namespace add_cv {
 
 void cross(cv::InputOutputArray& img, const cv::Point point,
 	const cv::Size& size, const cv::Scalar& color) {
@@ -12,7 +12,7 @@ void cross(cv::InputOutputArray& img, const cv::Point point,
 		cv::Point2d{ 1.0 * point.x, 1.0 * point.y + size.height }, color);
 }
 
-} //namespace cv
+} //namespace add_cv
 
 
 namespace glm {
@@ -54,5 +54,19 @@ std::ostream& operator<<(std::ostream& ostrm, const std::array<double, 9>& rhs) 
 std::ostream& operator<<(std::ostream& ostrm, const std::array<double, 3>& rhs) {
 	ostrm << std::fixed << std::setprecision(4)
 		<< "{ " << rhs[0] << " " << rhs[1] << " " << rhs[2] << " }";
+	return ostrm;
+}
+
+std::ostream& operator<<(std::ostream& ostrm, const std::vector<cv::Point3d>& rhs) {
+	ostrm << std::fixed << std::setprecision(4);
+	for (const auto& e : rhs)
+		ostrm << "{ " << e.x << " " << e.y << " " << e.z << " },  ";
+ 	return ostrm;
+}
+
+std::ostream& operator<<(std::ostream& ostrm, const std::array<std::array<double, 3>, 8>& rhs) {
+	ostrm << std::fixed << std::setprecision(4);
+	for (const auto& e : rhs)
+		ostrm << "{ " << e[0] << " " << e[1] << " " << e[2] << " },  ";
 	return ostrm;
 }

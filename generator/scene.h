@@ -7,6 +7,8 @@
 
 #include "camera.h"
 #include "aquarium.h"
+#include "daphnia.h"
+#include "utils.h"
 
 #include <stb_image.h>
 #include <stb_image_write.h>
@@ -24,12 +26,19 @@ public:
 	std::array<double, 3> getAquariumSize();
 
 	double getScale();
+	Daphnia getRCODaphnia(size_t, size_t);
 
 	void setCameraRMat(const std::array<double, 9>&);
 	void setCameraTVec(const std::array<double, 3>&);
+	void setCameraSVec(const std::array<double, 3>&);
 	void setObjGridPoints(const std::vector<cv::Point3d>&);
 	void setGridFilename(const std::string&);
-	void setGridShift(const std::array<double, 3>&);
+
+	void setRCOFrames(const size_t&);
+	void setRCOObjects(const size_t&, const size_t&);
+	void setRCODaphniaCoords(const size_t&, const size_t&, const std::array<double, 3>&);
+	void setRCODaphniaAngles(const size_t&, const size_t&, const std::array<double, 3>&);
+	void resetFrameCount();
 
 	void calcOuterCameraParams(const std::vector<cv::Point2d>&,
 		const cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
@@ -39,6 +48,7 @@ public:
 	void drawAxis();
 	void reshape(int, int);
 	void displayPointGrid();
+	void displayRandomClip();
 
 private:
 	cv::Size2i render_image_size_{ 1280, 1024 };
@@ -49,8 +59,10 @@ private:
 	Aquarium aquarium_{ };
 
 	std::vector<cv::Point3d> objgridpoints_{ };
-	std::array<double, 3> grid_shift_{ };
 	std::string grid_filename_{ };
+
+	std::vector<std::vector<Daphnia>> random_clip_objects_{ }; //RCO
+	size_t frame_count_{ };
 };
 
 #endif

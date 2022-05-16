@@ -20,6 +20,11 @@ glm::dvec3 Camera::getTVec() {
 	return tvec_;
 }
 
+////////// getSVec //////////
+glm::dvec3 Camera::getSVec() {
+	return svec_;
+}
+
 ////////// setOpticalCenter //////////
 void Camera::setOpticalCenter(const cv::Size2d& image_size) {
 	optical_center_ = {
@@ -39,6 +44,11 @@ void Camera::setRMat(const std::array<double, 9>& rmat) {
 ////////// setTVec //////////
 void Camera::setTVec(const std::array<double, 3>& tvec) {
 	tvec_ = glm::make_vec3(tvec.data());
+}
+
+////////// setSVec //////////
+void Camera::setSVec(const std::array<double, 3>& svec) {
+	svec_ = glm::make_vec3(svec.data());
 }
 
 ////////// calcIntrinsicMatrix //////////
