@@ -1,6 +1,8 @@
 #ifndef UTILS_UTILS_H_20221505
 #define UTILS_UTILS_H_20221505
 
+#include <filesystem>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -26,7 +28,9 @@ std::ostream& operator<<(std::ostream& ostrm, const std::array<double, 9>& rhs);
 std::ostream& operator<<(std::ostream& ostrm, const std::array<double, 3>& rhs);
 
 std::ostream& operator<<(std::ostream& ostrm, const std::vector<cv::Point3d>& rhs);
-
 std::ostream& operator<<(std::ostream& ostrm, const std::array<std::array<double, 3>, 8>& rhs);
+
+void makeGenFileTree(const std::string&, const std::string&,
+	const std::string&, const std::string&, const std::string&);
 
 #endif

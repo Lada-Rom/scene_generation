@@ -317,7 +317,7 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 
 ////////// genRandomClip //////////
 void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_objects,
-	const std::string& path) {
+	std::string path) {
 
 	//read info from json and set params
 	std::string image_filename = readInputImage(index);
@@ -331,6 +331,22 @@ void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_object
 	std::cout << "Rotation matrix:\n" << rmat << std::endl;
 	std::cout << "Translation vector:\t" << tvec << std::endl;
 	std::cout << "Shift vector:\t\t" << svec << std::endl;
+
+	//set directories for generation
+	if (path.empty()) {
+		path = generation_path_;
+	}
+	else if (path.compare(path.size() - 1, 1, "/")) {
+		std::cout << "Warning: path ends not with \"/\" and will be supplemented" << std::endl;
+		path += "/";
+	}
+	std::string gen_glut_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
+	std::string gen_merged_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
+	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
+	main_scene_.setGenFramesPath(gen_glut_dir);
+	makeGenFileTree(generation_path_, RCO_generation_main_dir_,
+		generation_frames_dir_ + frames_glut_dir_,
+		generation_frames_dir_ + frames_merged_dir_, generation_json_dir_);
 
 	//construct 3D params - coords, angles
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
@@ -371,6 +387,8 @@ void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_object
 	std::vector<std::vector<std::array<double, 2>>> imgpoints;
 	predictPoints(imgpoints, objpoints,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
+
+	//saving objoints and imgpoints to json
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;

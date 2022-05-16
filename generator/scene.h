@@ -38,6 +38,7 @@ public:
 	void setRCOObjects(const size_t&, const size_t&);
 	void setRCODaphniaCoords(const size_t&, const size_t&, const std::array<double, 3>&);
 	void setRCODaphniaAngles(const size_t&, const size_t&, const std::array<double, 3>&);
+	void setGenFramesPath(const std::string&);
 	void resetFrameCount();
 
 	void calcOuterCameraParams(const std::vector<cv::Point2d>&,
@@ -62,6 +63,8 @@ private:
 	std::string grid_filename_{ };
 
 	std::vector<std::vector<Daphnia>> random_clip_objects_{ }; //RCO
+	std::string generation_frames_path_{ };
+	std::string generation_frames_ending_{ ".png" };
 	size_t frame_count_{ };
 };
 

@@ -81,6 +81,11 @@ void Scene::setRCODaphniaAngles(const size_t& frame, const size_t& object,
     random_clip_objects_[frame][object].setAngles(angles);
 }
 
+////////// setGenFramesPath //////////
+void Scene::setGenFramesPath(const std::string& path) {
+    generation_frames_path_ = path;
+}
+
 ////////// resetFrameCount //////////
 void Scene::resetFrameCount() {
     frame_count_ = 0;
@@ -235,7 +240,8 @@ void Scene::displayRandomClip() {
     aquarium_.draw();
 
     //write to file
-    saveImage(viewport[2], viewport[3], grid_filename_);
+    saveImage(viewport[2], viewport[3], generation_frames_path_
+        + std::to_string(frame_count_) + generation_frames_ending_);
     ++frame_count_;
 
     glutSwapBuffers();

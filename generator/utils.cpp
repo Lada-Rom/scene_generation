@@ -70,3 +70,24 @@ std::ostream& operator<<(std::ostream& ostrm, const std::array<std::array<double
 		ostrm << "{ " << e[0] << " " << e[1] << " " << e[2] << " },  ";
 	return ostrm;
 }
+
+////////// makeGenFileTree //////////
+void makeGenFileTree(const std::string& path, const std::string& main_dir,
+	const std::string& glut_dir, const std::string& merged_dir, const std::string& json_dir) {
+	namespace fs = std::filesystem;
+
+	//check if path exists
+	fs::file_status s = fs::file_status{};
+	if (!fs::exists(path))
+		throw std::invalid_argument("Path does not exists");
+		
+	//check if main_dir exists
+	if (fs::exists(path + main_dir))
+		fs::remove_all(path + main_dir);
+
+	//making subdirectories
+	fs::create_directories(path + main_dir + glut_dir);
+	fs::create_directories(path + main_dir + merged_dir);
+	fs::create_directories(path + main_dir + json_dir);
+}
+

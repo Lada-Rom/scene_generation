@@ -48,6 +48,7 @@ void Aquarium::calcVerticies() {
     };
 }
 
+////////// draw //////////
 void Aquarium::draw() {
     glPushMatrix();
 

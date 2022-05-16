@@ -7,3 +7,4 @@ bin.*/
 *.vcxproj.user
 data/params_selection/
 data/grid/
+data/RCO_generation/
