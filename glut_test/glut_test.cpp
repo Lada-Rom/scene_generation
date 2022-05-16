@@ -194,6 +194,13 @@
 //}
 
 
+double mat_data[] = {
+    0.9848, 0.1736, 0, 0,
+    -0.1736, 0.9848, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+};
+
 void init() {
     glClearColor(1., 1., 1., 0.);
     glShadeModel(GL_FLAT);
@@ -209,6 +216,8 @@ void display() {
     gluLookAt(0, 0, 0,
         0, 0, -1,
         0, 1, 0);
+
+    glLoadMatrixd(&mat_data[0]);
 
     glColor3f(0, 0, 0);
     glPushMatrix();

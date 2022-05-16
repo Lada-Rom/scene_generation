@@ -227,8 +227,9 @@ void Scene::displayRandomClip() {
 
     //object grid
     glColor3f(0, 0, 0);
-    for (auto& daphnia : random_clip_objects_[frame_count_])
+    for (auto& daphnia : random_clip_objects_[frame_count_]) {
         daphnia.draw();
+    }
 
     //aquarium with axis
     aquarium_.draw();

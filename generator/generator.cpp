@@ -335,36 +335,30 @@ void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_object
 	//construct 3D params - coords, angles
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
 
-	std::uniform_real_distribution<> x_dis(-aq_size[0], aq_size[0]);
-	std::uniform_real_distribution<> y_dis(-aq_size[1], aq_size[1]);
+	std::uniform_real_distribution<> x_dis(-0.5 * aq_size[0], 0.5 * aq_size[0]);
+	std::uniform_real_distribution<> y_dis(-0.5 * aq_size[1], 0.5 * aq_size[1]);
 	std::uniform_real_distribution<> z_dis(-aq_size[2], 0);
 	std::uniform_real_distribution<> angles_dis(0., 180.);
 
-	//Daphnia current;
 	std::array<double, 3> buffer;
 	main_scene_.setRCOFrames(num_frames);
+	std::cout << "\nGenerating 3D params" << std::endl;
 	for (int frame = {}; frame < num_frames; ++frame) {
 		main_scene_.setRCOObjects(frame, num_objects);
-		std::cout << "\nFrame " << frame << ":" << std::endl;
 		for (int object = {}; object < num_objects; ++object) {
-			std::cout << "\tobject " << object << ": ";
-			//current = main_scene_.getRCODaphnia(frame, object);
 
 			//gen coords - x, y, z
 			buffer = { x_dis(rd_), y_dis(rd_), z_dis(rd_) };
 			main_scene_.setRCODaphniaCoords(frame, object, buffer);
-			//current.setCoords(buffer);
-			std::cout << buffer << ",  ";
 
 			//gen angles - apha, beta, gamma
 			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
 			main_scene_.setRCODaphniaAngles(frame, object, buffer);
-			//current.setAngles(buffer);
-			std::cout << buffer << std::endl;
 		}
 	}
 
 	//calc 2D coords from 3D
+	std::cout << "Calculating 2D coords" << std::endl;
 	std::vector<std::vector<std::array<double, 3>>> objpoints{num_frames};
 	for (int frame{}; frame < num_frames; ++frame) {
 		objpoints[frame] = std::vector<std::array<double, 3>>{num_objects};
@@ -379,6 +373,7 @@ void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_object
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
 
 	//glut rendering
+	std::cout << "GLUT rendering" << std::endl;
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowSize(
 		main_scene_.getRenderImageSize().width,
