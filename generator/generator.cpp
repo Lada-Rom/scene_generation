@@ -42,14 +42,14 @@ void Generator::constructConfigRCOJSON(size_t num_frames,
 	config["object_quantity_range"] = num_object_range;
 	config["object_size_range"] = size_object_range;
 
-	std::ofstream file(generation_path_ + json_dir_
+	std::ofstream file(data_path_ + json_dir_
 		+ config_json_dir_+ config_json_name_ + json_ending_);
 	file << config.dump(4) << std::endl;
 	config_json_ = config;
 }
 
 ////////// constructConfigRCOJSON //////////
-void Generator::constructConfigRCOJSON(size_t index, size_t num_frames,
+void Generator::constructConfigRCOJSON(size_t config_index, size_t num_frames,
 	const std::array<double, 2>& num_object_range,
 	const std::array<double, 2>& size_object_range) {
 	json config;
@@ -57,8 +57,8 @@ void Generator::constructConfigRCOJSON(size_t index, size_t num_frames,
 	config["object_quantity_range"] = num_object_range;
 	config["object_size_range"] = size_object_range;
 
-	std::ofstream file(generation_path_ + json_dir_ + config_json_dir_
-		+ config_json_name_ + "." + std::to_string(index) + json_ending_);
+	std::ofstream file(data_path_ + json_dir_ + config_json_dir_
+		+ config_json_name_ + "." + std::to_string(config_index) + json_ending_);
 	file << config.dump(4) << std::endl;
 	config_json_ = config;
 }
@@ -67,6 +67,12 @@ void Generator::constructConfigRCOJSON(size_t index, size_t num_frames,
 void Generator::loadMainJSON() {
 	std::ifstream file(getMainJSONFilename());
 	file >> main_json_;
+}
+
+////////// loadConfigRCOJSON //////////
+void Generator::loadConfigRCOJSON(const std::string& config_filename) {
+	std::ifstream file(config_filename);
+	file >> config_json_;
 }
 
 ////////// saveMainJSON //////////
@@ -125,6 +131,16 @@ std::array<double, 3> Generator::readCameraTVec(size_t index) {
 ////////// readCameraSVec //////////
 std::array<double, 3> Generator::readCameraSVec(size_t index) {
 	return main_json_["camera"][index]["svec"].get<std::array<double, 3>>();
+}
+
+////////// readConfigRCOJSON //////////
+void Generator::readConfigRCOJSON(size_t& num_frames,
+	std::array<double, 2>& num_objects_range,
+	std::array<double, 2>& size_objects_range, const std::string& filename) {
+	loadConfigRCOJSON(filename);
+	num_frames = config_json_["num_frames"].get<size_t>();
+	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
+	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
 }
 
 ////////// writeCameraRMat //////////
@@ -301,8 +317,8 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 	std::cout << "Shift vector:\t\t" << shift << std::endl;
 
 	//filenames
-	std::string grid_glut_filename = generation_path_ + grid_dir_ + grid_glut_name_ + image_ending_;
-	std::string grid_merged_filename = generation_path_ + grid_dir_ + grid_merged_name_ + image_ending_;
+	std::string grid_glut_filename = data_path_ + grid_dir_ + grid_glut_name_ + image_ending_;
+	std::string grid_merged_filename = data_path_ + grid_dir_ + grid_merged_name_ + image_ending_;
 
 	//constructing 3D points
 	std::vector<cv::Point3d> objgridpoints;
@@ -389,14 +405,14 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 
 	//filetree
 	namespace fs = std::filesystem;
-	if (!fs::exists(generation_path_ + grid_dir_ + frames_glut_dir_))
-		fs::create_directories(generation_path_ + grid_dir_ + frames_glut_dir_);
-	if (!fs::exists(generation_path_ + grid_dir_ + frames_merged_dir_))
-		fs::create_directories(generation_path_ + grid_dir_ + frames_merged_dir_);
+	if (!fs::exists(data_path_ + grid_dir_ + frames_glut_dir_))
+		fs::create_directories(data_path_ + grid_dir_ + frames_glut_dir_);
+	if (!fs::exists(data_path_ + grid_dir_ + frames_merged_dir_))
+		fs::create_directories(data_path_ + grid_dir_ + frames_merged_dir_);
 
-	std::string grid_glut_filename = generation_path_ + grid_dir_ + frames_glut_dir_
+	std::string grid_glut_filename = data_path_ + grid_dir_ + frames_glut_dir_
 		+ std::to_string(file_index) + image_ending_;
-	std::string grid_merged_filename = generation_path_ + grid_dir_ + frames_merged_dir_
+	std::string grid_merged_filename = data_path_ + grid_dir_ + frames_merged_dir_
 		+ std::to_string(file_index) + image_ending_;
 
 	//constructing 3D points
@@ -490,7 +506,7 @@ void Generator::genRandomClip(size_t index, size_t num_frames,
 
 	//set directories for generation
 	if (path.empty()) {
-		path = generation_path_;
+		path = data_path_;
 	}
 	else if (path.compare(path.size() - 1, 1, "/")) {
 		std::cout << "Warning: path ends not with \"/\" and will be supplemented" << std::endl;
@@ -500,7 +516,7 @@ void Generator::genRandomClip(size_t index, size_t num_frames,
 	std::string gen_merged_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
 	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
 	main_scene_.setGenFramesPath(gen_glut_dir);
-	makeGenFileTree(generation_path_, RCO_generation_main_dir_,
+	makeGenFileTree(data_path_, RCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_, generation_json_dir_);
 
@@ -590,6 +606,134 @@ void Generator::genRandomClip(size_t index, size_t num_frames,
 			gen_glut_dir + std::to_string(frame) + ".png",
 			gen_merged_dir + std::to_string(frame) + ".png");
 	
+	std::cout << "Successful end of program!" << std::endl;
+}
+
+////////// genRandomClip //////////
+void Generator::genRandomClip(size_t index,
+	const std::string& config_filename,	std::string path) {
+
+	//read params from config json
+	size_t num_frames;
+	std::array<double, 2> num_objects_range;
+	std::array<double, 2> size_objects_range;
+	readConfigRCOJSON(num_frames, num_objects_range, size_objects_range, config_filename);
+
+	//read info from main json and set params
+	std::string image_filename = readInputImage(index);
+	std::array<double, 9> rmat = readCameraRMat(index);
+	std::array<double, 3> tvec = readCameraTVec(index);
+	std::array<double, 3> svec = readCameraSVec(index);
+	main_scene_.setCameraRMat(rmat);
+	main_scene_.setCameraTVec(tvec);
+	main_scene_.setCameraSVec(svec);
+
+	std::cout << "Rotation matrix:\n" << rmat << std::endl;
+	std::cout << "Translation vector:\t" << tvec << std::endl;
+	std::cout << "Shift vector:\t\t" << svec << std::endl;
+
+	//set directories for generation
+	if (path.empty()) {
+		path = data_path_;
+	}
+	else if (path.compare(path.size() - 1, 1, "/")) {
+		std::cout << "Warning: path ends not with \"/\" and will be supplemented" << std::endl;
+		path += "/";
+	}
+	std::string gen_glut_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
+	std::string gen_merged_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
+	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
+	main_scene_.setGenFramesPath(gen_glut_dir);
+	makeGenFileTree(data_path_, RCO_generation_main_dir_,
+		generation_frames_dir_ + frames_glut_dir_,
+		generation_frames_dir_ + frames_merged_dir_, generation_json_dir_);
+
+	//construct 3D params - coords, angles
+	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
+
+	std::uniform_int_distribution<>	num_obj(num_objects_range[0], num_objects_range[1]);
+	std::uniform_real_distribution<> angles_dis(0., 180.);
+	std::normal_distribution<> size_dis(
+		(size_objects_range[0] + size_objects_range[1]) * 0.5,
+		(size_objects_range[1] - size_objects_range[0]) / 6);
+	std::uniform_real_distribution<> x_dis;
+	std::uniform_real_distribution<> y_dis;
+	std::uniform_real_distribution<> z_dis;
+
+	std::array<double, 3> buffer;
+	size_t num_objects;
+	double curr_dl;
+	double curr_scale;
+	main_scene_.setRCOFrames(num_frames);
+	std::cout << "\nGenerating 3D params" << std::endl;
+	for (int frame = {}; frame < num_frames; ++frame) {
+		num_objects = num_obj(rd_);
+		main_scene_.setRCOObjects(frame, num_objects);
+		for (int object = {}; object < num_objects; ++object) {
+			//gen size scale
+			curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
+			main_scene_.setRCODaphniaScale(frame, object, curr_scale);
+			curr_dl = 0.5 * main_scene_.getRCODaphniaLength(frame, object);
+
+			//set distributions' range by length of object
+			x_dis = std::uniform_real_distribution<>(-0.5 * aq_size[0] + curr_dl, 0.5 * aq_size[0] - curr_dl);
+			y_dis = std::uniform_real_distribution<>(-0.5 * aq_size[1] + curr_dl, 0.5 * aq_size[1] - curr_dl);
+			z_dis = std::uniform_real_distribution<>(-aq_size[2] + curr_dl, 0 - curr_dl);
+
+			//gen coords - x, y, z
+			buffer = { x_dis(rd_), y_dis(rd_), z_dis(rd_) };
+			main_scene_.setRCODaphniaCoords(frame, object, buffer);
+
+			//gen angles - apha, beta, gamma
+			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
+			main_scene_.setRCODaphniaAngles(frame, object, buffer);
+
+		}
+	}
+
+	//calc 2D coords from 3D
+	std::cout << "Calculating 2D coords" << std::endl;
+	std::vector<std::vector<std::array<double, 3>>> objpoints{ num_frames };
+	for (int frame{}; frame < num_frames; ++frame) {
+		num_objects = main_scene_.getRCOObjectsNum(frame);
+		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
+		for (int object = {}; object < num_objects; ++object) {
+			objpoints[frame][object] =
+				main_scene_.getRCODaphnia(frame, object).getCoords();
+		}
+	}
+
+	std::vector<std::vector<std::array<double, 2>>> imgpoints;
+	predictPoints(imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
+
+	//saving objoints and imgpoints to json
+	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
+
+	//glut rendering
+	std::cout << "GLUT rendering" << std::endl;
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Point array");
+
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayRandomClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT();
+	glutMainLoop();
+
+	//merging glut image with src and imgpoints
+	std::cout << "OpenCV merging" << std::endl;
+	for (int frame{}; frame < objpoints.size(); ++frame)
+		add_cv::mergeGLUTandCVImage(image_filename, imgpoints[frame],
+			gen_glut_dir + std::to_string(frame) + ".png",
+			gen_merged_dir + std::to_string(frame) + ".png");
+
 	std::cout << "Successful end of program!" << std::endl;
 }
 

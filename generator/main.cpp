@@ -15,9 +15,10 @@ try{
 	//for (int i{}; i <= 7; ++i)
 	//	generator.showPointGrid(0, { 8, 8 }, i * step, i, { -0.7, 0.23, 0 }, true);
 
-	generator.genRandomClip(0, 30, { 5, 25 }, { 0.5, 0.8 });
+	//generator.genRandomClip(0, 30, { 5, 25 }, { 0.5, 0.8 });
 
 	//generator.constructConfigRCOJSON(30, { 20, 30 }, { 0.5, 1. });
+	generator.genRandomClip(0, "../../data/json/config/config.json");
 }
 catch (const std::exception& exc) {
 	std::cout << exc.what() << std::endl;
