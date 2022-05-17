@@ -2,7 +2,7 @@
 
 namespace add_cv {
 
-void cross(cv::InputOutputArray& img, const cv::Point point,
+void cross(cv::InputOutputArray& img, const cv::Point& point,
 	const cv::Size& size, const cv::Scalar& color) {
 	cv::line(img,
 		cv::Point2d{ 1.0 * point.x - size.width, 1.0 * point.y },
@@ -10,6 +10,56 @@ void cross(cv::InputOutputArray& img, const cv::Point point,
 	cv::line(img,
 		cv::Point2d{ 1.0 * point.x, 1.0 * point.y - size.height },
 		cv::Point2d{ 1.0 * point.x, 1.0 * point.y + size.height }, color);
+}
+
+void cross(cv::InputOutputArray& img, const std::array<double, 2>& point,
+	const cv::Size& size, const cv::Scalar& color) {
+	cv::line(img,
+		cv::Point2d{ 1.0 * point[0] - size.width, 1.0 * point[1] },
+		cv::Point2d{ 1.0 * point[0] + size.width, 1.0 * point[1] }, color);
+	cv::line(img,
+		cv::Point2d{ 1.0 * point[0], 1.0 * point[1] - size.height },
+		cv::Point2d{ 1.0 * point[0], 1.0 * point[1] + size.height }, color);
+}
+
+////////// mergeGLUTandCVImage //////////
+void mergeGLUTandCVImage(const std::string& src_filename,
+	const std::vector<cv::Point2d>& imgpoints,
+	const std::string& glut_filename, const std::string& dst_filename) {
+
+	cv::Mat grid_glut = cv::imread(glut_filename, cv::IMREAD_GRAYSCALE);
+	cv::Mat src = cv::imread(src_filename, cv::IMREAD_GRAYSCALE);
+
+	cv::Mat grid_merged_1c;
+	cv::bitwise_and(src, grid_glut, grid_merged_1c, grid_glut);
+
+	cv::Mat grid_merged_3c;
+	cv::merge(std::array<cv::Mat, 3>
+	{ grid_merged_1c, grid_merged_1c, grid_merged_1c }, grid_merged_3c);
+
+	for (auto& point : imgpoints)
+		add_cv::cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
+	cv::imwrite(dst_filename, grid_merged_3c);
+}
+
+////////// mergeGLUTandCVImage //////////
+void mergeGLUTandCVImage(const std::string& src_filename,
+	const std::vector<std::array<double, 2>>& imgpoints,
+	const std::string& glut_filename, const std::string& dst_filename) {
+
+	cv::Mat grid_glut = cv::imread(glut_filename, cv::IMREAD_GRAYSCALE);
+	cv::Mat src = cv::imread(src_filename, cv::IMREAD_GRAYSCALE);
+
+	cv::Mat grid_merged_1c;
+	cv::bitwise_and(src, grid_glut, grid_merged_1c, grid_glut);
+
+	cv::Mat grid_merged_3c;
+	cv::merge(std::array<cv::Mat, 3>
+	{ grid_merged_1c, grid_merged_1c, grid_merged_1c }, grid_merged_3c);
+
+	for (auto& point : imgpoints)
+		add_cv::cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
+	cv::imwrite(dst_filename, grid_merged_3c);
 }
 
 } //namespace add_cv
@@ -90,4 +140,3 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	fs::create_directories(path + main_dir + merged_dir);
 	fs::create_directories(path + main_dir + json_dir);
 }
-

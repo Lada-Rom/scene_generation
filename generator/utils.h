@@ -11,8 +11,16 @@
 
 namespace add_cv {
 
-void cross(cv::InputOutputArray& img, const cv::Point point,
+void cross(cv::InputOutputArray& img, const cv::Point& point,
 	const cv::Size& size, const cv::Scalar& color);
+
+void cross(cv::InputOutputArray& img, const std::array<double, 2>& point,
+	const cv::Size& size, const cv::Scalar& color);
+
+void mergeGLUTandCVImage(const std::string&, const std::vector<cv::Point2d>&,
+	const std::string&, const std::string&);
+void mergeGLUTandCVImage(const std::string&, const std::vector<std::array<double, 2>>&,
+	const std::string&, const std::string&);
 
 } //namespace add_cv
 

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <random>
+#include <filesystem>
 
 #include "scene.h"
 #include "utils.h"
@@ -53,7 +54,9 @@ public:
 		const std::vector<std::vector<std::array<double, 3>>>&,
 		const std::array<double, 9>&,
 		const std::array<double, 9>&, const std::array<double, 3>&);
-	void showPointGrid(size_t, const cv::Size&,
+	void showPointGrid(size_t, const cv::Size&, double,
+		const std::array<double, 3>& shift = { 0., 0., 0. }, bool save = false);
+	void showPointGrid(size_t, const cv::Size&, double, size_t,
 		const std::array<double, 3>& shift = { 0., 0., 0. }, bool save = false);
 
 	void genRandomClip(size_t, size_t, size_t, std::string path = { });
@@ -72,16 +75,20 @@ private:
 	static void reshape(int, int);
 
 	const std::string main_json_filename_		{ "../../data/json/generator_params.json" };
-	const std::string grid_glut_filename_		{ "../../data/grid/grid_glut.png" };
-	const std::string grid_merged_filename_		{ "../../data/grid/grid_merged.png" };
-	const std::string generation_path_			{ "../../data/" };
 
+	const std::string grid_path_				{ "../../data/grid/" };
+	const std::string grid_glut_name_			{ "grid_glut" };
+	const std::string grid_merged_name_			{ "grid_merged" };
+
+	const std::string generation_path_			{ "../../data/" };
 	const std::string RCO_generation_main_dir_	{ "RCO_generation/" };
 	const std::string generation_frames_dir_	{ "frames/" };
 	const std::string generation_json_dir_		{ "json/" };
 	const std::string frames_glut_dir_			{ "glut/" };
 	const std::string frames_merged_dir_		{ "merged/" };
 	const std::string generation_json_name_		{ "gen_annotation.json" };
+
+	const std::string image_ending_				{ ".png" };
 
 	json main_json_{ };
 	Scene main_scene_{ };
