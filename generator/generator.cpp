@@ -45,6 +45,26 @@ void Generator::saveMainJSON() {
 	file << main_json_.dump(4) << std::endl;
 }
 
+////////// saveGenRCOJSON //////////
+void Generator::saveGenRCOJSON(const std::string& path,
+	const std::vector<std::vector<std::array<double, 3>>>& objpoints,
+	const std::vector<std::vector<std::array<double, 2>>>& imgpoints) {
+	
+	gen_RCO_json_["3D_points"] = json::array();
+	gen_RCO_json_["2D_points"] = json::array();
+
+	for (int frame{}; frame < objpoints.size(); ++frame) {
+		gen_RCO_json_["3D_points"].push_back(json::array());
+		for (int object{}; object < objpoints[frame].size(); ++object) {
+			gen_RCO_json_["3D_points"][frame].push_back(objpoints[frame][object]);
+			gen_RCO_json_["2D_points"][frame].push_back(imgpoints[frame][object]);
+		}
+	}
+
+	std::ofstream file(path + generation_json_name_);
+	file << gen_RCO_json_.dump(4) << std::endl;
+}
+
 ////////// readInputImgpoints //////////
 std::vector<cv::Point2d> Generator::readInputImgpoints(size_t index) {
 	json x_coords = main_json_["input"][index]["x_coords"];
@@ -72,19 +92,24 @@ std::array<double, 3> Generator::readCameraTVec(size_t index) {
 	return main_json_["camera"][index]["tvec"].get<std::array<double, 3>>();
 }
 
-////////// writeRotationMatrix //////////
-void Generator::writeRotationMatrix(const cv::Mat& rmat, size_t i) {
+////////// readCameraSVec //////////
+std::array<double, 3> Generator::readCameraSVec(size_t index) {
+	return main_json_["camera"][index]["svec"].get<std::array<double, 3>>();
+}
+
+////////// writeCameraRMat //////////
+void Generator::writeCameraRMat(const cv::Mat& rmat, size_t i) {
 	main_json_["camera"][i]["rmat"] = cvtMatToVector(rmat);
 }
 
-////////// writeTranslationVector //////////
-void Generator::writeTranslationVector(const cv::Mat& rvec, size_t i) {
+////////// writeCameraTVec //////////
+void Generator::writeCameraTVec(const cv::Mat& rvec, size_t i) {
 	main_json_["camera"][i]["tvec"] = cvtMatToVector(rvec);
 }
 
-////////// writeShiftVector //////////
-void Generator::writeShiftVector(std::array<double, 3> vec, size_t i) {
-	main_json_["camera"][i]["shift"] = vec;
+////////// writeCameraSVec //////////
+void Generator::writeCameraSVec(std::array<double, 3> svec, size_t i) {
+	main_json_["camera"][i]["svec"] = svec;
 }
 
 ////////// checkIfInputExists //////////
@@ -150,9 +175,9 @@ void Generator::addCameraParamsToMainJSON(size_t index) {
 		throw std::out_of_range("Too short main_json[\"camera\"] array");
 	if (main_json_["camera"].size() == index) //difference exactly 1 element
 		main_json_["camera"].push_back(json::object());
-	writeRotationMatrix(rmat, index);
-	writeTranslationVector(tvec, index);
-	writeShiftVector({0., 0., 0.}, index);
+	writeCameraRMat(rmat, index);
+	writeCameraTVec(tvec, index);
+	writeCameraSVec({0., 0., 0.}, index);
 	saveMainJSON();
 }
 
@@ -175,6 +200,7 @@ void Generator::predictPoints(std::vector<cv::Point2d>& imgpoints,
 
 		//convert point to mat
 		temp = { objpoint };
+		temp[0].z = -temp[0].z;
 		objpoint_mat = cv::Mat(3, 1, CV_64FC1, temp.data());
 
 		//calc prediction mat
@@ -190,8 +216,47 @@ void Generator::predictPoints(std::vector<cv::Point2d>& imgpoints,
 
 }
 
+////////// predictPoints //////////
+void Generator::predictPoints(std::vector<std::vector<std::array<double, 2>>>& imgpoints,
+	const std::vector<std::vector<std::array<double, 3>>>& objpoints,
+	const std::array<double, 9>& cmat,
+	const std::array<double, 9>& rmat,
+	const std::array<double, 3>& tvec) {
+
+	cv::Mat cv_cmat = cv::Mat(3, 3, CV_64FC1, (double*)cmat.data());
+	cv::Mat cv_rmat = cv::Mat(3, 3, CV_64FC1, (double*)rmat.data());
+	cv::Mat cv_tvec = cv::Mat(3, 1, CV_64FC1, (double*)tvec.data());
+
+	cv::Mat objpoint_mat;
+	cv::Mat imgpoint_mat;
+	cv::Point3d imgpoint;
+	std::array<double, 3> point;
+
+	imgpoints = std::vector<std::vector<std::array<double, 2>>>{objpoints.size()};
+	for (int frame = {}; frame < objpoints.size(); ++frame) {
+		imgpoints[frame] = std::vector<std::array<double, 2>>{objpoints[frame].size()};
+		for (int object = {}; object < objpoints[frame].size(); ++object) {
+			point = objpoints[frame][object];
+			point[1] = -point[1];
+			point[2] = -point[2];
+
+			//convert point to mat
+			objpoint_mat = cv::Mat(3, 1, CV_64FC1, (double*)point.data());
+
+			//calc prediction mat
+			imgpoint_mat = cv_cmat * (cv_rmat * objpoint_mat + cv_tvec);
+
+			//build point from prediction
+			imgpoint.x = imgpoint_mat.at<double>(0, 0);
+			imgpoint.y = imgpoint_mat.at<double>(1, 0);
+			imgpoint.z = imgpoint_mat.at<double>(2, 0);
+			imgpoints[frame][object] = { imgpoint.x / imgpoint.z, imgpoint.y / imgpoint.z };
+		}
+	}
+}
+
 ////////// showPointGrid //////////
-void Generator::showPointGrid(size_t index, const cv::Size& quantity,
+void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 	const std::array<double, 3>& shift, bool save){
 	//read info from json
 	std::string image_filename = readInputImage(index);
@@ -199,10 +264,15 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 	std::array<double, 3> tvec = readCameraTVec(index);
 	main_scene_.setCameraRMat(rmat);
 	main_scene_.setCameraTVec(tvec);
+	main_scene_.setCameraSVec(shift);
 
 	std::cout << "Rotation matrix:\n" << rmat << std::endl;
 	std::cout << "Translation vector:\t" << tvec << std::endl;
 	std::cout << "Shift vector:\t\t" << shift << std::endl;
+
+	//filenames
+	std::string grid_glut_filename = grid_path_ + grid_glut_name_ + image_ending_;
+	std::string grid_merged_filename = grid_path_ + grid_merged_name_ + image_ending_;
 
 	//constructing 3D points
 	std::vector<cv::Point3d> objgridpoints;
@@ -214,12 +284,11 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 		for (int j{}; j < quantity.height; ++j) {
 			objgridpoints.push_back({
 				(-0.5 * aquarium_width + i * width_step),
-				(-0.5 * aquarium_height + j * height_step), 0 });
+				(-0.5 * aquarium_height + j * height_step), z });
 		}
 	}
 	main_scene_.setObjGridPoints(objgridpoints);
-	main_scene_.setGridFilename(grid_glut_filename_);
-	main_scene_.setGridShift(shift);
+	main_scene_.setGridFilename(grid_glut_filename);
 
 	std::cout << "\nHorizontal values: \t";
 	for (int i{}; i < objgridpoints.size(); i += quantity.height)
@@ -251,7 +320,7 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
 
 	//opencv & opengl merging
-	cv::Mat grid_glut = cv::imread(grid_glut_filename_, cv::IMREAD_GRAYSCALE);
+	cv::Mat grid_glut = cv::imread(grid_glut_filename, cv::IMREAD_GRAYSCALE);
 	cv::Mat src = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
 
 	cv::Mat grid_merged_1c;
@@ -262,14 +331,214 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity,
 		{ grid_merged_1c, grid_merged_1c, grid_merged_1c }, grid_merged_3c);
 
 	for (auto& point : imggridpoints)
-		cv::cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
+		add_cv::cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
 	cv::imwrite(grid_merged_filename, grid_merged_3c);
 
 	if (save) {
-		writeShiftVector(shift, index);
+		writeCameraSVec(shift, index);
 		saveMainJSON();
 	}
 
+	std::cout << "Successful end of program!" << std::endl;
+}
+
+////////// showPointGrid //////////
+void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
+	size_t file_index, const std::array<double, 3>& shift, bool save) {
+	//read info from json
+	std::string image_filename = readInputImage(index);
+	std::array<double, 9> rmat = readCameraRMat(index);
+	std::array<double, 3> tvec = readCameraTVec(index);
+	main_scene_.setCameraRMat(rmat);
+	main_scene_.setCameraTVec(tvec);
+	main_scene_.setCameraSVec(shift);
+
+	std::cout << "Rotation matrix:\n" << rmat << std::endl;
+	std::cout << "Translation vector:\t" << tvec << std::endl;
+	std::cout << "Shift vector:\t\t" << shift << std::endl;
+
+	//filetree
+	namespace fs = std::filesystem;
+	if (!fs::exists(grid_path_ + frames_glut_dir_))
+		fs::create_directories(grid_path_ + frames_glut_dir_);
+	if (!fs::exists(grid_path_ + frames_merged_dir_))
+		fs::create_directories(grid_path_ + frames_merged_dir_);
+
+	std::string grid_glut_filename = grid_path_ + frames_glut_dir_
+		+ std::to_string(file_index) + image_ending_;
+	std::string grid_merged_filename = grid_path_ + frames_merged_dir_
+		+ std::to_string(file_index) + image_ending_;
+
+	//constructing 3D points
+	std::vector<cv::Point3d> objgridpoints;
+	double aquarium_width = main_scene_.getAquariumSize()[0];
+	double aquarium_height = main_scene_.getAquariumSize()[1];
+	double width_step = aquarium_width / (quantity.width - 1);
+	double height_step = aquarium_height / (quantity.height - 1);
+	for (int i{}; i < quantity.width; ++i) {
+		for (int j{}; j < quantity.height; ++j) {
+			objgridpoints.push_back({
+				(-0.5 * aquarium_width + i * width_step),
+				(-0.5 * aquarium_height + j * height_step), z });
+		}
+	}
+	main_scene_.setObjGridPoints(objgridpoints);
+	main_scene_.setGridFilename(grid_glut_filename);
+
+	std::cout << "\nHorizontal values: \t";
+	for (int i{}; i < objgridpoints.size(); i += quantity.height)
+		std::cout << objgridpoints[i].x << ", ";
+
+	std::cout << "\nVertical values: \t";
+	for (int i{}; i < quantity.height; ++i)
+		std::cout << objgridpoints[i].y << ", ";
+	std::cout << std::endl;
+
+	//glut rendering 3D points
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Point array");
+
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayPointGrid);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.initGLUT();
+	glutMainLoop();
+
+	//predicting 2D points
+	std::vector<cv::Point2d> imggridpoints;
+	predictPoints(imggridpoints, objgridpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
+
+	//opencv & opengl merging
+	cv::Mat grid_glut = cv::imread(grid_glut_filename, cv::IMREAD_GRAYSCALE);
+	cv::Mat src = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
+
+	cv::Mat grid_merged_1c;
+	cv::bitwise_and(src, grid_glut, grid_merged_1c, grid_glut);
+
+	cv::Mat grid_merged_3c;
+	cv::merge(std::array<cv::Mat, 3>
+	{ grid_merged_1c, grid_merged_1c, grid_merged_1c }, grid_merged_3c);
+
+	for (auto& point : imggridpoints)
+		add_cv::cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
+	cv::imwrite(grid_merged_filename, grid_merged_3c);
+
+	if (save) {
+		writeCameraSVec(shift, index);
+		saveMainJSON();
+	}
+
+	std::cout << "Successful end of program!" << std::endl;
+}
+
+////////// genRandomClip //////////
+void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_objects,
+	std::string path) {
+
+	//read info from json and set params
+	std::string image_filename = readInputImage(index);
+	std::array<double, 9> rmat = readCameraRMat(index);
+	std::array<double, 3> tvec = readCameraTVec(index);
+	std::array<double, 3> svec = readCameraSVec(index);
+	main_scene_.setCameraRMat(rmat);
+	main_scene_.setCameraTVec(tvec);
+	main_scene_.setCameraSVec(svec);
+
+	std::cout << "Rotation matrix:\n" << rmat << std::endl;
+	std::cout << "Translation vector:\t" << tvec << std::endl;
+	std::cout << "Shift vector:\t\t" << svec << std::endl;
+
+	//set directories for generation
+	if (path.empty()) {
+		path = generation_path_;
+	}
+	else if (path.compare(path.size() - 1, 1, "/")) {
+		std::cout << "Warning: path ends not with \"/\" and will be supplemented" << std::endl;
+		path += "/";
+	}
+	std::string gen_glut_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
+	std::string gen_merged_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
+	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
+	main_scene_.setGenFramesPath(gen_glut_dir);
+	makeGenFileTree(generation_path_, RCO_generation_main_dir_,
+		generation_frames_dir_ + frames_glut_dir_,
+		generation_frames_dir_ + frames_merged_dir_, generation_json_dir_);
+
+	//construct 3D params - coords, angles
+	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
+
+	std::uniform_real_distribution<> x_dis(-0.5 * aq_size[0], 0.5 * aq_size[0]);
+	std::uniform_real_distribution<> y_dis(-0.5 * aq_size[1], 0.5 * aq_size[1]);
+	std::uniform_real_distribution<> z_dis(-aq_size[2], 0);
+	std::uniform_real_distribution<> angles_dis(0., 180.);
+
+	std::array<double, 3> buffer;
+	main_scene_.setRCOFrames(num_frames);
+	std::cout << "\nGenerating 3D params" << std::endl;
+	for (int frame = {}; frame < num_frames; ++frame) {
+		main_scene_.setRCOObjects(frame, num_objects);
+		for (int object = {}; object < num_objects; ++object) {
+
+			//gen coords - x, y, z
+			buffer = { x_dis(rd_), y_dis(rd_), z_dis(rd_) };
+			main_scene_.setRCODaphniaCoords(frame, object, buffer);
+
+			//gen angles - apha, beta, gamma
+			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
+			main_scene_.setRCODaphniaAngles(frame, object, buffer);
+		}
+	}
+
+	//calc 2D coords from 3D
+	std::cout << "Calculating 2D coords" << std::endl;
+	std::vector<std::vector<std::array<double, 3>>> objpoints{num_frames};
+	for (int frame{}; frame < num_frames; ++frame) {
+		objpoints[frame] = std::vector<std::array<double, 3>>{num_objects};
+		for (int object = {}; object < num_objects; ++object) {
+			objpoints[frame][object] =
+				main_scene_.getRCODaphnia(frame, object).getCoords();
+		}
+	}
+
+	std::vector<std::vector<std::array<double, 2>>> imgpoints;
+	predictPoints(imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
+
+	//saving objoints and imgpoints to json
+	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
+
+	//glut rendering
+	std::cout << "GLUT rendering" << std::endl;
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Point array");
+
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayRandomClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT();
+	glutMainLoop();
+
+	//merging glut image with src and imgpoints
+	std::cout << "OpenCV merging" << std::endl;
+	for (int frame{}; frame < objpoints.size(); ++frame)
+		add_cv::mergeGLUTandCVImage(image_filename, imgpoints[frame],
+			gen_glut_dir + std::to_string(frame) + ".png",
+			gen_merged_dir + std::to_string(frame) + ".png");
+	
 	std::cout << "Successful end of program!" << std::endl;
 }
 
@@ -290,6 +559,11 @@ std::vector<double> Generator::cvtMatToVector(const cv::Mat& mat) {
 ////////// displayPointGrid //////////
 void Generator::displayPointGrid() {
 	curr_this_->main_scene_.displayPointGrid();
+}
+
+////////// displayRandomClip //////////
+void Generator::displayRandomClip() {
+	curr_this_->main_scene_.displayRandomClip();
 }
 
 ////////// reshape //////////

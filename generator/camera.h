@@ -17,10 +17,12 @@ public:
 	std::array<double, 9> getIntrinsicMatrix();
 	glm::dmat4 getRMat();
 	glm::dvec3 getTVec();
+	glm::dvec3 getSVec();
 
 	void setOpticalCenter(const cv::Size2d&);
 	void setRMat(const std::array<double, 9>&);
 	void setTVec(const std::array<double, 3>&);
+	void setSVec(const std::array<double, 3>&);
 
 	void calcIntrinsicMatrix();
 
@@ -32,6 +34,7 @@ private:
 	std::array<double, 9> intrinsic_matrix_{ };
 	glm::dmat4 rmat_{ };
 	glm::dvec3 tvec_{ };
+	glm::dvec3 svec_{ };
 };
 
 #endif
