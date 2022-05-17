@@ -33,6 +33,36 @@ void Generator::constructMainJSON(bool load) {
 		loadMainJSON();
 }
 
+////////// constructConfigRCOJSON //////////
+void Generator::constructConfigRCOJSON(size_t num_frames,
+	const std::array<double, 2>& num_object_range,
+	const std::array<double, 2>& size_object_range) {
+	json config;
+	config["num_frames"] = num_frames;
+	config["object_quantity_range"] = num_object_range;
+	config["object_size_range"] = size_object_range;
+
+	std::ofstream file(generation_path_ + json_dir_
+		+ config_json_dir_+ config_json_name_ + json_ending_);
+	file << config.dump(4) << std::endl;
+	config_json_ = config;
+}
+
+////////// constructConfigRCOJSON //////////
+void Generator::constructConfigRCOJSON(size_t index, size_t num_frames,
+	const std::array<double, 2>& num_object_range,
+	const std::array<double, 2>& size_object_range) {
+	json config;
+	config["num_frames"] = num_frames;
+	config["object_quantity_range"] = num_object_range;
+	config["object_size_range"] = size_object_range;
+
+	std::ofstream file(generation_path_ + json_dir_ + config_json_dir_
+		+ config_json_name_ + "." + std::to_string(index) + json_ending_);
+	file << config.dump(4) << std::endl;
+	config_json_ = config;
+}
+
 ////////// loadMainJSON //////////
 void Generator::loadMainJSON() {
 	std::ifstream file(getMainJSONFilename());
@@ -61,7 +91,7 @@ void Generator::saveGenRCOJSON(const std::string& path,
 		}
 	}
 
-	std::ofstream file(path + generation_json_name_);
+	std::ofstream file(path + generation_json_name_ + json_ending_);
 	file << gen_RCO_json_.dump(4) << std::endl;
 }
 
@@ -271,8 +301,8 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 	std::cout << "Shift vector:\t\t" << shift << std::endl;
 
 	//filenames
-	std::string grid_glut_filename = grid_path_ + grid_glut_name_ + image_ending_;
-	std::string grid_merged_filename = grid_path_ + grid_merged_name_ + image_ending_;
+	std::string grid_glut_filename = generation_path_ + grid_dir_ + grid_glut_name_ + image_ending_;
+	std::string grid_merged_filename = generation_path_ + grid_dir_ + grid_merged_name_ + image_ending_;
 
 	//constructing 3D points
 	std::vector<cv::Point3d> objgridpoints;
@@ -359,14 +389,14 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 
 	//filetree
 	namespace fs = std::filesystem;
-	if (!fs::exists(grid_path_ + frames_glut_dir_))
-		fs::create_directories(grid_path_ + frames_glut_dir_);
-	if (!fs::exists(grid_path_ + frames_merged_dir_))
-		fs::create_directories(grid_path_ + frames_merged_dir_);
+	if (!fs::exists(generation_path_ + grid_dir_ + frames_glut_dir_))
+		fs::create_directories(generation_path_ + grid_dir_ + frames_glut_dir_);
+	if (!fs::exists(generation_path_ + grid_dir_ + frames_merged_dir_))
+		fs::create_directories(generation_path_ + grid_dir_ + frames_merged_dir_);
 
-	std::string grid_glut_filename = grid_path_ + frames_glut_dir_
+	std::string grid_glut_filename = generation_path_ + grid_dir_ + frames_glut_dir_
 		+ std::to_string(file_index) + image_ending_;
-	std::string grid_merged_filename = grid_path_ + frames_merged_dir_
+	std::string grid_merged_filename = generation_path_ + grid_dir_ + frames_merged_dir_
 		+ std::to_string(file_index) + image_ending_;
 
 	//constructing 3D points
@@ -440,7 +470,9 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 }
 
 ////////// genRandomClip //////////
-void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_objects,
+void Generator::genRandomClip(size_t index, size_t num_frames,
+	const std::array<double,2>& num_objects_range,
+	const std::array<double, 2>& size_objects_range,
 	std::string path) {
 
 	//read info from json and set params
@@ -475,17 +507,34 @@ void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_object
 	//construct 3D params - coords, angles
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
 
-	std::uniform_real_distribution<> x_dis(-0.5 * aq_size[0], 0.5 * aq_size[0]);
-	std::uniform_real_distribution<> y_dis(-0.5 * aq_size[1], 0.5 * aq_size[1]);
-	std::uniform_real_distribution<> z_dis(-aq_size[2], 0);
+	std::uniform_int_distribution<>	num_obj(num_objects_range[0], num_objects_range[1]);
 	std::uniform_real_distribution<> angles_dis(0., 180.);
+	std::normal_distribution<> size_dis(
+		(size_objects_range[0] + size_objects_range[1]) * 0.5,
+		(size_objects_range[1] - size_objects_range[0]) / 6);
+	std::uniform_real_distribution<> x_dis;
+	std::uniform_real_distribution<> y_dis;
+	std::uniform_real_distribution<> z_dis;
 
 	std::array<double, 3> buffer;
+	size_t num_objects;
+	double curr_dl;
+	double curr_scale;
 	main_scene_.setRCOFrames(num_frames);
 	std::cout << "\nGenerating 3D params" << std::endl;
 	for (int frame = {}; frame < num_frames; ++frame) {
+		num_objects = num_obj(rd_);
 		main_scene_.setRCOObjects(frame, num_objects);
 		for (int object = {}; object < num_objects; ++object) {
+			//gen size scale
+			curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
+			main_scene_.setRCODaphniaScale(frame, object, curr_scale);
+			curr_dl = 0.5 * main_scene_.getRCODaphniaLength(frame, object);
+
+			//set distributions' range by length of object
+			x_dis = std::uniform_real_distribution<>(-0.5 * aq_size[0] + curr_dl, 0.5 * aq_size[0] - curr_dl);
+			y_dis = std::uniform_real_distribution<>(-0.5 * aq_size[1] + curr_dl, 0.5 * aq_size[1] - curr_dl);
+			z_dis = std::uniform_real_distribution<>(-aq_size[2] + curr_dl, 0 - curr_dl);
 
 			//gen coords - x, y, z
 			buffer = { x_dis(rd_), y_dis(rd_), z_dis(rd_) };
@@ -494,6 +543,7 @@ void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_object
 			//gen angles - apha, beta, gamma
 			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
 			main_scene_.setRCODaphniaAngles(frame, object, buffer);
+
 		}
 	}
 
@@ -501,7 +551,8 @@ void Generator::genRandomClip(size_t index, size_t num_frames, size_t num_object
 	std::cout << "Calculating 2D coords" << std::endl;
 	std::vector<std::vector<std::array<double, 3>>> objpoints{num_frames};
 	for (int frame{}; frame < num_frames; ++frame) {
-		objpoints[frame] = std::vector<std::array<double, 3>>{num_objects};
+		num_objects = main_scene_.getRCOObjectsNum(frame);
+		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
 		for (int object = {}; object < num_objects; ++object) {
 			objpoints[frame][object] =
 				main_scene_.getRCODaphnia(frame, object).getCoords();
@@ -569,4 +620,14 @@ void Generator::displayRandomClip() {
 ////////// reshape //////////
 void Generator::reshape(int width, int height) {
 	curr_this_->main_scene_.reshape(width, height);
+}
+
+////////// normDistGenInRange //////////
+double Generator::normDistGenInRange(std::normal_distribution<> norm,
+	const double& min, const double& max) {
+	double sample;
+	do {
+		sample = norm(rd_);
+	} while (sample < min || sample > max);
+	return sample;
 }

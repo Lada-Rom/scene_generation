@@ -34,6 +34,16 @@ Daphnia Scene::getRCODaphnia(size_t frame, size_t object) {
     return random_clip_objects_[frame][object];
 }
 
+////////// getRCODaphniaLength //////////
+double Scene::getRCODaphniaLength(size_t frame, size_t object) {
+    return random_clip_objects_[frame][object].getLength();
+}
+
+////////// getRCOObjectsNum //////////
+size_t Scene::getRCOObjectsNum(size_t frame) {
+    return random_clip_objects_[frame].size();
+}
+
 ////////// setCameraRMat //////////
 void Scene::setCameraRMat(const std::array<double, 9>& rmat) {
     camera_.setRMat(rmat);
@@ -79,6 +89,12 @@ void Scene::setRCODaphniaCoords(const size_t& frame, const size_t& object,
 void Scene::setRCODaphniaAngles(const size_t& frame, const size_t& object,
     const std::array<double, 3>& angles) {
     random_clip_objects_[frame][object].setAngles(angles);
+}
+
+////////// setRCODaphniaScale //////////
+void Scene::setRCODaphniaScale(const size_t& frame, const size_t& object,
+    const double& scale) {
+    random_clip_objects_[frame][object].setScale(scale);
 }
 
 ////////// setGenFramesPath //////////
