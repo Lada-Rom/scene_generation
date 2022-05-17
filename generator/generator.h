@@ -27,7 +27,14 @@ public:
 	std::string getMainJSONFilename();
 
 	void constructMainJSON(bool load = true);
+	void constructConfigRCOJSON(size_t num_frames,
+		const std::array<double, 2>& num_object_range,
+		const std::array<double, 2>& size_object_range);
+	void constructConfigRCOJSON(size_t config_index, size_t num_frames,
+		const std::array<double, 2>& num_object_range,
+		const std::array<double, 2>& size_object_range);
 	void loadMainJSON();
+	void loadConfigRCOJSON(const std::string& config_filename);
 	void saveMainJSON();
 	void saveGenRCOJSON(const std::string&,
 		const std::vector<std::vector<std::array<double, 3>>>&,
@@ -38,6 +45,8 @@ public:
 	std::array<double, 9> readCameraRMat(size_t);
 	std::array<double, 3> readCameraTVec(size_t);
 	std::array<double, 3> readCameraSVec(size_t);
+	void readConfigRCOJSON(size_t&, std::array<double, 2>&,
+		std::array<double, 2>&, const std::string& filename);
 
 	void writeCameraRMat(const cv::Mat&, size_t);
 	void writeCameraTVec(const cv::Mat&, size_t);
@@ -59,7 +68,12 @@ public:
 	void showPointGrid(size_t, const cv::Size&, double, size_t,
 		const std::array<double, 3>& shift = { 0., 0., 0. }, bool save = false);
 
-	void genRandomClip(size_t, size_t, size_t, std::string path = { });
+	void genRandomClip(size_t index, size_t num_frames,
+		const std::array<double, 2>& num_objects_range,
+		const std::array<double, 2>& size_objects_range = { 0.5, 0.5 },
+		std::string path = {});
+	void genRandomClip(size_t index,
+		const std::string& config_filename, std::string path = {});
 
 	std::vector<double> cvtMatToVector(const cv::Mat&);
 
@@ -73,27 +87,32 @@ private:
 	static void displayPointGrid();
 	static void displayRandomClip();
 	static void reshape(int, int);
+	double normDistGenInRange(std::normal_distribution<>, const double&, const double&);
 
 	const std::string main_json_filename_		{ "../../data/json/generator_params.json" };
+	const std::string json_dir_					{ "json/" };
+	const std::string config_json_dir_			{ "config/" };
+	const std::string config_json_name_			{ "config" };
+	const std::string generation_json_name_		{ "gen_annotation" };
+	const std::string json_ending_				{ ".json" };
 
-	const std::string grid_path_				{ "../../data/grid/" };
+	const std::string data_path_				{ "../../data/" };
+	const std::string image_ending_				{ ".png" };
+
+	const std::string grid_dir_					{ "grid/" };
 	const std::string grid_glut_name_			{ "grid_glut" };
 	const std::string grid_merged_name_			{ "grid_merged" };
 
-	const std::string generation_path_			{ "../../data/" };
 	const std::string RCO_generation_main_dir_	{ "RCO_generation/" };
 	const std::string generation_frames_dir_	{ "frames/" };
 	const std::string generation_json_dir_		{ "json/" };
 	const std::string frames_glut_dir_			{ "glut/" };
 	const std::string frames_merged_dir_		{ "merged/" };
-	const std::string generation_json_name_		{ "gen_annotation.json" };
-
-	const std::string image_ending_				{ ".png" };
 
 	json main_json_{ };
-	Scene main_scene_{ };
-
+	json config_json_{ };
 	json gen_RCO_json_{ };
+	Scene main_scene_{ };
 };
 
 #endif

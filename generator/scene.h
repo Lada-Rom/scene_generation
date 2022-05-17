@@ -27,6 +27,8 @@ public:
 
 	double getScale();
 	Daphnia getRCODaphnia(size_t, size_t);
+	double getRCODaphniaLength(size_t, size_t);
+	size_t getRCOObjectsNum(size_t);
 
 	void setCameraRMat(const std::array<double, 9>&);
 	void setCameraTVec(const std::array<double, 3>&);
@@ -38,6 +40,7 @@ public:
 	void setRCOObjects(const size_t&, const size_t&);
 	void setRCODaphniaCoords(const size_t&, const size_t&, const std::array<double, 3>&);
 	void setRCODaphniaAngles(const size_t&, const size_t&, const std::array<double, 3>&);
+	void setRCODaphniaScale(const size_t&, const size_t&, const double&);
 	void setGenFramesPath(const std::string&);
 	void resetFrameCount();
 

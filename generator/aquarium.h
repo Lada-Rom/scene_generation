@@ -22,8 +22,7 @@ public:
 	void draw();
 
 private:
-	std::array<double, 3> size_{ 17.9, 15.5, 2.1 };
-	//std::array<double, 3> size_{ 18.1, 15.5, 2.1 };
+	std::array<double, 3> size_{ 18.1, 15.5, 2.1 }; //shift { -0.7, 0.23, 0 }
 	const std::array<double, 3> default_size_{ 16.5, 14.5, 2.5};
 
 	std::array<std::array<double, 3>, 8> vertices_{ };
