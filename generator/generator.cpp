@@ -227,6 +227,7 @@ void Generator::addCameraParamsToMainJSON(size_t index) {
 	saveMainJSON();
 }
 
+////////// makeBackground //////////
 void Generator::makeBackground(
 	const std::string& video_filename, const std::string& bckg_filename) {
 	cv::VideoCapture video(video_filename);
@@ -261,7 +262,36 @@ void Generator::makeBackground(
 	cv::imwrite(bckg_filename, background_image);
 
 	std::cout << "Background image is ready" << std::endl;
+}
 
+////////// makeTestTexture //////////
+void Generator::makeTestTexture(const std::string& filename) {
+	cv::Mat texture = cv::Mat::zeros(256, 256, CV_8UC3);
+	texture += cv::Scalar{ 255, 255, 255 };
+
+	//vertcal lines
+	for (int i{}; i < texture.cols; i += 16) {
+		cv::line(texture, { i, 0 }, { i, texture.rows - 1 }, { 0, 0, 0 });
+	}
+
+	//horizontal lines
+	for (int j{}; j < texture.rows; j += 16) {
+		cv::line(texture, { 0, j }, { texture.cols - 1, j }, { 0, 0, 0 });
+	}
+
+	//triangle
+	int step = 40;
+	std::vector<cv::Point> points;
+	points.push_back(cv::Point( 0.5 * texture.cols - step, 0.5 * texture.rows + step ));
+	points.push_back(cv::Point( 0.5 * texture.cols + step, 0.5 * texture.rows + step ));
+	points.push_back(cv::Point( 0.5 * texture.cols, 0.5 * texture.rows - 1.5 * step));
+	cv::polylines(texture, points, true, { 0, 0, 255 }, 3);
+
+	//circles
+	cv::circle(texture, points[0], 0.5 * step, { 0, 255, 0 }, 2);
+	cv::circle(texture, points[1], 0.5 * step, { 255, 0, 0 }, 2);
+
+	cv::imwrite(filename, texture);
 }
 
 ////////// predictPoints //////////

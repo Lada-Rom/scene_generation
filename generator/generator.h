@@ -57,6 +57,7 @@ public:
 	void addCameraParamsToMainJSON(size_t);
 
 	void makeBackground(const std::string& video_filename, const std::string& bckg_filename);
+	void makeTestTexture(const std::string& filename);
 
 	void predictPoints(std::vector<cv::Point2d>&, const std::vector<cv::Point3d>&,
 		const std::array<double, 9>&,
