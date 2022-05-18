@@ -227,6 +227,43 @@ void Generator::addCameraParamsToMainJSON(size_t index) {
 	saveMainJSON();
 }
 
+void Generator::makeBackground(
+	const std::string& video_filename, const std::string& bckg_filename) {
+	cv::VideoCapture video(video_filename);
+
+	if (!video.isOpened())
+		throw std::exception("Error opening video stream or file");
+
+	std::cout << "\nReading frames" << std::endl;
+	cv::Mat curr_frame;
+	std::vector<cv::Mat> frames;
+	for (int i{};; ++i) {
+		video >> curr_frame;
+		if (curr_frame.empty())
+			break;
+		frames.push_back(curr_frame);
+		cv::cvtColor(frames[i], frames[i], cv::COLOR_BGR2GRAY);
+	}
+
+	std::cout << "\nCalculating median" << std::endl;
+	std::vector<uchar> pixel;
+	cv::Mat background_image = cv::Mat(frames[0].size(), frames[0].type());
+	for (int i{}; i < frames[0].cols; ++i) {
+		for (int j{}; j < frames[0].rows; ++j) {
+			for (int f{}; f < frames.size(); ++f) {
+				pixel.push_back(frames[f].at<uchar>(j, i));
+			}
+			background_image.at<uchar>(j, i) = median(pixel);
+			pixel.clear();
+		}
+	}
+
+	cv::imwrite(bckg_filename, background_image);
+
+	std::cout << "Background image is ready" << std::endl;
+
+}
+
 ////////// predictPoints //////////
 void Generator::predictPoints(std::vector<cv::Point2d>& imgpoints,
 	const std::vector<cv::Point3d>& objpoints,

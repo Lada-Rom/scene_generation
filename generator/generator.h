@@ -56,6 +56,8 @@ public:
 	void addInputToMainJSON(const std::string&, const std::string&);
 	void addCameraParamsToMainJSON(size_t);
 
+	void makeBackground(const std::string& video_filename, const std::string& bckg_filename);
+
 	void predictPoints(std::vector<cv::Point2d>&, const std::vector<cv::Point3d>&,
 		const std::array<double, 9>&,
 		const std::array<double, 9>&, const std::array<double, 3>&);
