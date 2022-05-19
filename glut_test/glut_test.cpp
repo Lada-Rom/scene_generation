@@ -775,10 +775,10 @@ void drawScene() {
 	glDisable(GL_STENCIL_TEST); //Disable using the stencil buffer
 
 	//Blend the floor onto the screen
-	glEnable(GL_BLEND);
-	glColor4f(0.5, 0, 0, 0.5f);
-	drawFloor();
-	glDisable(GL_BLEND);
+	//glEnable(GL_BLEND);
+	//glColor4f(0.5, 0, 0, 0.5f);
+	//drawFloor();
+	//glDisable(GL_BLEND);
 
 	glutSwapBuffers();
 	glutPostRedisplay();

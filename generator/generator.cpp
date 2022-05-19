@@ -779,7 +779,7 @@ void Generator::genRandomClip(size_t index,
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize(
 		main_scene_.getRenderImageSize().width,
 		main_scene_.getRenderImageSize().height);
