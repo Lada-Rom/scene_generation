@@ -679,6 +679,8 @@ const float LIGHT_POS = 7.0f; //The length of each side of the cube
 const float BOX_HEIGHT = -4; //The height of the box off of the ground
 const float FLOOR_SIZE = 20.0f; //The length of each side of the floor
 const float floor_on = 2;
+float keyboard_x = 0;
+float keyboard_alpha = 1 / (abs(BOX_HEIGHT) + abs(floor_on));
 
 //Draws the cube
 void drawCube() {
@@ -738,6 +740,7 @@ void drawScene() {
 	glColor3f(0, 0, 0.5);
 	glPushMatrix();
 	glTranslatef(BOX_HEIGHT, 0, 0);
+	glTranslatef(keyboard_x, 0, 0);
 	drawCube();
 	glPopMatrix();
 
@@ -759,10 +762,14 @@ void drawScene() {
 	//Draw the cube, reflected vertically, at all pixels where the stencil
 	//buffer is 1
 	glPushMatrix();
+	glEnable(GL_BLEND);
+	glColor4f(0, 0.5, 0, 2 * (keyboard_alpha - 0.2));
 	glScalef(-1, 1, 1);
-	glTranslatef(-floor_on, 0, 0);
+	glTranslatef(keyboard_x, 0, 0);
+	glTranslatef(-2 * floor_on, 0, 0);
 	glTranslatef(BOX_HEIGHT, 0, 0);
 	drawCube();
+	glDisable(GL_BLEND);
 	glPopMatrix();
 
 	glDisable(GL_STENCIL_TEST); //Disable using the stencil buffer
@@ -774,17 +781,34 @@ void drawScene() {
 	glDisable(GL_BLEND);
 
 	glutSwapBuffers();
+	glutPostRedisplay();
+}
+
+void handlerArrow(int key, int x, int y) {
+	switch (key) {
+	case GLUT_KEY_LEFT:
+		keyboard_x -= 0.1;
+		keyboard_alpha = 1 / (abs(BOX_HEIGHT) + abs(floor_on) - keyboard_x);
+		std::cout << keyboard_alpha << " " << BOX_HEIGHT << " " << floor_on << " " << keyboard_x << std::endl;
+		break;
+	case GLUT_KEY_RIGHT:
+		keyboard_x += 0.1;
+		keyboard_alpha = 1 / (abs(BOX_HEIGHT) + abs(floor_on) - keyboard_x);
+		std::cout << keyboard_alpha << " " << BOX_HEIGHT << " " << floor_on << " " << keyboard_x << std::endl;
+		break;
+	}
 }
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize(600, 600);
 
 	glutCreateWindow("Sphere reflection");
 	initRendering();
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(handleResize);
+	glutSpecialFunc(handlerArrow);
 	glutMainLoop();
 	return 0;
 }
