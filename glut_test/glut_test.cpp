@@ -356,132 +356,233 @@
 //}
 
 
-const float LIGHT_POS = 7.0f; //The length of each side of the cube
-const float BOX_HEIGHT = LIGHT_POS; //The height of the box off of the ground
-const float FLOOR_SIZE = 20.0f; //The length of each side of the floor
+//http://www.codeincodeblock.com/2011/11/drawing-reflection-capture-extra.html
+//const float LIGHT_POS = 7.0f; //The length of each side of the cube
+//const float BOX_HEIGHT = LIGHT_POS; //The height of the box off of the ground
+//const float FLOOR_SIZE = 20.0f; //The length of each side of the floor
+//
+////Draws the cube
+//void drawCube(float angle) {
+//
+//	glPushMatrix();
+//	glRotatef(-angle, 1.0f, 1.0f, 0.0f);
+//
+//	glBegin(GL_QUADS);
+//	//Cross back
+//	glColor4f(0.0f, 1.0f, 0.0f, 0.9f);
+//	glVertex3f(-0.5, 2.5, -0.5);
+//	glVertex3f(-0.5, -3.0, -0.5);
+//	glVertex3f(0.5, -3.0, -0.5);
+//	glVertex3f(0.5, 2.5, -0.5);
+//
+//	glVertex3f(-2.0, 1.0, -0.5);
+//	glVertex3f(-2.0, 0.0, -0.5);
+//	glVertex3f(2.0, 0.0, -0.5);
+//	glVertex3f(2.0, 1.0, -0.5);
+//
+//
+//	//Cross front
+//	glColor4f(1.0f, 1.0f, 0.0f, 0.9f);
+//	glVertex3f(-0.5, 2.5, 0.5);
+//	glVertex3f(-0.5, -3.0, 0.5);
+//	glVertex3f(0.5, -3.0, 0.5);
+//	glVertex3f(0.5, 2.5, 0.5);
+//
+//	glVertex3f(-2.0, 1.0, 0.5);
+//	glVertex3f(-2.0, 0.0, 0.5);
+//	glVertex3f(2.0, 0.0, 0.5);
+//	glVertex3f(2.0, 1.0, 0.5);
+//
+//	//Cross top
+//	glColor3f(1.0, 0.0, 0.0);
+//	glVertex3f(0.5, 2.5, 0.5);
+//	glVertex3f(-0.5, 2.5, 0.5);
+//	glVertex3f(-0.5, 2.5, -0.5);
+//	glVertex3f(0.5, 2.5, -0.5);
+//	//Cross left top side
+//	glColor3f(0.0, 0.0, 1.0);
+//	glVertex3f(-0.5, 2.5, 0.5);
+//	glVertex3f(-0.5, 2.5, -0.5);
+//	glVertex3f(-0.5, 1.0, -0.5);
+//	glVertex3f(-0.5, 1.0, 0.5);
+//	//Cross left side  top
+//
+//	glVertex3f(-0.5, 1.0, 0.5);
+//	glVertex3f(-0.5, 1.0, -0.5);
+//	glVertex3f(-2.0, 1.0, -0.5);
+//	glVertex3f(-2.0, 1.0, 0.5);
+//
+//	//Cross left side  end
+//	glColor3f(1.0, 0.0, 0.0);
+//	glVertex3f(-2.0, 1.0, 0.5);
+//	glVertex3f(-2.0, 1.0, -0.5);
+//	glVertex3f(-2.0, 0.0, -0.5);
+//	glVertex3f(-2.0, 0.0, 0.5);
+//
+//	//Cross left side bottom
+//	glColor3f(0.0, 0.0, 1.0);
+//	glVertex3f(-2.0, 0.0, 0.5);
+//	glVertex3f(-0.5, 0.0, 0.5);
+//	glVertex3f(-0.5, 0.0, -0.5);
+//	glVertex3f(-2.0, 0.0, -0.5);
+//	//Cross left bottom side
+//	glVertex3f(-0.5, 0.0, 0.5);
+//	glVertex3f(-0.5, 0.0, -0.5);
+//	glVertex3f(-0.5, -3.0, -0.5);
+//	glVertex3f(-0.5, -3.0, 0.5);
+//	//Cross  bottom
+//	glColor3f(1.0, 0.0, 0.0);
+//	glVertex3f(0.5, -3.0, 0.5);
+//	glVertex3f(0.5, -3.0, -0.5);
+//	glVertex3f(-0.5, -3.0, -0.5);
+//	glVertex3f(-0.5, -3.0, 0.5);
+//
+//	//Cross right bottom side
+//	glColor3f(0.0, 0.0, 1.0);
+//	glVertex3f(0.5, 0.0, 0.5);
+//	glVertex3f(0.5, -3.0, 0.5);
+//	glVertex3f(0.5, -3.0, -0.5);
+//	glVertex3f(0.5, 0.0, -0.5);
+//
+//	//Cross right side bottom
+//	glVertex3f(0.5, 0.0, 0.5);
+//	glVertex3f(0.5, 0.0, -0.5);
+//	glVertex3f(2.0, 0.0, -0.5);
+//	glVertex3f(2.0, 0.0, 0.5);
+//	//Cross right side end
+//	glColor3f(1.0, 0.0, 0.0);
+//	glVertex3f(2.0, 1.0, 0.5);
+//	glVertex3f(2.0, 0.0, 0.5);
+//	glVertex3f(2.0, 0.0, -0.5);
+//	glVertex3f(2.0, 1.0, -0.5);
+//
+//	//Cross right side top
+//	glColor3f(0.0, 0.0, 1.0);
+//	glVertex3f(0.5, 1.0, 0.5);
+//	glVertex3f(2.0, 1.0, 0.5);
+//	glVertex3f(2.0, 1.0, -0.5);
+//	glVertex3f(0.5, 1.0, -0.5);
+//	//Cross right side top
+//	glVertex3f(0.5, 1.0, 0.5);
+//	glVertex3f(0.5, 1.0, -0.5);
+//	glVertex3f(0.5, 2.5, -0.5);
+//	glVertex3f(0.5, 2.5, 0.5);
+//	glEnd();
+//	glPopMatrix();
+//}
+//
+////Draws the floor
+//void drawFloor() {
+//	glBegin(GL_QUADS);
+//	glNormal3f(0, 1, 0);
+//	glVertex3f(-FLOOR_SIZE / 2, 0, FLOOR_SIZE / 2);
+//	glVertex3f(-FLOOR_SIZE / 2, 0, -FLOOR_SIZE / 2);
+//	glVertex3f(FLOOR_SIZE / 2, 0, -FLOOR_SIZE / 2);
+//	glVertex3f(FLOOR_SIZE / 2, 0, FLOOR_SIZE / 2);
+//	glEnd();
+//}
+//
+//float _angle = 0;
+//
+//void initRendering() {
+//	glClearColor(1.0, 1.0, 1.0, 1.0);
+//	glEnable(GL_DEPTH_TEST);
+//	glEnable(GL_LIGHTING);
+//	glEnable(GL_LIGHT0);
+//	glEnable(GL_NORMALIZE);
+//	glEnable(GL_COLOR_MATERIAL);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//}
+//
+//void handleResize(int w, int h) {
+//	glViewport(0, 0, w, h);
+//	glMatrixMode(GL_PROJECTION);
+//	glLoadIdentity();
+//	gluPerspective(45.0, (float)w / (float)h, 1.0, 200.0);
+//}
+//
+//void drawScene() {
+//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+//
+//	glMatrixMode(GL_MODELVIEW);
+//	glLoadIdentity();
+//
+//	glTranslatef(0.0f, 0.0f, -40.0f);
+//	glRotatef(30, 1, 0, 0);
+//
+//	GLfloat ambientLight[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+//	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientLight);
+//
+//	GLfloat lightColor[] = { 0.7f, 0.7f, 0.7f, 1.0f };
+//	GLfloat lightPos[] = { -2 * LIGHT_POS , LIGHT_POS , 4 * LIGHT_POS , 1.0f };
+//	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor);
+//	glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+//
+//	glPushMatrix();
+//	glTranslatef(0, BOX_HEIGHT, 0);
+//	drawCube(_angle);
+//	glPopMatrix();
+//
+//	glEnable(GL_STENCIL_TEST); //Enable using the stencil buffer
+//	glColorMask(0, 0, 0, 0); //Disable drawing colors to the screen
+//	glDisable(GL_DEPTH_TEST); //Disable depth testing
+//	glStencilFunc(GL_ALWAYS, 1, 1); //Make the stencil test always pass
+//	//Make pixels in the stencil buffer be set to 1 when the stencil test passes
+//	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+//	//Set all of the pixels covered by the floor to be 1 in the stencil buffer
+//	drawFloor();
+//
+//	glColorMask(1, 1, 1, 1); //Enable drawing colors to the screen
+//	glEnable(GL_DEPTH_TEST); //Enable depth testing
+//	//Make the stencil test pass only when the pixel is 1 in the stencil buffer
+//	glStencilFunc(GL_EQUAL, 1, 1);
+//	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); //Make the stencil buffer not change
+//
+//	//Draw the cube, reflected vertically, at all pixels where the stencil
+//	//buffer is 1
+//	glPushMatrix();
+//	glScalef(1, -1, 1);
+//	glTranslatef(0, BOX_HEIGHT, 0);
+//	drawCube(_angle);
+//	glPopMatrix();
+//
+//	glDisable(GL_STENCIL_TEST); //Disable using the stencil buffer
+//
+//	//Blend the floor onto the screen
+//	glEnable(GL_BLEND);
+//	glColor4f(0, 0, 0.5, 0.5f);
+//	drawFloor();
+//	glDisable(GL_BLEND);
+//
+//	glutSwapBuffers();
+//}
+//
+//void update(int value) {
+//	_angle += 1.0f;
+//	if (_angle > 360) {
+//		_angle -= 360;
+//	}
+//
+//	glutPostRedisplay();
+//	glutTimerFunc(25, update, 0);
+//}
+//
+//int main(int argc, char** argv) {
+//	glutInit(&argc, argv);
+//	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
+//	glutInitWindowSize(600, 600);
+//
+//	glutCreateWindow("www.codeincodeblock.blogspot.com");
+//	initRendering();
+//
+//	glutDisplayFunc(drawScene);
+//	glutReshapeFunc(handleResize);
+//	glutTimerFunc(25, update, 0);
+//
+//	glutMainLoop();
+//	return 0;
+//}
 
-//Draws the cube
-void drawCube(float angle) {
-
-	glPushMatrix();
-	glRotatef(-angle, 1.0f, 1.0f, 0.0f);
-
-	glBegin(GL_QUADS);
-	//Cross back
-	glColor4f(0.0f, 1.0f, 0.0f, 0.9f);
-	glVertex3f(-0.5, 2.5, -0.5);
-	glVertex3f(-0.5, -3.0, -0.5);
-	glVertex3f(0.5, -3.0, -0.5);
-	glVertex3f(0.5, 2.5, -0.5);
-
-	glVertex3f(-2.0, 1.0, -0.5);
-	glVertex3f(-2.0, 0.0, -0.5);
-	glVertex3f(2.0, 0.0, -0.5);
-	glVertex3f(2.0, 1.0, -0.5);
-
-
-	//Cross front
-	glColor4f(1.0f, 1.0f, 0.0f, 0.9f);
-	glVertex3f(-0.5, 2.5, 0.5);
-	glVertex3f(-0.5, -3.0, 0.5);
-	glVertex3f(0.5, -3.0, 0.5);
-	glVertex3f(0.5, 2.5, 0.5);
-
-	glVertex3f(-2.0, 1.0, 0.5);
-	glVertex3f(-2.0, 0.0, 0.5);
-	glVertex3f(2.0, 0.0, 0.5);
-	glVertex3f(2.0, 1.0, 0.5);
-
-	//Cross top
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(0.5, 2.5, 0.5);
-	glVertex3f(-0.5, 2.5, 0.5);
-	glVertex3f(-0.5, 2.5, -0.5);
-	glVertex3f(0.5, 2.5, -0.5);
-	//Cross left top side
-	glColor3f(0.0, 0.0, 1.0);
-	glVertex3f(-0.5, 2.5, 0.5);
-	glVertex3f(-0.5, 2.5, -0.5);
-	glVertex3f(-0.5, 1.0, -0.5);
-	glVertex3f(-0.5, 1.0, 0.5);
-	//Cross left side  top
-
-	glVertex3f(-0.5, 1.0, 0.5);
-	glVertex3f(-0.5, 1.0, -0.5);
-	glVertex3f(-2.0, 1.0, -0.5);
-	glVertex3f(-2.0, 1.0, 0.5);
-
-	//Cross left side  end
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(-2.0, 1.0, 0.5);
-	glVertex3f(-2.0, 1.0, -0.5);
-	glVertex3f(-2.0, 0.0, -0.5);
-	glVertex3f(-2.0, 0.0, 0.5);
-
-	//Cross left side bottom
-	glColor3f(0.0, 0.0, 1.0);
-	glVertex3f(-2.0, 0.0, 0.5);
-	glVertex3f(-0.5, 0.0, 0.5);
-	glVertex3f(-0.5, 0.0, -0.5);
-	glVertex3f(-2.0, 0.0, -0.5);
-	//Cross left bottom side
-	glVertex3f(-0.5, 0.0, 0.5);
-	glVertex3f(-0.5, 0.0, -0.5);
-	glVertex3f(-0.5, -3.0, -0.5);
-	glVertex3f(-0.5, -3.0, 0.5);
-	//Cross  bottom
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(0.5, -3.0, 0.5);
-	glVertex3f(0.5, -3.0, -0.5);
-	glVertex3f(-0.5, -3.0, -0.5);
-	glVertex3f(-0.5, -3.0, 0.5);
-
-	//Cross right bottom side
-	glColor3f(0.0, 0.0, 1.0);
-	glVertex3f(0.5, 0.0, 0.5);
-	glVertex3f(0.5, -3.0, 0.5);
-	glVertex3f(0.5, -3.0, -0.5);
-	glVertex3f(0.5, 0.0, -0.5);
-
-	//Cross right side bottom
-	glVertex3f(0.5, 0.0, 0.5);
-	glVertex3f(0.5, 0.0, -0.5);
-	glVertex3f(2.0, 0.0, -0.5);
-	glVertex3f(2.0, 0.0, 0.5);
-	//Cross right side end
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(2.0, 1.0, 0.5);
-	glVertex3f(2.0, 0.0, 0.5);
-	glVertex3f(2.0, 0.0, -0.5);
-	glVertex3f(2.0, 1.0, -0.5);
-
-	//Cross right side top
-	glColor3f(0.0, 0.0, 1.0);
-	glVertex3f(0.5, 1.0, 0.5);
-	glVertex3f(2.0, 1.0, 0.5);
-	glVertex3f(2.0, 1.0, -0.5);
-	glVertex3f(0.5, 1.0, -0.5);
-	//Cross right side top
-	glVertex3f(0.5, 1.0, 0.5);
-	glVertex3f(0.5, 1.0, -0.5);
-	glVertex3f(0.5, 2.5, -0.5);
-	glVertex3f(0.5, 2.5, 0.5);
-	glEnd();
-	glPopMatrix();
-}
-
-//Draws the floor
-void drawFloor() {
-	glBegin(GL_QUADS);
-	glNormal3f(0, 1, 0);
-	glVertex3f(-FLOOR_SIZE / 2, 0, FLOOR_SIZE / 2);
-	glVertex3f(-FLOOR_SIZE / 2, 0, -FLOOR_SIZE / 2);
-	glVertex3f(FLOOR_SIZE / 2, 0, -FLOOR_SIZE / 2);
-	glVertex3f(FLOOR_SIZE / 2, 0, FLOOR_SIZE / 2);
-	glEnd();
-}
-
-float _angle = 0;
 
 void initRendering() {
 	glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -489,95 +590,87 @@ void initRendering() {
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_NORMALIZE);
-	glEnable(GL_COLOR_MATERIAL);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+void drawScene() {
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glTranslatef(0.0f, 0.0f, -20.0f);
+
+	GLfloat no_mat[] = { 0.0,0.0,0.0,1.0 };
+	GLfloat mat_ambient[] = { 0.7,0.7,0.7,1.0 };
+	GLfloat mat_ambient_color[] = { 0.8,0.8,0.2,1.0 };
+	GLfloat mat_diffuse[] = { 0.1,0.5,0.8,1.0 };
+	GLfloat mat_specular[] = { 1.0,1.0,1.0,1.0 };
+	GLfloat no_shininess[] = { 0.0 };
+	GLfloat low_shininess[] = { 5.0 };
+	GLfloat high_shininess[] = { 100.0 };
+	GLfloat mat_emission[] = { 0.3,0.2,0.2,0.0 };
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//first left sphere
+	glPushMatrix();
+	glTranslatef(-3.75, 0.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, no_mat);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, no_shininess);
+	glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
+	glutSolidSphere(1.0, 16, 16);
+	glPopMatrix();
+
+	//second sphere
+	glPushMatrix();
+	glTranslatef(-1.25, 0.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, no_mat);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, low_shininess);
+	glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
+	glutSolidSphere(1.0, 16, 16);
+	glPopMatrix();
+
+	//third sphere
+	glPushMatrix();
+	glTranslatef(1.25, 0.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, no_mat);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+	glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
+	glutSolidSphere(1.0, 16, 16);
+	glPopMatrix();
+
+	//last right sphere
+	glPushMatrix();
+	glTranslatef(3.75, 0.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, no_mat);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, no_mat);
+	glMaterialfv(GL_FRONT, GL_SHININESS, no_shininess);
+	glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
+	glutSolidSphere(1.0, 16, 16);
+	glPopMatrix();
+
+	glutSwapBuffers();
+	glutPostRedisplay();
 }
 
 void handleResize(int w, int h) {
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(45.0, (float)w / (float)h, 1.0, 200.0);
-}
-
-void drawScene() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glTranslatef(0.0f, 0.0f, -40.0f);
-	glRotatef(30, 1, 0, 0);
-
-	GLfloat ambientLight[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientLight);
-
-	GLfloat lightColor[] = { 0.7f, 0.7f, 0.7f, 1.0f };
-	GLfloat lightPos[] = { -2 * LIGHT_POS , LIGHT_POS , 4 * LIGHT_POS , 1.0f };
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor);
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
-
-	glPushMatrix();
-	glTranslatef(0, BOX_HEIGHT, 0);
-	drawCube(_angle);
-	glPopMatrix();
-
-	glEnable(GL_STENCIL_TEST); //Enable using the stencil buffer
-	glColorMask(0, 0, 0, 0); //Disable drawing colors to the screen
-	glDisable(GL_DEPTH_TEST); //Disable depth testing
-	glStencilFunc(GL_ALWAYS, 1, 1); //Make the stencil test always pass
-	//Make pixels in the stencil buffer be set to 1 when the stencil test passes
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	//Set all of the pixels covered by the floor to be 1 in the stencil buffer
-	drawFloor();
-
-	glColorMask(1, 1, 1, 1); //Enable drawing colors to the screen
-	glEnable(GL_DEPTH_TEST); //Enable depth testing
-	//Make the stencil test pass only when the pixel is 1 in the stencil buffer
-	glStencilFunc(GL_EQUAL, 1, 1);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); //Make the stencil buffer not change
-
-	//Draw the cube, reflected vertically, at all pixels where the stencil
-	//buffer is 1
-	glPushMatrix();
-	glScalef(1, -1, 1);
-	glTranslatef(0, BOX_HEIGHT, 0);
-	drawCube(_angle);
-	glPopMatrix();
-
-	glDisable(GL_STENCIL_TEST); //Disable using the stencil buffer
-
-	//Blend the floor onto the screen
-	glEnable(GL_BLEND);
-	glColor4f(0, 0, 0.5, 0.5f);
-	drawFloor();
-	glDisable(GL_BLEND);
-
-	glutSwapBuffers();
-}
-
-void update(int value) {
-	_angle += 1.0f;
-	if (_angle > 360) {
-		_angle -= 360;
-	}
-
-	glutPostRedisplay();
-	glutTimerFunc(25, update, 0);
+	gluPerspective(37.0, (float)w / (float)h, 1.0, 200.0);
 }
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize(600, 600);
-
-	glutCreateWindow("www.codeincodeblock.blogspot.com");
+	glutCreateWindow("My reflection");
 	initRendering();
-
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(handleResize);
-	glutTimerFunc(25, update, 0);
-
 	glutMainLoop();
-	return 0;
 }
