@@ -90,7 +90,6 @@ void Aquarium::draw() {
 void Aquarium::drawRightPlane() {
     glPushMatrix();
         glBegin(GL_QUADS);
-            glNormal3d(0., 1., 0.);
             glVertex3dv(vertices_[5].data());
             glVertex3dv(vertices_[6].data());
             glVertex3dv(vertices_[2].data());
@@ -110,3 +109,28 @@ void Aquarium::drawLeftPlane() {
         glEnd();
     glPopMatrix();
 }
+
+////////// drawUpperPlane //////////
+void Aquarium::drawUpperPlane() {
+    glPushMatrix();
+        glBegin(GL_QUADS);
+            glVertex3dv(vertices_[4].data());
+            glVertex3dv(vertices_[5].data());
+            glVertex3dv(vertices_[1].data());
+            glVertex3dv(vertices_[0].data());
+        glEnd();
+    glPopMatrix();
+}
+
+////////// drawLowerPlane //////////
+void Aquarium::drawLowerPlane() {
+    glPushMatrix();
+        glBegin(GL_QUADS);
+            glVertex3dv(vertices_[2].data());
+            glVertex3dv(vertices_[3].data());
+            glVertex3dv(vertices_[7].data());
+            glVertex3dv(vertices_[6].data());
+        glEnd();
+    glPopMatrix();
+}
+

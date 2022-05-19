@@ -22,6 +22,8 @@ public:
 	void draw();
 	void drawRightPlane();
 	void drawLeftPlane();
+	void drawUpperPlane();
+	void drawLowerPlane();
 
 private:
 	std::array<double, 3> size_{ 18.1, 15.5, 2.1 }; //shift { -0.7, 0.23, 0 }

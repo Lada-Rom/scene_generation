@@ -50,13 +50,17 @@ void Daphnia::draw(const std::array<double, 4>& color4d) {
 }
 
 ////////// drawReflection //////////
-void Daphnia::drawReflection(const std::array<double, 3>& coords,
+void Daphnia::drawReflection(bool horizontal,
+	const std::array<double, 3>& coords,
 	const std::array<double, 4>& color4d) const {
 	glPushMatrix();
 	glEnable(GL_BLEND);
 
 		glColor4dv(color4d.data());
-		glScaled(-1, 1, 1);
+		if (horizontal)
+			glScaled(-1, 1, 1);
+		else
+			glScaled(1, -1, 1);
 		glTranslated(coords[0], coords[1], coords[2]);
 		glRotated(angles_[0], 1, 0, 0);
 		glRotated(angles_[1], 0, 1, 0);

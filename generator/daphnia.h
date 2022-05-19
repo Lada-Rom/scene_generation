@@ -18,7 +18,8 @@ public:
 	void setScale(const double&);
 
 	void draw(const std::array<double, 4>& color4d);
-	void drawReflection(const std::array<double, 3>& coords,
+	void drawReflection(bool horizontal,
+		const std::array<double, 3>& coords,
 		const std::array<double, 4>& color4d) const;
 
 private:

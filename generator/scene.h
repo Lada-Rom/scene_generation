@@ -56,6 +56,10 @@ public:
 		const std::array<double, 3>& color3d);
 	void drawLeftPlaneReflection(const Daphnia& daphnia,
 		const std::array<double, 3>& color3d);
+	void drawUpperPlaneReflection(const Daphnia& daphnia,
+		const std::array<double, 3>& color3d);
+	void drawLowerPlaneReflection(const Daphnia& daphnia,
+		const std::array<double, 3>& color3d);
 	void reshape(int, int);
 
 	void displayPointGrid();
@@ -65,7 +69,7 @@ private:
 	cv::Size2i render_image_size_{ 1280, 1024 };
 	std::array<double, 2> z_plane_{ 0.8, 1000 };
 	double scale_{ 0.9 };
-	double reflection_distance_limit_{ 1. };
+	double reflection_distance_limit_{ 2. };
 	double reflection_strength_{ 0.3 };
 
 	Camera camera_{ };

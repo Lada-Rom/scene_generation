@@ -148,8 +148,6 @@ void Scene::initGLUT(GLfloat red, GLfloat green, GLfloat blue) {
     glClearColor(red, green, blue, 0.0);
     glShadeModel(GL_FLAT);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glEnable(GL_NORMALIZE);
-    //glEnable(GL_COLOR_MATERIAL);
 }
 
 ////////// drawAxis //////////
@@ -189,15 +187,12 @@ void Scene::drawReflection(const Daphnia& daphnia,
         drawLeftPlaneReflection(daphnia, color3d);
 
     //upper plane
-    //if (coords[1] > 0.5 * aq_size[1] - reflection_distance_limit_) {
-    //
-    //}
+    if (coords[1] > 0.5 * aq_size[1] - reflection_distance_limit_)
+        drawUpperPlaneReflection(daphnia, color3d);
 
     //lower plane
-    //if (coords[1] < -0.5 * aq_size[1] + reflection_distance_limit_) {
-    //
-    //}
-
+    if (coords[1] < -0.5 * aq_size[1] + reflection_distance_limit_)
+        drawLowerPlaneReflection(daphnia, color3d);
 }
 
 ////////// drawRightPlaneReflection //////////
@@ -218,7 +213,7 @@ void Scene::drawRightPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[0]) - abs(coords[0]));
-    daphnia.drawReflection(
+    daphnia.drawReflection(true,
         { -0.5 * aq_size[0] - diff, coords[1], coords[2] },
         { color3d[0], color3d[1], color3d[2], reflection_strength_});
 
@@ -244,8 +239,60 @@ void Scene::drawLeftPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[0]) - abs(coords[0]));
-    daphnia.drawReflection(
+    daphnia.drawReflection(true,
         { 0.5 * aq_size[0] + diff, coords[1], coords[2] },
+        { color3d[0], color3d[1], color3d[2], reflection_strength_ });
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+}
+
+////////// drawUpperPlaneReflection //////////
+void Scene::drawUpperPlaneReflection(const Daphnia& daphnia,
+    const std::array<double, 3>& color3d) {
+    glEnable(GL_STENCIL_TEST);
+
+    glColorMask(0, 0, 0, 0); //disable drawing colors
+    glStencilFunc(GL_ALWAYS, 1, 1); //make the stencil test always pass
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); //set 1 to pixels that passed stencil test
+    aquarium_.drawUpperPlane(); //set right plane pixels to 1
+
+    glColorMask(1, 1, 1, 1); //enable drawing colors
+    glStencilFunc(GL_EQUAL, 1, 1); //make pixel pass when pixel is 1 in stencil buffer
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); //make the stencil buffer not change
+
+    //draw reflection
+    std::array<double, 3> aq_size = aquarium_.getSize();
+    std::array<double, 3> coords = daphnia.getCoords();
+    double diff = abs(abs(0.5 * aq_size[1]) - abs(coords[1]));
+    daphnia.drawReflection(false,
+        { coords[0], -0.5 * aq_size[1] - diff, coords[2] },
+        { color3d[0], color3d[1], color3d[2], reflection_strength_ });
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+}
+
+////////// drawLowerPlaneReflection //////////
+void Scene::drawLowerPlaneReflection(const Daphnia& daphnia,
+    const std::array<double, 3>& color3d) {
+    glEnable(GL_STENCIL_TEST);
+
+    glColorMask(0, 0, 0, 0); //disable drawing colors
+    glStencilFunc(GL_ALWAYS, 1, 1); //make the stencil test always pass
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); //set 1 to pixels that passed stencil test
+    aquarium_.drawLowerPlane(); //set right plane pixels to 1
+
+    glColorMask(1, 1, 1, 1); //enable drawing colors
+    glStencilFunc(GL_EQUAL, 1, 1); //make pixel pass when pixel is 1 in stencil buffer
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); //make the stencil buffer not change
+
+    //draw reflection
+    std::array<double, 3> aq_size = aquarium_.getSize();
+    std::array<double, 3> coords = daphnia.getCoords();
+    double diff = abs(abs(0.5 * aq_size[1]) - abs(coords[1]));
+    daphnia.drawReflection(false,
+        { coords[0], 0.5 * aq_size[1] + diff, coords[2] },
         { color3d[0], color3d[1], color3d[2], reflection_strength_ });
 
     glDisable(GL_DEPTH_TEST);
