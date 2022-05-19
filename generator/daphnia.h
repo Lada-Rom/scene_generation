@@ -10,13 +10,17 @@ public:
 	~Daphnia() = default;
 
 	std::array<double, 3> getCoords();
+	std::array<double, 3> getCoords() const;
 	double getLength();
 
 	void setCoords(const std::array<double, 3>&);
 	void setAngles(const std::array<double, 3>&);
 	void setScale(const double&);
 
-	void draw();
+	void draw(const std::array<double, 4>& color4d);
+	void drawReflection(bool horizontal,
+		const std::array<double, 3>& coords,
+		const std::array<double, 4>& color4d) const;
 
 private:
 	std::array<double, 3> coords_{ };

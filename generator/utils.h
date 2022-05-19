@@ -32,6 +32,8 @@ std::ostream& operator<<(std::ostream& ostrm, const glm::dvec3& rhs);
 
 } //namespace glm
 
+uchar median(std::vector<uchar>& vec);
+
 std::ostream& operator<<(std::ostream& ostrm, const std::array<double, 9>& rhs);
 std::ostream& operator<<(std::ostream& ostrm, const std::array<double, 3>& rhs);
 

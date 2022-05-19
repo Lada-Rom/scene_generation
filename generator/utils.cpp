@@ -93,6 +93,12 @@ std::ostream& operator<<(std::ostream& ostrm, const glm::dvec3& rhs) {
 } //namespace glm
 
 
+uchar median(std::vector<uchar>&vec) {
+	size_t n = vec.size() / 2;
+	std::nth_element(vec.begin(), vec.begin() + n, vec.end());
+	return vec[n];
+}
+
 std::ostream& operator<<(std::ostream& ostrm, const std::array<double, 9>& rhs) {
 	ostrm << std::fixed << std::setprecision(4)
 		<< "{\t" << rhs[0] << "\t" << rhs[1] << "\t" << rhs[2] << "\n"
