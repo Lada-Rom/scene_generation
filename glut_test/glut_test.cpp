@@ -676,9 +676,9 @@
 //}
 
 const float LIGHT_POS = 7.0f; //The length of each side of the cube
-const float BOX_HEIGHT = 4; //The height of the box off of the ground
+const float BOX_HEIGHT = -4; //The height of the box off of the ground
 const float FLOOR_SIZE = 20.0f; //The length of each side of the floor
-const float floor_on = -2;
+const float floor_on = 2;
 
 //Draws the cube
 void drawCube() {
@@ -690,13 +690,13 @@ void drawCube() {
 //Draws the floor
 void drawFloor() {
 	glPushMatrix();
-	glTranslated(0, floor_on, 0);
+	glTranslated(floor_on, 0, 0);
 		glBegin(GL_QUADS);
 			//glNormal3f(0, 1, 0);
-			glVertex3f(-FLOOR_SIZE / 2, 0, FLOOR_SIZE / 2);
-			glVertex3f(-FLOOR_SIZE / 2, 0, -FLOOR_SIZE / 2);
-			glVertex3f(FLOOR_SIZE / 2, 0, -FLOOR_SIZE / 2);
-			glVertex3f(FLOOR_SIZE / 2, 0, FLOOR_SIZE / 2);
+			glVertex3f(0, -0.5 * FLOOR_SIZE, -0.5 * FLOOR_SIZE);
+			glVertex3f(0, -0.5 * FLOOR_SIZE,  0.5 * FLOOR_SIZE);
+			glVertex3f(0,  0.5 * FLOOR_SIZE,  0.5 * FLOOR_SIZE);
+			glVertex3f(0,  0.5 * FLOOR_SIZE, -0.5 * FLOOR_SIZE);
 		glEnd();
 	glPopMatrix();
 }
@@ -725,7 +725,7 @@ void drawScene() {
 	glLoadIdentity();
 
 	glTranslatef(0.0f, 0.0f, -40.0f);
-	glRotatef(20, 1, 0, 0);
+	glRotatef(20, 0, 1, 0);
 
 	//GLfloat ambientLight[] = { 0.3f, 0.3f, 0.3f, 1.0f };
 	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientLight);
@@ -737,7 +737,7 @@ void drawScene() {
 
 	glColor3f(0, 0, 0.5);
 	glPushMatrix();
-	glTranslatef(0, BOX_HEIGHT, 0);
+	glTranslatef(BOX_HEIGHT, 0, 0);
 	drawCube();
 	glPopMatrix();
 
@@ -759,9 +759,9 @@ void drawScene() {
 	//Draw the cube, reflected vertically, at all pixels where the stencil
 	//buffer is 1
 	glPushMatrix();
-	glScalef(1, -1, 1);
-	glTranslatef(0, -floor_on, 0);
-	glTranslatef(0, BOX_HEIGHT, 0);
+	glScalef(-1, 1, 1);
+	glTranslatef(-floor_on, 0, 0);
+	glTranslatef(BOX_HEIGHT, 0, 0);
 	drawCube();
 	glPopMatrix();
 
