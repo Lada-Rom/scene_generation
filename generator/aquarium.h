@@ -16,6 +16,11 @@ public:
 	std::array<std::array<double, 3>, 8> getVertices();
 	std::vector<cv::Point3d> getObjpoints();
 	std::vector<cv::Point3d> getObjpoints(double);
+	//std::array<std::array<double, 3>, 4> getRightPlanePoints();
+	//std::array<std::array<double, 3>, 4> getLeftPlanePoints();
+	//std::array<std::array<double, 3>, 4> getUpperPlanePoints();
+	//std::array<std::array<double, 3>, 4> getLowerPlanePoints();
+	//std::array<std::array<double, 3>, 4> getBottomPlanePoints();
 
 	void calcVerticies();
 

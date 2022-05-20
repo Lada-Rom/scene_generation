@@ -30,6 +30,12 @@ public:
 	double getRCODaphniaLength(size_t, size_t);
 	size_t getRCOObjectsNum(size_t);
 
+	//std::array<std::array<double, 3>, 4> getAquariumRightPlanePoints();
+	//std::array<std::array<double, 3>, 4> getAquariumLeftPlanePoints();
+	//std::array<std::array<double, 3>, 4> getAquariumUpperPlanePoints();
+	//std::array<std::array<double, 3>, 4> getAquariumLowerPlanePoints();
+	//std::array<std::array<double, 3>, 4> getAquariumBottomPlanePoints();
+
 	void setCameraRMat(const std::array<double, 9>&);
 	void setCameraTVec(const std::array<double, 3>&);
 	void setCameraSVec(const std::array<double, 3>&);
@@ -63,7 +69,7 @@ public:
 	void reshape(int, int);
 
 	void displayPointGrid();
-	void displayRandomClip();
+	void displayUntexturedRandomClip();
 
 private:
 	cv::Size2i render_image_size_{ 1280, 1024 };

@@ -101,14 +101,26 @@ void Generator::saveGenRCOJSON(const std::string& path,
 	file << gen_RCO_json_.dump(4) << std::endl;
 }
 
-////////// readInputImgpoints //////////
-std::vector<cv::Point2d> Generator::readInputImgpoints(size_t index) {
+////////// readInputImgpointsD //////////
+std::vector<cv::Point2d> Generator::readInputImgpointsD(size_t index) {
 	json x_coords = main_json_["input"][index]["x_coords"];
 	json y_coords = main_json_["input"][index]["y_coords"];
 
 	std::vector<cv::Point2d> imgpoints;
 	for (int j{}; j < x_coords.size(); ++j)
 		imgpoints.push_back(cv::Point2d{ (double)x_coords[j], (double)y_coords[j] });
+
+	return imgpoints;
+}
+
+////////// readInputImgpointsI //////////
+std::vector<cv::Point2i> Generator::readInputImgpointsI(size_t index) {
+	json x_coords = main_json_["input"][index]["x_coords"];
+	json y_coords = main_json_["input"][index]["y_coords"];
+
+	std::vector<cv::Point2i> imgpoints;
+	for (int j{}; j < x_coords.size(); ++j)
+		imgpoints.push_back(cv::Point2i{ x_coords[j].get<int>(), y_coords[j].get<int>()});
 
 	return imgpoints;
 }
@@ -207,7 +219,7 @@ void Generator::addInputToMainJSON(
 ////////// addCameraParamsToMainJSON //////////
 void Generator::addCameraParamsToMainJSON(size_t index) {
 	//get imgpoints
-	std::vector<cv::Point2d> imgpoints = readInputImgpoints(index);
+	std::vector<cv::Point2d> imgpoints = readInputImgpointsD(index);
 
 	//calc outer camera params
 	cv::Mat camera_mat = cv::Mat(3, 3, CV_64FC1, main_scene_.getIntrinsicCameraMatrix().data());
@@ -260,7 +272,6 @@ void Generator::makeBackground(
 	}
 
 	cv::imwrite(bckg_filename, background_image);
-
 	std::cout << "Background image is ready" << std::endl;
 }
 
@@ -292,6 +303,74 @@ void Generator::makeTestTexture(const std::string& filename) {
 	cv::circle(texture, points[1], 0.5 * step, { 255, 0, 0 }, 2);
 
 	cv::imwrite(filename, texture);
+}
+
+////////// makeEdgeTextures //////////
+void Generator::makeEdgeTextures(size_t index) {
+	//get info from json
+	std::string filename = readInputImage(index);
+	cv::Mat src = cv::imread(filename, cv::IMREAD_GRAYSCALE);
+	std::vector<cv::Point2i> imgpoints = readInputImgpointsI(index);
+
+	cv::Mat test;
+	cv::merge(std::array<cv::Mat, 3>{ src, src, src }, test);
+	for (int i{}; i < 4; ++i)
+		add_cv::cross(test, imgpoints[i], { 2, 2 }, { 255, 0, 0 });
+	for (int i{4}; i < 8; ++i)
+		add_cv::cross(test, imgpoints[i], { 2, 2 }, { 0, 0, 255 });
+
+	//initialize dst images
+	cv::Mat right_plane = cv::Mat::zeros(64, src.cols, CV_8UC1);
+	cv::Mat left_plane  = cv::Mat::zeros(64, src.cols, CV_8UC1);
+	cv::Mat upper_plane = cv::Mat::zeros(64, src.cols, CV_8UC1);
+	cv::Mat lower_plane = cv::Mat::zeros(64, src.cols, CV_8UC1);
+	cv::Mat bottom_plane = cv::Mat::zeros(src.rows, src.cols, CV_8UC1);
+	
+	cv::Mat homography;
+	std::vector<cv::Point2i> plane_points{ 4 };
+	std::vector<cv::Point2i> dst_points = {
+		{0, 0},
+		{right_plane.cols - 1, 0},
+		{right_plane.cols - 1, right_plane.rows - 1},
+		{0, right_plane.rows - 1} };
+	
+	////right
+	plane_points = { imgpoints[5], imgpoints[6], imgpoints[2], imgpoints[1] };
+	homography = cv::findHomography(plane_points, dst_points);
+	cv::warpPerspective(src, right_plane, homography, right_plane.size());
+	
+	////left
+	plane_points = { imgpoints[7], imgpoints[4], imgpoints[0], imgpoints[3] };
+	homography = cv::findHomography(plane_points, dst_points);
+	cv::warpPerspective(src, left_plane, homography, left_plane.size());
+	
+	//upper
+	plane_points = { imgpoints[4], imgpoints[5], imgpoints[1], imgpoints[0] };
+	homography = cv::findHomography(plane_points, dst_points);
+	cv::warpPerspective(src, upper_plane, homography, upper_plane.size());
+	
+	//lower
+	plane_points = { imgpoints[6], imgpoints[7], imgpoints[3], imgpoints[2] };
+	homography = cv::findHomography(plane_points, dst_points);
+	cv::warpPerspective(src, lower_plane, homography, lower_plane.size());
+	
+	//bottom
+	plane_points = { imgpoints[0], imgpoints[1], imgpoints[2], imgpoints[3] };
+	dst_points = { {0, 0},  {bottom_plane.cols, 0},
+		{bottom_plane.cols, bottom_plane.rows}, {0, bottom_plane.rows} };
+	homography = cv::findHomography(plane_points, dst_points);
+	cv::warpPerspective(src, bottom_plane, homography, bottom_plane.size());
+
+	//saving
+	std::string directory = data_path_ + src_dir_ + edges_dir_;
+	if (!std::filesystem::exists(directory))
+		std::filesystem::create_directories(directory);
+
+	cv::imwrite(directory + std::to_string(index) + right_edge_name_ + image_ending_, right_plane);
+	cv::imwrite(directory + std::to_string(index) + left_edge_name_ + image_ending_, left_plane);
+	cv::imwrite(directory + std::to_string(index) + upper_edge_name_ + image_ending_, upper_plane);
+	cv::imwrite(directory + std::to_string(index) + lower_edge_name_ + image_ending_, lower_plane);
+	cv::imwrite(directory + std::to_string(index) + bottom_edge_name_ + image_ending_, bottom_plane);
 }
 
 ////////// predictPoints //////////
@@ -552,8 +631,8 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 	std::cout << "Successful end of program!" << std::endl;
 }
 
-////////// genRandomClip //////////
-void Generator::genRandomClip(size_t index, size_t num_frames,
+////////// genUntexturedRandomClip //////////
+void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 	const std::array<double,2>& num_objects_range,
 	const std::array<double, 2>& size_objects_range,
 	std::string path) {
@@ -660,7 +739,7 @@ void Generator::genRandomClip(size_t index, size_t num_frames,
 
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
-	glutDisplayFunc(Generator::displayRandomClip);
+	glutDisplayFunc(Generator::displayUntexturedRandomClip);
 	glutReshapeFunc(Generator::reshape);
 	main_scene_.resetFrameCount();
 	main_scene_.initGLUT();
@@ -676,8 +755,8 @@ void Generator::genRandomClip(size_t index, size_t num_frames,
 	std::cout << "Successful end of program!" << std::endl;
 }
 
-////////// genRandomClip //////////
-void Generator::genRandomClip(size_t index,
+////////// genUntexturedRandomClip //////////
+void Generator::genUntexturedRandomClip(size_t index,
 	const std::string& config_filename,	std::string path) {
 
 	//read params from config json
@@ -788,7 +867,7 @@ void Generator::genRandomClip(size_t index,
 
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
-	glutDisplayFunc(Generator::displayRandomClip);
+	glutDisplayFunc(Generator::displayUntexturedRandomClip);
 	glutReshapeFunc(Generator::reshape);
 	main_scene_.resetFrameCount();
 	main_scene_.initGLUT();
@@ -800,6 +879,126 @@ void Generator::genRandomClip(size_t index,
 		add_cv::mergeGLUTandCVImage(image_filename, imgpoints[frame],
 			gen_glut_dir + std::to_string(frame) + ".png",
 			gen_merged_dir + std::to_string(frame) + ".png");
+
+	std::cout << "Successful end of program!" << std::endl;
+}
+
+////////// genTexturedRandomClip //////////
+void Generator::genTexturedRandomClip(size_t index,
+	const std::string& config_filename, std::string path) {
+	//read params from config json
+	size_t num_frames;
+	std::array<double, 2> num_objects_range;
+	std::array<double, 2> size_objects_range;
+	readConfigRCOJSON(num_frames, num_objects_range, size_objects_range, config_filename);
+
+	//read info from main json and set params
+	std::string image_filename = readInputImage(index);
+	std::array<double, 9> rmat = readCameraRMat(index);
+	std::array<double, 3> tvec = readCameraTVec(index);
+	std::array<double, 3> svec = readCameraSVec(index);
+	main_scene_.setCameraRMat(rmat);
+	main_scene_.setCameraTVec(tvec);
+	main_scene_.setCameraSVec(svec);
+
+	std::cout << "Rotation matrix:\n" << rmat << std::endl;
+	std::cout << "Translation vector:\t" << tvec << std::endl;
+	std::cout << "Shift vector:\t\t" << svec << std::endl;
+
+	//set directories for generation
+	if (path.empty()) {
+		path = data_path_;
+	}
+	else if (path.compare(path.size() - 1, 1, "/")) {
+		std::cout << "Warning: path ends not with \"/\" and will be supplemented" << std::endl;
+		path += "/";
+	}
+	std::string gen_glut_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
+	std::string gen_merged_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
+	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
+	main_scene_.setGenFramesPath(gen_glut_dir);
+	makeGenFileTree(data_path_, RCO_generation_main_dir_,
+		generation_frames_dir_ + frames_glut_dir_,
+		generation_frames_dir_ + frames_merged_dir_, generation_json_dir_);
+
+	//construct 3D params - coords, angles
+	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
+
+	std::uniform_int_distribution<>	num_obj(num_objects_range[0], num_objects_range[1]);
+	std::uniform_real_distribution<> angles_dis(0., 180.);
+	std::normal_distribution<> size_dis(
+		(size_objects_range[0] + size_objects_range[1]) * 0.5,
+		(size_objects_range[1] - size_objects_range[0]) / 6);
+	std::uniform_real_distribution<> x_dis;
+	std::uniform_real_distribution<> y_dis;
+	std::uniform_real_distribution<> z_dis;
+
+	std::array<double, 3> buffer;
+	size_t num_objects;
+	double curr_dl;
+	double curr_scale;
+	main_scene_.setRCOFrames(num_frames);
+	std::cout << "\nGenerating 3D params" << std::endl;
+	for (int frame = {}; frame < num_frames; ++frame) {
+		num_objects = num_obj(rd_);
+		main_scene_.setRCOObjects(frame, num_objects);
+		for (int object = {}; object < num_objects; ++object) {
+			//gen size scale
+			curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
+			main_scene_.setRCODaphniaScale(frame, object, curr_scale);
+			curr_dl = 0.5 * main_scene_.getRCODaphniaLength(frame, object);
+
+			//set distributions' range by length of object
+			x_dis = std::uniform_real_distribution<>(-0.5 * aq_size[0] + curr_dl, 0.5 * aq_size[0] - curr_dl);
+			y_dis = std::uniform_real_distribution<>(-0.5 * aq_size[1] + curr_dl, 0.5 * aq_size[1] - curr_dl);
+			z_dis = std::uniform_real_distribution<>(-aq_size[2] + curr_dl, 0 - curr_dl);
+
+			//gen coords - x, y, z
+			buffer = { x_dis(rd_), y_dis(rd_), z_dis(rd_) };
+			main_scene_.setRCODaphniaCoords(frame, object, buffer);
+
+			//gen angles - apha, beta, gamma
+			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
+			main_scene_.setRCODaphniaAngles(frame, object, buffer);
+
+		}
+	}
+
+	//calc 2D coords from 3D
+	std::cout << "Calculating 2D coords" << std::endl;
+	std::vector<std::vector<std::array<double, 3>>> objpoints{ num_frames };
+	for (int frame{}; frame < num_frames; ++frame) {
+		num_objects = main_scene_.getRCOObjectsNum(frame);
+		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
+		for (int object = {}; object < num_objects; ++object) {
+			objpoints[frame][object] =
+				main_scene_.getRCODaphnia(frame, object).getCoords();
+		}
+	}
+
+	std::vector<std::vector<std::array<double, 2>>> imgpoints;
+	predictPoints(imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
+
+	//saving objoints and imgpoints to json
+	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
+
+	//glut rendering
+	std::cout << "GLUT rendering" << std::endl;
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Point array");
+
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayUntexturedRandomClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT();
+	glutMainLoop();
 
 	std::cout << "Successful end of program!" << std::endl;
 }
@@ -823,9 +1022,9 @@ void Generator::displayPointGrid() {
 	curr_this_->main_scene_.displayPointGrid();
 }
 
-////////// displayRandomClip //////////
-void Generator::displayRandomClip() {
-	curr_this_->main_scene_.displayRandomClip();
+////////// displayUntexturedRandomClip //////////
+void Generator::displayUntexturedRandomClip() {
+	curr_this_->main_scene_.displayUntexturedRandomClip();
 }
 
 ////////// reshape //////////

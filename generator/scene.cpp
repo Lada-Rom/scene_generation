@@ -44,6 +44,31 @@ size_t Scene::getRCOObjectsNum(size_t frame) {
     return random_clip_objects_[frame].size();
 }
 
+//////////// getAquariumRightPlanePoints //////////
+//std::array<std::array<double, 3>, 4> Scene::getAquariumRightPlanePoints() {
+//    return aquarium_.getRightPlanePoints();
+//}
+//
+//////////// getAquariumLeftPlanePoints //////////
+//std::array<std::array<double, 3>, 4> Scene::getAquariumLeftPlanePoints() {
+//    return aquarium_.getLeftPlanePoints();
+//}
+//
+//////////// getAquariumUpperPlanePoints //////////
+//std::array<std::array<double, 3>, 4> Scene::getAquariumUpperPlanePoints() {
+//    return aquarium_.getUpperPlanePoints();
+//}
+//
+//////////// getAquariumLowerPlanePoints //////////
+//std::array<std::array<double, 3>, 4> Scene::getAquariumLowerPlanePoints() {
+//    return aquarium_.getLowerPlanePoints();
+//}
+//
+//////////// getAquariumBottomPlanePoints //////////
+//std::array<std::array<double, 3>, 4> Scene::getAquariumBottomPlanePoints() {
+//    return aquarium_.getBottomPlanePoints();
+//}
+
 ////////// setCameraRMat //////////
 void Scene::setCameraRMat(const std::array<double, 9>& rmat) {
     camera_.setRMat(rmat);
@@ -353,8 +378,8 @@ void Scene::displayPointGrid() {
     glutLeaveMainLoop();
 }
 
-////////// displayRandomClip //////////
-void Scene::displayRandomClip() {
+////////// displayUntexturedRandomClip //////////
+void Scene::displayUntexturedRandomClip() {
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
     glClear(GL_COLOR_BUFFER_BIT);

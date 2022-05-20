@@ -34,6 +34,31 @@ std::vector<cv::Point3d> Aquarium::getObjpoints(double scale) {
     return objpoints;
 }
 
+//////////// getRightPlanePoints //////////
+//std::array<std::array<double, 3>, 4> Aquarium::getRightPlanePoints() {
+//    return { vertices_[5], vertices_[6], vertices_[2], vertices_[1]};
+//}
+//
+//////////// getLeftPlanePoints //////////
+//std::array<std::array<double, 3>, 4> Aquarium::getLeftPlanePoints() {
+//    return { vertices_[3], vertices_[4], vertices_[0], vertices_[7] };
+//}
+//
+//////////// getUpperPlanePoints //////////
+//std::array<std::array<double, 3>, 4> Aquarium::getUpperPlanePoints() {
+//    return { vertices_[4], vertices_[5], vertices_[1], vertices_[0] };
+//}
+//
+//////////// getLowerPlanePoints //////////
+//std::array<std::array<double, 3>, 4> Aquarium::getLowerPlanePoints() {
+//    return { vertices_[6], vertices_[7], vertices_[3], vertices_[2] };
+//}
+//
+//////////// getBottomPlanePoints //////////
+//std::array<std::array<double, 3>, 4> Aquarium::getBottomPlanePoints() {
+//    return { vertices_[4], vertices_[5], vertices_[6], vertices_[7] };
+//}
+
 ////////// calcVerticies //////////
 void Aquarium::calcVerticies() {
     vertices_ = {

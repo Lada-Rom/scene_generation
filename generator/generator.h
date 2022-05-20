@@ -40,7 +40,8 @@ public:
 		const std::vector<std::vector<std::array<double, 3>>>&,
 		const std::vector<std::vector<std::array<double, 2>>>&);
 
-	std::vector<cv::Point2d> readInputImgpoints(size_t);
+	std::vector<cv::Point2d> readInputImgpointsD(size_t);
+	std::vector<cv::Point2i> readInputImgpointsI(size_t);
 	std::string readInputImage(size_t);
 	std::array<double, 9> readCameraRMat(size_t);
 	std::array<double, 3> readCameraTVec(size_t);
@@ -58,6 +59,7 @@ public:
 
 	void makeBackground(const std::string& video_filename, const std::string& bckg_filename);
 	void makeTestTexture(const std::string& filename);
+	void makeEdgeTextures(size_t index);
 
 	void predictPoints(std::vector<cv::Point2d>&, const std::vector<cv::Point3d>&,
 		const std::array<double, 9>&,
@@ -71,11 +73,13 @@ public:
 	void showPointGrid(size_t, const cv::Size&, double, size_t,
 		const std::array<double, 3>& shift = { 0., 0., 0. }, bool save = false);
 
-	void genRandomClip(size_t index, size_t num_frames,
+	void genUntexturedRandomClip(size_t index, size_t num_frames,
 		const std::array<double, 2>& num_objects_range,
 		const std::array<double, 2>& size_objects_range = { 0.5, 0.5 },
 		std::string path = {});
-	void genRandomClip(size_t index,
+	void genUntexturedRandomClip(size_t index,
+		const std::string& config_filename, std::string path = {});
+	void genTexturedRandomClip(size_t index,
 		const std::string& config_filename, std::string path = {});
 
 	std::vector<double> cvtMatToVector(const cv::Mat&);
@@ -88,7 +92,7 @@ private:
 	std::random_device rd_{ };
 
 	static void displayPointGrid();
-	static void displayRandomClip();
+	static void displayUntexturedRandomClip();
 	static void reshape(int, int);
 	double normDistGenInRange(std::normal_distribution<>, const double&, const double&);
 
@@ -96,6 +100,13 @@ private:
 	const std::string json_dir_					{ "json/" };
 	const std::string config_json_dir_			{ "config/" };
 	const std::string config_json_name_			{ "config" };
+	const std::string src_dir_					{ "src/" };
+	const std::string edges_dir_				{ "edges/" };
+	const std::string right_edge_name_			{ ".right" };
+	const std::string left_edge_name_			{ ".left" };
+	const std::string upper_edge_name_			{ ".upper" };
+	const std::string lower_edge_name_			{ ".lower" };
+	const std::string bottom_edge_name_			{ ".bottom" };
 	const std::string generation_json_name_		{ "gen_annotation" };
 	const std::string json_ending_				{ ".json" };
 
