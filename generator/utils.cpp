@@ -25,8 +25,8 @@ void cross(cv::InputOutputArray& img, const std::array<double, 2>& point,
 		cv::Point2d{ 1.0 * point[0], 1.0 * point[1] + size.height }, color);
 }
 
-////////// mergeGLUTandCVImage //////////
-void mergeGLUTandCVImage(const std::string& src_filename,
+////////// mergeUntexturedImageAndPoints //////////
+void mergeUntexturedImageAndPoints(const std::string& src_filename,
 	const std::vector<cv::Point2d>& imgpoints,
 	const std::string& glut_filename, const std::string& dst_filename) {
 
@@ -45,8 +45,8 @@ void mergeGLUTandCVImage(const std::string& src_filename,
 	cv::imwrite(dst_filename, grid_merged_3c);
 }
 
-////////// mergeGLUTandCVImage //////////
-void mergeGLUTandCVImage(const std::string& src_filename,
+////////// mergeUntexturedImageAndPoints //////////
+void mergeUntexturedImageAndPoints(const std::string& src_filename,
 	const std::vector<std::array<double, 2>>& imgpoints,
 	const std::string& glut_filename, const std::string& dst_filename) {
 
@@ -63,6 +63,28 @@ void mergeGLUTandCVImage(const std::string& src_filename,
 	for (auto& point : imgpoints)
 		add_cv::cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
 	cv::imwrite(dst_filename, grid_merged_3c);
+}
+
+void mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
+	const std::string& glut_filename, const std::string& dst_filename) {
+	cv::Mat glut_image = cv::imread(glut_filename, cv::IMREAD_GRAYSCALE);
+
+	cv::bitwise_and(src_image, glut_image, glut_image, mask);
+	cv::imwrite(dst_filename, glut_image);
+}
+
+void mergeTexturedImageWithSource(
+	const std::vector<std::array<double, 2>>& imgpoints,
+	const cv::Mat& mask, const cv::Mat& src_image,
+	const std::string& glut_filename, const std::string& dst_filename) {
+	cv::Mat glut_image = cv::imread(glut_filename, cv::IMREAD_GRAYSCALE);
+
+	cv::bitwise_and(src_image, glut_image, glut_image, mask);
+	cv::Mat merged_3c;
+	cv::merge(std::array<cv::Mat, 3>{glut_image, glut_image, glut_image}, merged_3c);
+	for (auto& point : imgpoints)
+		add_cv::cross(merged_3c, point, { 2, 2 }, { 0, 0, 255 });
+	cv::imwrite(dst_filename, glut_image);
 }
 
 } //namespace add_cv

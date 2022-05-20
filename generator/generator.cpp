@@ -413,7 +413,8 @@ void Generator::predictPoints(std::vector<std::vector<std::array<double, 2>>>& i
 	const std::vector<std::vector<std::array<double, 3>>>& objpoints,
 	const std::array<double, 9>& cmat,
 	const std::array<double, 9>& rmat,
-	const std::array<double, 3>& tvec) {
+	const std::array<double, 3>& tvec,
+	const std::array<double, 3>& svec) {
 
 	cv::Mat cv_cmat = cv::Mat(3, 3, CV_64FC1, (double*)cmat.data());
 	cv::Mat cv_rmat = cv::Mat(3, 3, CV_64FC1, (double*)rmat.data());
@@ -430,7 +431,7 @@ void Generator::predictPoints(std::vector<std::vector<std::array<double, 2>>>& i
 		for (int object = {}; object < objpoints[frame].size(); ++object) {
 			point = objpoints[frame][object];
 			point[1] = -point[1];
-			point[2] = -point[2];
+			point[2] = -point[2] - svec[2];
 
 			//convert point to mat
 			objpoint_mat = cv::Mat(3, 1, CV_64FC1, (double*)point.data());
@@ -723,7 +724,7 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 
 	std::vector<std::vector<std::array<double, 2>>> imgpoints;
 	predictPoints(imgpoints, objpoints,
-		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
 	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
@@ -748,7 +749,7 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 	//merging glut image with src and imgpoints
 	std::cout << "OpenCV merging" << std::endl;
 	for (int frame{}; frame < objpoints.size(); ++frame)
-		add_cv::mergeGLUTandCVImage(image_filename, imgpoints[frame],
+		add_cv::mergeUntexturedImageAndPoints(image_filename, imgpoints[frame],
 			gen_glut_dir + std::to_string(frame) + ".png",
 			gen_merged_dir + std::to_string(frame) + ".png");
 	
@@ -851,7 +852,7 @@ void Generator::genUntexturedRandomClip(size_t index,
 
 	std::vector<std::vector<std::array<double, 2>>> imgpoints;
 	predictPoints(imgpoints, objpoints,
-		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
 	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
@@ -876,7 +877,7 @@ void Generator::genUntexturedRandomClip(size_t index,
 	//merging glut image with src and imgpoints
 	std::cout << "OpenCV merging" << std::endl;
 	for (int frame{}; frame < objpoints.size(); ++frame)
-		add_cv::mergeGLUTandCVImage(image_filename, imgpoints[frame],
+		add_cv::mergeUntexturedImageAndPoints(image_filename, imgpoints[frame],
 			gen_glut_dir + std::to_string(frame) + ".png",
 			gen_merged_dir + std::to_string(frame) + ".png");
 
@@ -978,7 +979,7 @@ void Generator::genTexturedRandomClip(size_t index,
 
 	std::vector<std::vector<std::array<double, 2>>> imgpoints;
 	predictPoints(imgpoints, objpoints,
-		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec);
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
 	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
@@ -1007,6 +1008,22 @@ void Generator::genTexturedRandomClip(size_t index,
 	main_scene_.resetFrameCount();
 	main_scene_.initGLUT();
 	glutMainLoop();
+
+	//cv::Mat glut_img = cv::imread("../../data/RCO_generation/frames/glut/0.png", cv::IMREAD_GRAYSCALE);
+	//cv::Mat src = cv::imread("../../data/src/bckg.0.png", cv::IMREAD_GRAYSCALE);
+	//cv::Mat merged;
+	//cv::merge(std::array<cv::Mat, 3>{src, src, glut_img}, merged);
+
+	//merge glut scene with source image
+	std::cout << "OpenCV merging" << std::endl;
+	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
+	cv::Mat mask_source = cv::imread(gen_glut_dir + "0" + image_ending_, cv::IMREAD_GRAYSCALE);
+	cv::Mat mask;
+	cv::threshold(mask_source, mask, 254, 255, cv::THRESH_BINARY);
+	for (int frame = {}; frame < num_frames; ++frame)
+		add_cv::mergeTexturedImageWithSource(mask, src_image,
+			gen_glut_dir + std::to_string(frame) + image_ending_,
+			gen_merged_dir + std::to_string(frame) + image_ending_);
 
 	std::cout << "Successful end of program!" << std::endl;
 }

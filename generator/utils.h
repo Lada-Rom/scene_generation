@@ -23,10 +23,16 @@ void cross(cv::InputOutputArray& img, const cv::Point& point,
 void cross(cv::InputOutputArray& img, const std::array<double, 2>& point,
 	const cv::Size& size, const cv::Scalar& color);
 
-void mergeGLUTandCVImage(const std::string&, const std::vector<cv::Point2d>&,
-	const std::string&, const std::string&);
-void mergeGLUTandCVImage(const std::string&, const std::vector<std::array<double, 2>>&,
-	const std::string&, const std::string&);
+void mergeUntexturedImageAndPoints(const std::string&,
+	const std::vector<cv::Point2d>&, const std::string&, const std::string&);
+void mergeUntexturedImageAndPoints(const std::string&,
+	const std::vector<std::array<double, 2>>&, const std::string&, const std::string&);
+void mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
+	const std::string& glut_filename, const std::string& dst_filename);
+void mergeTexturedImageWithSource(
+	const std::vector<std::array<double, 2>>& imgpoints,
+	const cv::Mat& mask, const cv::Mat& src_image,
+	const std::string& glut_filename, const std::string& dst_filename);
 
 } //namespace add_cv
 
