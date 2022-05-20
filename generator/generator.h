@@ -93,6 +93,7 @@ private:
 
 	static void displayPointGrid();
 	static void displayUntexturedRandomClip();
+	static void displayTexturedRandomClip();
 	static void reshape(int, int);
 	double normDistGenInRange(std::normal_distribution<>, const double&, const double&);
 

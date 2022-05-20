@@ -1,6 +1,3 @@
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-
 #include "scene.h"
 
 ////////// Scene //////////
@@ -44,31 +41,6 @@ size_t Scene::getRCOObjectsNum(size_t frame) {
     return random_clip_objects_[frame].size();
 }
 
-//////////// getAquariumRightPlanePoints //////////
-//std::array<std::array<double, 3>, 4> Scene::getAquariumRightPlanePoints() {
-//    return aquarium_.getRightPlanePoints();
-//}
-//
-//////////// getAquariumLeftPlanePoints //////////
-//std::array<std::array<double, 3>, 4> Scene::getAquariumLeftPlanePoints() {
-//    return aquarium_.getLeftPlanePoints();
-//}
-//
-//////////// getAquariumUpperPlanePoints //////////
-//std::array<std::array<double, 3>, 4> Scene::getAquariumUpperPlanePoints() {
-//    return aquarium_.getUpperPlanePoints();
-//}
-//
-//////////// getAquariumLowerPlanePoints //////////
-//std::array<std::array<double, 3>, 4> Scene::getAquariumLowerPlanePoints() {
-//    return aquarium_.getLowerPlanePoints();
-//}
-//
-//////////// getAquariumBottomPlanePoints //////////
-//std::array<std::array<double, 3>, 4> Scene::getAquariumBottomPlanePoints() {
-//    return aquarium_.getBottomPlanePoints();
-//}
-
 ////////// setCameraRMat //////////
 void Scene::setCameraRMat(const std::array<double, 9>& rmat) {
     camera_.setRMat(rmat);
@@ -92,6 +64,12 @@ void Scene::setObjGridPoints(const std::vector<cv::Point3d>& objgridpoints) {
 ////////// setGridFilename //////////
 void Scene::setGridFilename(const std::string& filename) {
     grid_filename_ = filename;
+}
+
+////////// setAquariumEdgeTextureFilename //////////
+void Scene::setAquariumEdgeTextureFilename(
+    const std::string& edge, const std::string& filename) {
+    aquarium_.setTextureFilename(edge, filename);
 }
 
 ////////// setRCOFrames //////////
@@ -158,14 +136,6 @@ void Scene::calcOuterCameraParams(const std::vector<cv::Point2d>& imgpoints,
 
     //refine values
     cv::solvePnPRefineVVS(objpoints, imgpoints, camera_mat, dist_coeffs, rvec, tvec);
-}
-
-////////// saveImage //////////
-void Scene::saveImage(int width, int height, std::string& filepath) {
-    unsigned char* data = (unsigned char*)malloc((int)(width * height * (3)));
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
-    stbi_flip_vertically_on_write(true);
-    stbi_write_png(filepath.c_str(), width, height, 3, data, 0);
 }
 
 ////////// initGLUT //////////
@@ -367,7 +337,7 @@ void Scene::displayPointGrid() {
 
     //aquarium with axis
     //glScaled(scale_, scale_, scale_);
-    aquarium_.draw();
+    aquarium_.drawWire();
 
     //write to file
     saveImage(viewport[2], viewport[3], grid_filename_);
@@ -405,9 +375,52 @@ void Scene::displayUntexturedRandomClip() {
         drawReflection(daphnia, { 0., 0., 0. });
     }
 
-    //aquarium with axis
+    //aquarium
     glColor3d(0., 0., 0.);
-    aquarium_.draw();
+    aquarium_.drawWire();
+
+    //write to file
+    saveImage(viewport[2], viewport[3], generation_frames_path_
+        + std::to_string(frame_count_) + generation_frames_ending_);
+    ++frame_count_;
+
+    glutSwapBuffers();
+    glutPostRedisplay();
+
+    if (frame_count_ == random_clip_objects_.size())
+        glutLeaveMainLoop();
+}
+
+////////// displayTexturedRandomClip //////////
+void Scene::displayTexturedRandomClip() {
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    gluLookAt(0, 0, 0,
+        0, 0, -1,
+        0, 1, 0);
+
+    glLoadMatrixd(&camera_.getRMat()[0][0]);
+    glTranslated(
+        camera_.getTVec()[0],
+        -camera_.getTVec()[1],
+        -abs(camera_.getTVec()[2]));
+    glTranslated(
+        camera_.getSVec()[0],
+        camera_.getSVec()[1],
+        camera_.getSVec()[2]);
+
+    //aquarium
+    glColor3d(1., 1., 1.);
+    aquarium_.drawTextured();
+
+    //objects
+    for (auto& daphnia : random_clip_objects_[frame_count_]) {
+        drawReflection(daphnia, { 0., 0., 0. });
+        daphnia.draw({ 0., 0., 0., 1. });
+    }
 
     //write to file
     saveImage(viewport[2], viewport[3], generation_frames_path_

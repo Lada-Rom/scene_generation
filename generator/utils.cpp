@@ -1,3 +1,6 @@
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
 #include "utils.h"
 
 namespace add_cv {
@@ -93,6 +96,30 @@ std::ostream& operator<<(std::ostream& ostrm, const glm::dvec3& rhs) {
 } //namespace glm
 
 
+////////// saveImage //////////
+void saveImage(int& width, int& height, std::string& filename) {
+	unsigned char* data = (unsigned char*)malloc((int)(width * height * (3)));
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+	stbi_flip_vertically_on_write(true);
+	stbi_write_png(filename.c_str(), width, height, 3, data, 0);
+}
+
+////////// loadTexture //////////
+void loadTexture(Texture& texture) {
+	unsigned char* data = stbi_load(texture.filename_.c_str(),
+		&texture.width_, &texture.height_, &texture.comp_, 3);
+	if (!data)
+		throw std::exception("Unable to read texture data");
+
+	glGenTextures(1, &texture.id_);
+	glBindTexture(GL_TEXTURE_2D, texture.id_);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, texture.width_, texture.height_,
+		GL_RGB, GL_UNSIGNED_BYTE, data);
+
+	free(data);
+}
+
+////////// median //////////
 uchar median(std::vector<uchar>&vec) {
 	size_t n = vec.size() / 2;
 	std::nth_element(vec.begin(), vec.begin() + n, vec.end());

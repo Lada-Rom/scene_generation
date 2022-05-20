@@ -5,11 +5,11 @@
 #include <GL/freeglut.h>
 
 struct Texture {
-	unsigned int width_{ };
-	unsigned int height_{ };
+	int width_{ };
+	int height_{ };
 	int comp_{ };
 	GLuint id_{ };
-	std::string filename{ };
+	std::string filename_{ };
 };
 
 #endif

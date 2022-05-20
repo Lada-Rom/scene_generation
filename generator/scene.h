@@ -10,9 +10,6 @@
 #include "daphnia.h"
 #include "utils.h"
 
-#include <stb_image.h>
-#include <stb_image_write.h>
-
 #include <opencv2/opencv.hpp>
 #include <GL/freeglut.h>
 
@@ -30,17 +27,14 @@ public:
 	double getRCODaphniaLength(size_t, size_t);
 	size_t getRCOObjectsNum(size_t);
 
-	//std::array<std::array<double, 3>, 4> getAquariumRightPlanePoints();
-	//std::array<std::array<double, 3>, 4> getAquariumLeftPlanePoints();
-	//std::array<std::array<double, 3>, 4> getAquariumUpperPlanePoints();
-	//std::array<std::array<double, 3>, 4> getAquariumLowerPlanePoints();
-	//std::array<std::array<double, 3>, 4> getAquariumBottomPlanePoints();
-
 	void setCameraRMat(const std::array<double, 9>&);
 	void setCameraTVec(const std::array<double, 3>&);
 	void setCameraSVec(const std::array<double, 3>&);
 	void setObjGridPoints(const std::vector<cv::Point3d>&);
 	void setGridFilename(const std::string&);
+
+	void setAquariumEdgeTextureFilename(
+		const std::string& edge, const std::string& filename);
 
 	void setRCOFrames(const size_t&);
 	void setRCOObjects(const size_t&, const size_t&);
@@ -52,7 +46,6 @@ public:
 
 	void calcOuterCameraParams(const std::vector<cv::Point2d>&,
 		const cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
-	void saveImage(int, int, std::string&);
 
 	void initGLUT(GLfloat red = 1, GLfloat green = 1, GLfloat blue = 1);
 	void drawAxis();
@@ -70,6 +63,7 @@ public:
 
 	void displayPointGrid();
 	void displayUntexturedRandomClip();
+	void displayTexturedRandomClip();
 
 private:
 	cv::Size2i render_image_size_{ 1280, 1024 };

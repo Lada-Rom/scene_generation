@@ -3,11 +3,17 @@
 
 #include <filesystem>
 
+#include "texture.h"
+
+#include <stb_image.h>
+#include <stb_image_write.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <opencv2/opencv.hpp>
+#include <GL/freeglut.h>
 
 namespace add_cv {
 
@@ -31,6 +37,9 @@ std::ostream& operator<<(std::ostream& ostrm, const glm::dmat4& rhs);
 std::ostream& operator<<(std::ostream& ostrm, const glm::dvec3& rhs);
 
 } //namespace glm
+
+void saveImage(int& width, int& height, std::string& filename);
+void loadTexture(Texture& texture);
 
 uchar median(std::vector<uchar>& vec);
 

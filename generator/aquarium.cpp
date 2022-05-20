@@ -34,30 +34,11 @@ std::vector<cv::Point3d> Aquarium::getObjpoints(double scale) {
     return objpoints;
 }
 
-//////////// getRightPlanePoints //////////
-//std::array<std::array<double, 3>, 4> Aquarium::getRightPlanePoints() {
-//    return { vertices_[5], vertices_[6], vertices_[2], vertices_[1]};
-//}
-//
-//////////// getLeftPlanePoints //////////
-//std::array<std::array<double, 3>, 4> Aquarium::getLeftPlanePoints() {
-//    return { vertices_[3], vertices_[4], vertices_[0], vertices_[7] };
-//}
-//
-//////////// getUpperPlanePoints //////////
-//std::array<std::array<double, 3>, 4> Aquarium::getUpperPlanePoints() {
-//    return { vertices_[4], vertices_[5], vertices_[1], vertices_[0] };
-//}
-//
-//////////// getLowerPlanePoints //////////
-//std::array<std::array<double, 3>, 4> Aquarium::getLowerPlanePoints() {
-//    return { vertices_[6], vertices_[7], vertices_[3], vertices_[2] };
-//}
-//
-//////////// getBottomPlanePoints //////////
-//std::array<std::array<double, 3>, 4> Aquarium::getBottomPlanePoints() {
-//    return { vertices_[4], vertices_[5], vertices_[6], vertices_[7] };
-//}
+////////// setTextureFilename //////////
+void Aquarium::setTextureFilename(
+    const std::string& plane, const std::string& filename) {
+    plane_textures_[plane].filename_ = filename;
+}
 
 ////////// calcVerticies //////////
 void Aquarium::calcVerticies() {
@@ -73,8 +54,8 @@ void Aquarium::calcVerticies() {
     };
 }
 
-////////// draw //////////
-void Aquarium::draw() {
+////////// drawWire //////////
+void Aquarium::drawWire() {
     glPushMatrix();
 
         // near surface
@@ -111,14 +92,26 @@ void Aquarium::draw() {
     glPopMatrix();
 }
 
+////////// drawTextured //////////
+void Aquarium::drawTextured() {
+    for (auto& texture : plane_textures_)
+        loadTexture(texture.second);
+
+    drawTexturedRightPlane();
+    drawTexturedLeftPlane();
+    drawTexturedUpperPlane();
+    drawTexturedLowerPlane();
+    drawTexturedBottomPlane();
+}
+
 ////////// drawRightPlane //////////
 void Aquarium::drawRightPlane() {
     glPushMatrix();
         glBegin(GL_QUADS);
-            glVertex3dv(vertices_[5].data());
-            glVertex3dv(vertices_[6].data());
             glVertex3dv(vertices_[2].data());
             glVertex3dv(vertices_[1].data());
+            glVertex3dv(vertices_[5].data());
+            glVertex3dv(vertices_[6].data());
         glEnd();
     glPopMatrix();
 }
@@ -127,10 +120,10 @@ void Aquarium::drawRightPlane() {
 void Aquarium::drawLeftPlane() {
     glPushMatrix();
         glBegin(GL_QUADS);
-            glVertex3dv(vertices_[4].data());
-            glVertex3dv(vertices_[7].data());
-            glVertex3dv(vertices_[3].data());
             glVertex3dv(vertices_[0].data());
+            glVertex3dv(vertices_[3].data());
+            glVertex3dv(vertices_[7].data());
+            glVertex3dv(vertices_[4].data());
         glEnd();
     glPopMatrix();
 }
@@ -139,10 +132,10 @@ void Aquarium::drawLeftPlane() {
 void Aquarium::drawUpperPlane() {
     glPushMatrix();
         glBegin(GL_QUADS);
-            glVertex3dv(vertices_[4].data());
-            glVertex3dv(vertices_[5].data());
-            glVertex3dv(vertices_[1].data());
-            glVertex3dv(vertices_[0].data());
+            glVertex3dv(vertices_[3].data());
+            glVertex3dv(vertices_[2].data());
+            glVertex3dv(vertices_[6].data());
+            glVertex3dv(vertices_[7].data());
         glEnd();
     glPopMatrix();
 }
@@ -151,11 +144,100 @@ void Aquarium::drawUpperPlane() {
 void Aquarium::drawLowerPlane() {
     glPushMatrix();
         glBegin(GL_QUADS);
-            glVertex3dv(vertices_[2].data());
-            glVertex3dv(vertices_[3].data());
-            glVertex3dv(vertices_[7].data());
-            glVertex3dv(vertices_[6].data());
+            glVertex3dv(vertices_[1].data());
+            glVertex3dv(vertices_[0].data());
+            glVertex3dv(vertices_[4].data());
+            glVertex3dv(vertices_[5].data());
         glEnd();
     glPopMatrix();
 }
 
+////////// drawTexturedRightPlane //////////
+void Aquarium::drawTexturedRightPlane() {
+    glEnable(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glBindTexture(GL_TEXTURE_2D, plane_textures_["right"].id_);
+    glPushMatrix();
+        glBegin(GL_QUADS);
+            glTexCoord2d(0., 0.); glVertex3dv(vertices_[2].data());
+            glTexCoord2d(1., 0.); glVertex3dv(vertices_[1].data());
+            glTexCoord2d(1., 1.); glVertex3dv(vertices_[5].data());
+            glTexCoord2d(0., 1.); glVertex3dv(vertices_[6].data());
+        glEnd();
+    glPopMatrix();
+    glDisable(GL_TEXTURE_2D);
+}
+
+////////// drawTexturedLeftPlane //////////
+void Aquarium::drawTexturedLeftPlane() {
+    glEnable(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glBindTexture(GL_TEXTURE_2D, plane_textures_["left"].id_);
+    glPushMatrix();
+        glBegin(GL_QUADS);
+            glTexCoord2d(0., 0.); glVertex3dv(vertices_[0].data());
+            glTexCoord2d(1., 0.); glVertex3dv(vertices_[3].data());
+            glTexCoord2d(1., 1.); glVertex3dv(vertices_[7].data());
+            glTexCoord2d(0., 1.); glVertex3dv(vertices_[4].data());
+        glEnd();
+    glPopMatrix();
+    glDisable(GL_TEXTURE_2D);
+}
+
+////////// drawTexturedUpperPlane //////////
+void Aquarium::drawTexturedUpperPlane() {
+    glEnable(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glBindTexture(GL_TEXTURE_2D, plane_textures_["upper"].id_);
+    glPushMatrix();
+        glBegin(GL_QUADS);
+            glTexCoord2d(0., 0.); glVertex3dv(vertices_[3].data());
+            glTexCoord2d(1., 0.); glVertex3dv(vertices_[2].data());
+            glTexCoord2d(1., 1.); glVertex3dv(vertices_[6].data());
+            glTexCoord2d(0., 1.); glVertex3dv(vertices_[7].data());
+        glEnd();
+    glPopMatrix();
+    glDisable(GL_TEXTURE_2D);
+}
+
+////////// drawTexturedLowerPlane //////////
+void Aquarium::drawTexturedLowerPlane() {
+    glEnable(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glBindTexture(GL_TEXTURE_2D, plane_textures_["lower"].id_);
+    glPushMatrix();
+        glBegin(GL_QUADS);
+            glTexCoord2d(0., 0.); glVertex3dv(vertices_[1].data());
+            glTexCoord2d(1., 0.); glVertex3dv(vertices_[0].data());
+            glTexCoord2d(1., 1.); glVertex3dv(vertices_[4].data());
+            glTexCoord2d(0., 1.); glVertex3dv(vertices_[5].data());
+        glEnd();
+    glPopMatrix();
+    glDisable(GL_TEXTURE_2D);
+}
+
+////////// drawTexturedBottomPlane //////////
+void Aquarium::drawTexturedBottomPlane() {
+    glEnable(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glBindTexture(GL_TEXTURE_2D, plane_textures_["bottom"].id_);
+    glPushMatrix();
+        glBegin(GL_QUADS);
+            glTexCoord2d(0., 0.); glVertex3dv(vertices_[7].data());
+            glTexCoord2d(1., 0.); glVertex3dv(vertices_[6].data());
+            glTexCoord2d(1., 1.); glVertex3dv(vertices_[5].data());
+            glTexCoord2d(0., 1.); glVertex3dv(vertices_[4].data());
+        glEnd();
+    glPopMatrix();
+    glDisable(GL_TEXTURE_2D);
+}

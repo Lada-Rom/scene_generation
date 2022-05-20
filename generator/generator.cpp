@@ -983,6 +983,14 @@ void Generator::genTexturedRandomClip(size_t index,
 	//saving objoints and imgpoints to json
 	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
 
+	//texture settings
+	std::string texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
+	main_scene_.setAquariumEdgeTextureFilename("right", texture_path + right_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("left", texture_path + left_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("upper", texture_path + upper_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("lower", texture_path + lower_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("bottom", texture_path + bottom_edge_name_ + image_ending_);
+
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
@@ -994,7 +1002,7 @@ void Generator::genTexturedRandomClip(size_t index,
 
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
-	glutDisplayFunc(Generator::displayUntexturedRandomClip);
+	glutDisplayFunc(Generator::displayTexturedRandomClip);
 	glutReshapeFunc(Generator::reshape);
 	main_scene_.resetFrameCount();
 	main_scene_.initGLUT();
@@ -1025,6 +1033,11 @@ void Generator::displayPointGrid() {
 ////////// displayUntexturedRandomClip //////////
 void Generator::displayUntexturedRandomClip() {
 	curr_this_->main_scene_.displayUntexturedRandomClip();
+}
+
+////////// displayTexturedRandomClip //////////
+void Generator::displayTexturedRandomClip() {
+	curr_this_->main_scene_.displayTexturedRandomClip();
 }
 
 ////////// reshape //////////
