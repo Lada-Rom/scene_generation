@@ -60,6 +60,8 @@ public:
 	void drawLowerPlaneReflection(const Daphnia& daphnia,
 		const std::array<double, 3>& color3d);
 	void reshape(int, int);
+	//void controlSpec(int key, int x, int y);
+	//void controlKey(unsigned char key, int x, int y);
 
 	void displayPointGrid();
 	void displayUntexturedRandomClip();
@@ -82,6 +84,10 @@ private:
 	std::string generation_frames_path_{ };
 	std::string generation_frames_ending_{ ".png" };
 	size_t frame_count_{ };
+
+	//double test_x{9};
+	//double test_y{ };
+	//double test_z{-2};
 };
 
 #endif

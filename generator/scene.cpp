@@ -305,6 +305,26 @@ void Scene::reshape(int width, int height) {
     glMatrixMode(GL_MODELVIEW);
 }
 
+//////////// controlSpec //////////
+//void Scene::controlSpec(int key, int x, int y) {
+//    if (key == GLUT_KEY_LEFT)
+//        test_x -= 0.1;
+//    if (key == GLUT_KEY_RIGHT)
+//        test_x += 0.1;
+//    if (key == GLUT_KEY_UP)
+//        test_y += 0.1;
+//    if (key == GLUT_KEY_DOWN)
+//        test_y -= 0.1;
+//}
+//
+//////////// controlKey //////////
+//void Scene::controlKey(unsigned char key, int x, int y) {
+//    if (key == 'w')
+//        test_z -= 0.1;
+//    if (key == 's')
+//        test_z += 0.1;
+//}
+
 ////////// displayPointGrid //////////
 void Scene::displayPointGrid() {
     GLint viewport[4];

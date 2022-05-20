@@ -1045,6 +1045,16 @@ void Generator::reshape(int width, int height) {
 	curr_this_->main_scene_.reshape(width, height);
 }
 
+//////////// controlKey //////////
+//void Generator::controlKey(unsigned char key, int x, int y) {
+//	curr_this_->main_scene_.controlKey(key, x, y);
+//}
+//
+//////////// controlSpec //////////
+//void Generator::controlSpec(int key, int x, int y) {
+//	curr_this_->main_scene_.controlSpec(key, x, y);
+//}
+
 ////////// normDistGenInRange //////////
 double Generator::normDistGenInRange(std::normal_distribution<> norm,
 	const double& min, const double& max) {
