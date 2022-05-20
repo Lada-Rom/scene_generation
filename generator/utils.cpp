@@ -1,3 +1,6 @@
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
 #include "utils.h"
 
 namespace add_cv {
@@ -22,8 +25,8 @@ void cross(cv::InputOutputArray& img, const std::array<double, 2>& point,
 		cv::Point2d{ 1.0 * point[0], 1.0 * point[1] + size.height }, color);
 }
 
-////////// mergeGLUTandCVImage //////////
-void mergeGLUTandCVImage(const std::string& src_filename,
+////////// mergeUntexturedImageAndPoints //////////
+void mergeUntexturedImageAndPoints(const std::string& src_filename,
 	const std::vector<cv::Point2d>& imgpoints,
 	const std::string& glut_filename, const std::string& dst_filename) {
 
@@ -42,8 +45,8 @@ void mergeGLUTandCVImage(const std::string& src_filename,
 	cv::imwrite(dst_filename, grid_merged_3c);
 }
 
-////////// mergeGLUTandCVImage //////////
-void mergeGLUTandCVImage(const std::string& src_filename,
+////////// mergeUntexturedImageAndPoints //////////
+void mergeUntexturedImageAndPoints(const std::string& src_filename,
 	const std::vector<std::array<double, 2>>& imgpoints,
 	const std::string& glut_filename, const std::string& dst_filename) {
 
@@ -60,6 +63,28 @@ void mergeGLUTandCVImage(const std::string& src_filename,
 	for (auto& point : imgpoints)
 		add_cv::cross(grid_merged_3c, point, { 2, 2 }, { 0, 0, 255 });
 	cv::imwrite(dst_filename, grid_merged_3c);
+}
+
+void mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
+	const std::string& glut_filename, const std::string& dst_filename) {
+	cv::Mat glut_image = cv::imread(glut_filename, cv::IMREAD_GRAYSCALE);
+
+	cv::bitwise_and(src_image, glut_image, glut_image, mask);
+	cv::imwrite(dst_filename, glut_image);
+}
+
+void mergeTexturedImageWithSource(
+	const std::vector<std::array<double, 2>>& imgpoints,
+	const cv::Mat& mask, const cv::Mat& src_image,
+	const std::string& glut_filename, const std::string& dst_filename) {
+	cv::Mat glut_image = cv::imread(glut_filename, cv::IMREAD_GRAYSCALE);
+
+	cv::bitwise_and(src_image, glut_image, glut_image, mask);
+	cv::Mat merged_3c;
+	cv::merge(std::array<cv::Mat, 3>{glut_image, glut_image, glut_image}, merged_3c);
+	for (auto& point : imgpoints)
+		add_cv::cross(merged_3c, point, { 2, 2 }, { 0, 0, 255 });
+	cv::imwrite(dst_filename, glut_image);
 }
 
 } //namespace add_cv
@@ -93,6 +118,30 @@ std::ostream& operator<<(std::ostream& ostrm, const glm::dvec3& rhs) {
 } //namespace glm
 
 
+////////// saveImage //////////
+void saveImage(int& width, int& height, std::string& filename) {
+	unsigned char* data = (unsigned char*)malloc((int)(width * height * (3)));
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+	stbi_flip_vertically_on_write(true);
+	stbi_write_png(filename.c_str(), width, height, 3, data, 0);
+}
+
+////////// loadTexture //////////
+void loadTexture(Texture& texture) {
+	unsigned char* data = stbi_load(texture.filename_.c_str(),
+		&texture.width_, &texture.height_, &texture.comp_, 3);
+	if (!data)
+		throw std::exception("Unable to read texture data");
+
+	glGenTextures(1, &texture.id_);
+	glBindTexture(GL_TEXTURE_2D, texture.id_);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, texture.width_, texture.height_,
+		GL_RGB, GL_UNSIGNED_BYTE, data);
+
+	free(data);
+}
+
+////////// median //////////
 uchar median(std::vector<uchar>&vec) {
 	size_t n = vec.size() / 2;
 	std::nth_element(vec.begin(), vec.begin() + n, vec.end());

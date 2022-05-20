@@ -1,6 +1,3 @@
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-
 #include "scene.h"
 
 ////////// Scene //////////
@@ -69,6 +66,12 @@ void Scene::setGridFilename(const std::string& filename) {
     grid_filename_ = filename;
 }
 
+////////// setAquariumEdgeTextureFilename //////////
+void Scene::setAquariumEdgeTextureFilename(
+    const std::string& edge, const std::string& filename) {
+    aquarium_.setTextureFilename(edge, filename);
+}
+
 ////////// setRCOFrames //////////
 void Scene::setRCOFrames(const size_t& num_frames) {
     random_clip_objects_ = std::vector<std::vector<Daphnia>>{ num_frames };
@@ -133,14 +136,6 @@ void Scene::calcOuterCameraParams(const std::vector<cv::Point2d>& imgpoints,
 
     //refine values
     cv::solvePnPRefineVVS(objpoints, imgpoints, camera_mat, dist_coeffs, rvec, tvec);
-}
-
-////////// saveImage //////////
-void Scene::saveImage(int width, int height, std::string& filepath) {
-    unsigned char* data = (unsigned char*)malloc((int)(width * height * (3)));
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
-    stbi_flip_vertically_on_write(true);
-    stbi_write_png(filepath.c_str(), width, height, 3, data, 0);
 }
 
 ////////// initGLUT //////////
@@ -310,6 +305,26 @@ void Scene::reshape(int width, int height) {
     glMatrixMode(GL_MODELVIEW);
 }
 
+//////////// controlSpec //////////
+//void Scene::controlSpec(int key, int x, int y) {
+//    if (key == GLUT_KEY_LEFT)
+//        test_x -= 0.1;
+//    if (key == GLUT_KEY_RIGHT)
+//        test_x += 0.1;
+//    if (key == GLUT_KEY_UP)
+//        test_y += 0.1;
+//    if (key == GLUT_KEY_DOWN)
+//        test_y -= 0.1;
+//}
+//
+//////////// controlKey //////////
+//void Scene::controlKey(unsigned char key, int x, int y) {
+//    if (key == 'w')
+//        test_z -= 0.1;
+//    if (key == 's')
+//        test_z += 0.1;
+//}
+
 ////////// displayPointGrid //////////
 void Scene::displayPointGrid() {
     GLint viewport[4];
@@ -342,7 +357,7 @@ void Scene::displayPointGrid() {
 
     //aquarium with axis
     //glScaled(scale_, scale_, scale_);
-    aquarium_.draw();
+    aquarium_.drawWire();
 
     //write to file
     saveImage(viewport[2], viewport[3], grid_filename_);
@@ -353,8 +368,8 @@ void Scene::displayPointGrid() {
     glutLeaveMainLoop();
 }
 
-////////// displayRandomClip //////////
-void Scene::displayRandomClip() {
+////////// displayUntexturedRandomClip //////////
+void Scene::displayUntexturedRandomClip() {
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -380,9 +395,52 @@ void Scene::displayRandomClip() {
         drawReflection(daphnia, { 0., 0., 0. });
     }
 
-    //aquarium with axis
+    //aquarium
     glColor3d(0., 0., 0.);
-    aquarium_.draw();
+    aquarium_.drawWire();
+
+    //write to file
+    saveImage(viewport[2], viewport[3], generation_frames_path_
+        + std::to_string(frame_count_) + generation_frames_ending_);
+    ++frame_count_;
+
+    glutSwapBuffers();
+    glutPostRedisplay();
+
+    if (frame_count_ == random_clip_objects_.size())
+        glutLeaveMainLoop();
+}
+
+////////// displayTexturedRandomClip //////////
+void Scene::displayTexturedRandomClip() {
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    gluLookAt(0, 0, 0,
+        0, 0, -1,
+        0, 1, 0);
+
+    glLoadMatrixd(&camera_.getRMat()[0][0]);
+    glTranslated(
+        camera_.getTVec()[0],
+        -camera_.getTVec()[1],
+        -abs(camera_.getTVec()[2]));
+    glTranslated(
+        camera_.getSVec()[0],
+        camera_.getSVec()[1],
+        camera_.getSVec()[2]);
+
+    //aquarium
+    glColor3d(1., 1., 1.);
+    aquarium_.drawTextured();
+
+    //objects
+    for (auto& daphnia : random_clip_objects_[frame_count_]) {
+        drawReflection(daphnia, { 0., 0., 0. });
+        daphnia.draw({ 0., 0., 0., 1. });
+    }
 
     //write to file
     saveImage(viewport[2], viewport[3], generation_frames_path_

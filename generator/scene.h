@@ -10,9 +10,6 @@
 #include "daphnia.h"
 #include "utils.h"
 
-#include <stb_image.h>
-#include <stb_image_write.h>
-
 #include <opencv2/opencv.hpp>
 #include <GL/freeglut.h>
 
@@ -36,6 +33,9 @@ public:
 	void setObjGridPoints(const std::vector<cv::Point3d>&);
 	void setGridFilename(const std::string&);
 
+	void setAquariumEdgeTextureFilename(
+		const std::string& edge, const std::string& filename);
+
 	void setRCOFrames(const size_t&);
 	void setRCOObjects(const size_t&, const size_t&);
 	void setRCODaphniaCoords(const size_t&, const size_t&, const std::array<double, 3>&);
@@ -46,7 +46,6 @@ public:
 
 	void calcOuterCameraParams(const std::vector<cv::Point2d>&,
 		const cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
-	void saveImage(int, int, std::string&);
 
 	void initGLUT(GLfloat red = 1, GLfloat green = 1, GLfloat blue = 1);
 	void drawAxis();
@@ -61,9 +60,12 @@ public:
 	void drawLowerPlaneReflection(const Daphnia& daphnia,
 		const std::array<double, 3>& color3d);
 	void reshape(int, int);
+	//void controlSpec(int key, int x, int y);
+	//void controlKey(unsigned char key, int x, int y);
 
 	void displayPointGrid();
-	void displayRandomClip();
+	void displayUntexturedRandomClip();
+	void displayTexturedRandomClip();
 
 private:
 	cv::Size2i render_image_size_{ 1280, 1024 };
@@ -82,6 +84,10 @@ private:
 	std::string generation_frames_path_{ };
 	std::string generation_frames_ending_{ ".png" };
 	size_t frame_count_{ };
+
+	//double test_x{9};
+	//double test_y{ };
+	//double test_z{-2};
 };
 
 #endif

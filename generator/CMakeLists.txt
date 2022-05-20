@@ -5,6 +5,7 @@ add_executable(generator
 	camera.h
 	aquarium.h
 	daphnia.h
+	texture.h
 	utils.h
 	
 	generator.cpp
@@ -12,6 +13,7 @@ add_executable(generator
 	camera.cpp
 	aquarium.cpp
 	daphnia.cpp
+	texture.cpp
 	utils.cpp
 	main.cpp)
 target_link_libraries(generator ${OpenCV_LIBS} freeglut)
