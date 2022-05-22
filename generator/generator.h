@@ -60,6 +60,7 @@ public:
 	void makeBackground(const std::string& video_filename, const std::string& bckg_filename);
 	void makeTestTexture(const std::string& filename);
 	void makeEdgeTextures(size_t index);
+	void makeDaphniaTextures();
 
 	void predictPoints(std::vector<cv::Point2d>&, const std::vector<cv::Point3d>&,
 		const std::array<double, 9>&,
@@ -101,8 +102,10 @@ private:
 
 	const std::string main_json_filename_		{ "../../data/json/generator_params.json" };
 	const std::string json_dir_					{ "json/" };
+
 	const std::string config_json_dir_			{ "config/" };
 	const std::string config_json_name_			{ "config" };
+
 	const std::string src_dir_					{ "src/" };
 	const std::string edges_dir_				{ "edges/" };
 	const std::string right_edge_name_			{ ".right" };
@@ -110,6 +113,12 @@ private:
 	const std::string upper_edge_name_			{ ".upper" };
 	const std::string lower_edge_name_			{ ".lower" };
 	const std::string bottom_edge_name_			{ ".bottom" };
+
+	const std::string daphnia_texture_dir_		{ "daphnia/" };
+	const std::string daphnia_inner_name_		{ "inner" };
+	const std::string daphnia_outer_name_		{ "outer" };
+	const std::string daphnia_head_name_		{ "head" };
+
 	const std::string generation_json_name_		{ "gen_annotation" };
 	const std::string json_ending_				{ ".json" };
 

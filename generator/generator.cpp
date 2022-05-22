@@ -373,6 +373,32 @@ void Generator::makeEdgeTextures(size_t index) {
 	cv::imwrite(directory + std::to_string(index) + bottom_edge_name_ + image_ending_, bottom_plane);
 }
 
+////////// makeDaphniaTextures //////////
+void Generator::makeDaphniaTextures() {
+	std::string directory = data_path_ + src_dir_ + daphnia_texture_dir_;
+
+	if (!std::filesystem::exists(directory))
+		std::filesystem::create_directories(directory);
+
+	cv::Mat noise_smaller_32 = cv::Mat::zeros(32, 32, CV_8UC1);
+	cv::Mat noise_bigger_8 = cv::Mat::zeros(8, 8, CV_8UC1);
+	cv::Mat noise_bigger_32 = cv::Mat::zeros(32, 32, CV_8UC1);
+
+	for (int i{}; i < 3; ++i) {
+		cv::randn(noise_smaller_32, 0, 10);
+		cv::randn(noise_bigger_8, 0, 10);
+		cv::resize(noise_bigger_8, noise_bigger_32, noise_bigger_32.size());
+		noise_smaller_32 += noise_bigger_32;
+
+		if (i == 0)
+			cv::imwrite(directory + daphnia_inner_name_ + image_ending_, noise_smaller_32);
+		if (i == 1)
+			cv::imwrite(directory + daphnia_outer_name_ + image_ending_, noise_smaller_32);
+		if (i == 2)
+			cv::imwrite(directory + daphnia_head_name_ + image_ending_, noise_smaller_32);
+	}	
+}
+
 ////////// predictPoints //////////
 void Generator::predictPoints(std::vector<cv::Point2d>& imgpoints,
 	const std::vector<cv::Point3d>& objpoints,
