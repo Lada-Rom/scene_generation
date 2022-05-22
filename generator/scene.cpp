@@ -208,7 +208,7 @@ void Scene::drawRightPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[0]) - abs(coords[0]));
-    daphnia.drawReflection(true,
+    daphnia.drawSimplifiedReflection(true,
         { -0.5 * aq_size[0] - diff, coords[1], coords[2] },
         { color3d[0], color3d[1], color3d[2], reflection_strength_});
 
@@ -234,7 +234,7 @@ void Scene::drawLeftPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[0]) - abs(coords[0]));
-    daphnia.drawReflection(true,
+    daphnia.drawSimplifiedReflection(true,
         { 0.5 * aq_size[0] + diff, coords[1], coords[2] },
         { color3d[0], color3d[1], color3d[2], reflection_strength_ });
 
@@ -260,7 +260,7 @@ void Scene::drawUpperPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[1]) - abs(coords[1]));
-    daphnia.drawReflection(false,
+    daphnia.drawSimplifiedReflection(false,
         { coords[0], -0.5 * aq_size[1] - diff, coords[2] },
         { color3d[0], color3d[1], color3d[2], reflection_strength_ });
 
@@ -286,7 +286,7 @@ void Scene::drawLowerPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[1]) - abs(coords[1]));
-    daphnia.drawReflection(false,
+    daphnia.drawSimplifiedReflection(false,
         { coords[0], 0.5 * aq_size[1] + diff, coords[2] },
         { color3d[0], color3d[1], color3d[2], reflection_strength_ });
 
@@ -391,7 +391,7 @@ void Scene::displayUntexturedRandomClip() {
 
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
-        daphnia.draw({ 0., 0., 0., 1. });
+        daphnia.drawSimplified({ 0., 0., 0., 1. });
         drawReflection(daphnia, { 0., 0., 0. });
     }
 
@@ -439,7 +439,9 @@ void Scene::displayTexturedRandomClip() {
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
         drawReflection(daphnia, { 0., 0., 0. });
-        daphnia.draw({ 0., 0., 0., 1. });
+        daphnia.drawComplicated({ 0.3, 0.3, 0.3, 0.5 },
+            { 0.5, 0.5, 0.5, 0.5 }, { 0.2, 0.2, 0.2, 0.5 });
+        //daphnia.drawSimplified({ 0., 0., 0., 1. });
     }
 
     //write to file
