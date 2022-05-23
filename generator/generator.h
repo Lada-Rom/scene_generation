@@ -60,7 +60,7 @@ public:
 	void makeBackground(const std::string& video_filename, const std::string& bckg_filename);
 	void makeTestTexture(const std::string& filename);
 	void makeEdgeTextures(size_t index);
-	void makeDaphniaTextures();
+	void makeDaphniaTextures(double mean, double dev);
 
 	void predictPoints(std::vector<cv::Point2d>&, const std::vector<cv::Point3d>&,
 		const std::array<double, 9>&,
@@ -95,6 +95,7 @@ private:
 	static void displayPointGrid();
 	static void displayUntexturedRandomClip();
 	static void displayTexturedRandomClip();
+	static void displayMaskRandomClip();
 	static void reshape(int, int);
 	//static void controlKey(unsigned char key, int x, int y);
 	//static void controlSpec(int key, int x, int y);
@@ -134,6 +135,7 @@ private:
 	const std::string generation_json_dir_		{ "json/" };
 	const std::string frames_glut_dir_			{ "glut/" };
 	const std::string frames_merged_dir_		{ "merged/" };
+	const std::string frames_mask_dir_			{ "mask/" };
 
 	json main_json_{ };
 	json config_json_{ };

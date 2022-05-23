@@ -815,12 +815,38 @@
 
 
 double yaw{}, pitch{}, roll{};
+int image_width_, image_height_, image_comp_;
+GLuint tex;
+GLUquadric* sphere;
+
+void loadTexture(std::string filename) {
+    unsigned char* data = stbi_load(filename.c_str(), &image_width_, &image_height_, &image_comp_, 3);
+    if (!data)
+        return;
+
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, image_width_, image_height_, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+    free(data);
+}
 
 void initRendering() {
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	loadTexture("../../data/src/daphnia/outer.png");
+	sphere = gluNewQuadric();
+	gluQuadricDrawStyle(sphere, GLU_FILL);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	gluQuadricTexture(sphere, GL_TRUE);
+	gluQuadricNormals(sphere, GLU_SMOOTH);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 }
 
 void handleResize(int w, int h) {
@@ -862,21 +888,21 @@ void drawScene() {
 				glColor4f(0.5, 0.5, 0.5, 0.5);
 				glScaled(scale_3, scale_3, scale_3);
 				glScaled(ratio_head, 1., 1.);
-				glutSolidSphere(radius, 30, 30);
+				glutSolidSphere(radius, 32, 32);
 			glPopMatrix();
 
 			glPushMatrix();
 				glColor4f(0.5, 0.5, 0.5, 0.5);
 				glScaled(scale_2, scale_2, scale_2);
 				glScaled(ratio, 1., 1.);
-				glutSolidSphere(radius, 30, 30);
+				gluSphere(sphere, radius, 32, 32);
 			glPopMatrix();
 
 			glPushMatrix();
 				glTranslatef(0, radius * scale_2 - radius, 0);
 				glColor4f(0.5, 0.5, 0.5, 0.5);
 				glScaled(ratio, 1., 1.);
-				glutSolidSphere(radius, 30, 30);
+				glutSolidSphere(radius, 32, 32);
 			glPopMatrix();
 		glPopMatrix();
 	glPopMatrix();

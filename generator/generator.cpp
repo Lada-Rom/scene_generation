@@ -374,7 +374,7 @@ void Generator::makeEdgeTextures(size_t index) {
 }
 
 ////////// makeDaphniaTextures //////////
-void Generator::makeDaphniaTextures() {
+void Generator::makeDaphniaTextures(double mean, double dev) {
 	std::string directory = data_path_ + src_dir_ + daphnia_texture_dir_;
 
 	if (!std::filesystem::exists(directory))
@@ -385,8 +385,8 @@ void Generator::makeDaphniaTextures() {
 	cv::Mat noise_bigger_32 = cv::Mat::zeros(32, 32, CV_8UC1);
 
 	for (int i{}; i < 3; ++i) {
-		cv::randn(noise_smaller_32, 0, 10);
-		cv::randn(noise_bigger_8, 0, 10);
+		cv::randn(noise_smaller_32, mean, dev);
+		cv::randn(noise_bigger_8, mean, dev);
 		cv::resize(noise_bigger_8, noise_bigger_32, noise_bigger_32.size());
 		noise_smaller_32 += noise_bigger_32;
 
@@ -942,11 +942,15 @@ void Generator::genTexturedRandomClip(size_t index,
 	}
 	std::string gen_glut_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
 	std::string gen_merged_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
+	std::string gen_mask_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_mask_dir_;
 	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
 	main_scene_.setGenFramesPath(gen_glut_dir);
+	main_scene_.setGenMasksPath(gen_mask_dir);
 	makeGenFileTree(data_path_, RCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
-		generation_frames_dir_ + frames_merged_dir_, generation_json_dir_);
+		generation_frames_dir_ + frames_merged_dir_,
+		generation_frames_dir_ + frames_mask_dir_,
+		generation_json_dir_);
 
 	//construct 3D params - coords, angles
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
@@ -987,7 +991,6 @@ void Generator::genTexturedRandomClip(size_t index,
 			//gen angles - apha, beta, gamma
 			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
 			main_scene_.setRCODaphniaAngles(frame, object, buffer);
-
 		}
 	}
 
@@ -1011,22 +1014,21 @@ void Generator::genTexturedRandomClip(size_t index,
 	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
 
 	//texture settings
-	std::string texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
-	main_scene_.setAquariumEdgeTextureFilename("right", texture_path + right_edge_name_ + image_ending_);
-	main_scene_.setAquariumEdgeTextureFilename("left", texture_path + left_edge_name_ + image_ending_);
-	main_scene_.setAquariumEdgeTextureFilename("upper", texture_path + upper_edge_name_ + image_ending_);
-	main_scene_.setAquariumEdgeTextureFilename("lower", texture_path + lower_edge_name_ + image_ending_);
-	main_scene_.setAquariumEdgeTextureFilename("bottom", texture_path + bottom_edge_name_ + image_ending_);
+	std::string edge_texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
+	main_scene_.setAquariumEdgeTextureFilename("right", edge_texture_path + right_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("left", edge_texture_path + left_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("upper", edge_texture_path + upper_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("lower", edge_texture_path + lower_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("bottom", edge_texture_path + bottom_edge_name_ + image_ending_);
 
 	//glut rendering
-	std::cout << "GLUT rendering" << std::endl;
+	std::cout << "GLUT frames rendering" << std::endl;
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize(
 		main_scene_.getRenderImageSize().width,
 		main_scene_.getRenderImageSize().height);
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Point array");
-
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
 	glutDisplayFunc(Generator::displayTexturedRandomClip);
@@ -1035,13 +1037,24 @@ void Generator::genTexturedRandomClip(size_t index,
 	main_scene_.initGLUT();
 	glutMainLoop();
 
-	//cv::Mat glut_img = cv::imread("../../data/RCO_generation/frames/glut/0.png", cv::IMREAD_GRAYSCALE);
-	//cv::Mat src = cv::imread("../../data/src/bckg.0.png", cv::IMREAD_GRAYSCALE);
-	//cv::Mat merged;
-	//cv::merge(std::array<cv::Mat, 3>{src, src, glut_img}, merged);
+	std::cout << "GLUT masks rendering" << std::endl;
+	glutInit(&argc_, argv_);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Point array");
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayMaskRandomClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT(0, 0, 0);
+	glutMainLoop();
 
 	//merge glut scene with source image
-	std::cout << "OpenCV merging" << std::endl;
+	std::cout << "OpenCV background merging" << std::endl;
 	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
 	cv::Mat mask_source = cv::imread(gen_glut_dir + "0" + image_ending_, cv::IMREAD_GRAYSCALE);
 	cv::Mat mask;
@@ -1081,6 +1094,11 @@ void Generator::displayUntexturedRandomClip() {
 ////////// displayTexturedRandomClip //////////
 void Generator::displayTexturedRandomClip() {
 	curr_this_->main_scene_.displayTexturedRandomClip();
+}
+
+////////// displayMaskRandomClip //////////
+void Generator::displayMaskRandomClip() {
+	curr_this_->main_scene_.displayMaskRandomClip();
 }
 
 ////////// reshape //////////

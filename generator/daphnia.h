@@ -25,6 +25,11 @@ public:
 	void drawSimplifiedReflection(bool horizontal,
 		const std::array<double, 3>& coords,
 		const std::array<double, 4>& color4d) const;
+	void drawComplicatedReflection(bool horizontal,
+		const std::array<double, 3>& coords,
+		const std::array<double, 4>& color_inner,
+		const std::array<double, 4>& color_outer,
+		const std::array<double, 4>& color_head) const;
 
 private:
 	std::array<double, 3> coords_{ };

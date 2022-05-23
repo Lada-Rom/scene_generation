@@ -55,7 +55,10 @@ std::ostream& operator<<(std::ostream& ostrm, const std::array<double, 3>& rhs);
 std::ostream& operator<<(std::ostream& ostrm, const std::vector<cv::Point3d>& rhs);
 std::ostream& operator<<(std::ostream& ostrm, const std::array<std::array<double, 3>, 8>& rhs);
 
-void makeGenFileTree(const std::string&, const std::string&,
-	const std::string&, const std::string&, const std::string&);
+void makeGenFileTree(const std::string& path, const std::string& main_dir,
+	const std::string& glut_dir, const std::string& merged_dir, const std::string&);
+void makeGenFileTree(const std::string& path, const std::string& main_dir,
+	const std::string& glut_dir, const std::string& merged_dir,
+	const std::string& mask_dir, const std::string& json_dir);
 
 #endif
