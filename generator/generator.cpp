@@ -466,13 +466,53 @@ void Generator::makeDaphniaTextures(size_t index, bool ovoid) {
 	noise += noise_scaled;
 
 	imf_egg = imf_egg + imf_egg.mul(noise);
-	cv::resize(imf_egg, imf_egg, { 20, 20 }, 0.0, 0.0, cv::InterpolationFlags::INTER_LINEAR);
+	//cv::resize(imf_egg, imf_egg, { 20, 20 }, 0.0, 0.0, cv::InterpolationFlags::INTER_LINEAR);
 	cv::normalize(imf_egg, imf_egg, 1.0f, 0.0f, cv::NormTypes::NORM_MINMAX);
 
 	cv::Mat imf_ret;
 	imf_egg.convertTo(imf_ret, CV_8UC1, 255, 0);
 
 	cv::imwrite(directory + std::to_string(index) + image_ending_, imf_ret);
+}
+
+////////// makeDaphniaMask //////////
+void Generator::makeDaphniaMask(bool ovoid) {
+	std::string directory;
+	if (ovoid)
+		directory = data_path_ + src_dir_ + daphnia_texture_dir_ + daphnia_ovoid_dir_;
+	else
+		directory = data_path_ + src_dir_ + daphnia_texture_dir_ + daphnia_circle_dir_;
+
+	if (!std::filesystem::exists(directory))
+		std::filesystem::create_directories(directory);
+
+	const int  size = 200;
+	cv::Mat    img = cv::Mat::zeros(size, size, CV_8UC1);
+
+	float      t = 0.3f;
+	float      l = 1.565f;
+	uint8_t    base = 255;
+	const auto eps = std::numeric_limits<float>::epsilon();
+	float      dx = (2.0f - 2 * eps) / img.cols;
+
+	int radius = 72;
+	int center = 100;
+
+	float dy{};
+	int y_top{}, y_bottom{}, x{};
+	if (ovoid)
+		for (float fx = -1.0f + eps; fx < 1.0f; fx += dx) {
+			dy = t * std::pow((1.0f + fx) / (1.0f - fx),
+				(1.0f - l) / (2.0f * (1.0f + l))) * std::sqrt(1.0f - fx * fx);
+			int y_top = img.rows * (0.45f - dy);
+			int y_bottom = img.rows * (0.55f + dy);
+			int x = fx / dx + img.cols / 2;
+			cv::line(img, { x, y_top }, { x, y_bottom }, { double(base) }, 1);
+		}
+	else
+		cv::circle(img, cv::Point{ center, center }, radius, { (double)base }, -1);
+
+	cv::imwrite(directory + "mask" + image_ending_, img);
 }
 
 ////////// calcObjdirection //////////

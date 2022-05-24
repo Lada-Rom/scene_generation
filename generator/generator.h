@@ -63,6 +63,7 @@ public:
 	void makeTestTexture(const std::string& filename);
 	void makeEdgeTextures(size_t index);
 	void makeDaphniaTextures(size_t index, bool ovoid = true);
+	void makeDaphniaMask(bool ovoid = true);
 
 	std::array<double, 3> calcObjdirection(double alpha, double beta, double gamma);
 	void predictPoints(std::vector<cv::Point2d>&, const std::vector<cv::Point3d>&,
