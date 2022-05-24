@@ -39,7 +39,8 @@ public:
 	void saveGenRCOJSON(const std::string& path,
 		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
 		const std::vector<std::vector<std::array<double, 3>>>& objdirections,
-		const std::vector<std::vector<std::array<double, 2>>>& imgpoints);
+		const std::vector<std::vector<std::array<double, 2>>>& imgpoints,
+		const std::vector<std::vector<std::array<double, 2>>>& imgdirections);
 
 	std::vector<cv::Point2d> readInputImgpointsD(size_t);
 	std::vector<cv::Point2i> readInputImgpointsI(size_t);
@@ -68,6 +69,13 @@ public:
 		const std::array<double, 9>&,
 		const std::array<double, 9>&, const std::array<double, 3>&);
 	void predictPoints(std::vector<std::vector<std::array<double, 2>>>& imgpoints,
+		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
+		const std::array<double, 9>& cmat, const std::array<double, 9>& rmat,
+		const std::array<double, 3>& tvec, const std::array<double, 3>& svec);
+	void predictDirections(
+		std::vector<std::vector<std::array<double, 2>>>& imgdirections,
+		std::vector<std::vector<std::array<double, 3>>> objdirections,
+		const std::vector<std::vector<std::array<double, 2>>>& imgpoints,
 		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
 		const std::array<double, 9>& cmat, const std::array<double, 9>& rmat,
 		const std::array<double, 3>& tvec, const std::array<double, 3>& svec);

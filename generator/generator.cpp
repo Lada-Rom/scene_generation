@@ -85,7 +85,8 @@ void Generator::saveMainJSON() {
 void Generator::saveGenRCOJSON(const std::string& path,
 	const std::vector<std::vector<std::array<double, 3>>>& objpoints,
 	const std::vector<std::vector<std::array<double, 3>>>& objdirections,
-	const std::vector<std::vector<std::array<double, 2>>>& imgpoints) {
+	const std::vector<std::vector<std::array<double, 2>>>& imgpoints,
+	const std::vector<std::vector<std::array<double, 2>>>& imgdirections) {
 	
 	gen_RCO_json_["3D_points"] = json::array();
 	gen_RCO_json_["2D_points"] = json::array();
@@ -96,7 +97,7 @@ void Generator::saveGenRCOJSON(const std::string& path,
 			object_3d["coords"] = objpoints[frame][object];
 			object_3d["direction"] = objdirections[frame][object];
 			object_2d["coords"] = imgpoints[frame][object];
-			object_2d["direction"] = { 0, 0, 0 };
+			object_2d["direction"] = imgdirections[frame][object];
 			gen_RCO_json_["3D_points"][frame].push_back(object_3d);
 			gen_RCO_json_["2D_points"][frame].push_back(object_2d);
 		}
@@ -555,6 +556,38 @@ void Generator::predictPoints(std::vector<std::vector<std::array<double, 2>>>& i
 	}
 }
 
+////////// predictDirections //////////
+void Generator::predictDirections(
+	std::vector<std::vector<std::array<double, 2>>>& imgdirections,
+	std::vector<std::vector<std::array<double, 3>>> objdirections,
+	const std::vector<std::vector<std::array<double, 2>>>& imgpoints,
+	const std::vector<std::vector<std::array<double, 3>>>& objpoints,
+	const std::array<double, 9>& cmat,
+	const std::array<double, 9>& rmat,
+	const std::array<double, 3>& tvec,
+	const std::array<double, 3>& svec) {
+
+	//points for predict - end point of vector
+	for (int frame{}; frame < objpoints.size(); ++frame) {
+		for (int object{}; object < objpoints[frame].size(); ++object) {
+			objdirections[frame][object][0] += objpoints[frame][object][0];
+			objdirections[frame][object][1] += objpoints[frame][object][1];
+			objdirections[frame][object][2] += objpoints[frame][object][2];
+		}
+	}
+
+	//predict end point
+	predictPoints(imgdirections, objdirections, cmat, rmat, tvec, svec);
+
+	//recalc predicted point as vector length
+	for (int frame{}; frame < objpoints.size(); ++frame) {
+		for (int object{}; object < objpoints[frame].size(); ++object) {
+			imgdirections[frame][object][0] -= imgpoints[frame][object][0];
+			imgdirections[frame][object][1] -= imgpoints[frame][object][1];
+		}
+	}
+}
+
 ////////// showPointGrid //////////
 void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 	const std::array<double, 3>& shift, bool save){
@@ -837,11 +870,14 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 	}
 
 	std::vector<std::vector<std::array<double, 2>>> imgpoints;
+	std::vector<std::vector<std::array<double, 2>>> imgdirections{ num_frames };
 	predictPoints(imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
+	predictDirections(imgdirections, objdirections, imgpoints, objpoints,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints);
+	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
@@ -972,11 +1008,14 @@ void Generator::genUntexturedRandomClip(size_t index,
 	}
 
 	std::vector<std::vector<std::array<double, 2>>> imgpoints;
+	std::vector<std::vector<std::array<double, 2>>> imgdirections{ num_frames };
 	predictPoints(imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
+	predictDirections(imgdirections, objdirections, imgpoints, objpoints,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints);
+	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
@@ -1071,10 +1110,12 @@ void Generator::genTexturedRandomClip(size_t index,
 	std::vector<std::vector<std::array<double, 3>>> objdirections{ num_frames };
 	std::cout << "\nGenerating 3D params" << std::endl;
 	for (int frame = {}; frame < num_frames; ++frame) {
+
 		if (num_objects_range[0] != num_objects_range[1])
 			num_objects = num_obj(rd_);
 		main_scene_.setRCOObjects(frame, num_objects);
 		objdirections[frame] = std::vector<std::array<double, 3>>{num_objects};
+
 		for (int object = {}; object < num_objects; ++object) {
 			//gen size scale
 			curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
@@ -1097,7 +1138,7 @@ void Generator::genTexturedRandomClip(size_t index,
 		}
 	}
 
-	//calc 2D coords from 3D
+	//calc 2D params from 3D
 	std::cout << "Calculating 2D coords" << std::endl;
 	std::vector<std::vector<std::array<double, 3>>> objpoints{ num_frames };
 	for (int frame{}; frame < num_frames; ++frame) {
@@ -1110,12 +1151,14 @@ void Generator::genTexturedRandomClip(size_t index,
 	}
 
 	std::vector<std::vector<std::array<double, 2>>> imgpoints;
-	std::vector<std::array<double, 2>> imgdirections{ num_frames };
+	std::vector<std::vector<std::array<double, 2>>> imgdirections{ num_frames };
 	predictPoints(imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
+	predictDirections(imgdirections, objdirections, imgpoints, objpoints,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints);
+	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//texture settings
 	std::string edge_texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
@@ -1141,23 +1184,6 @@ void Generator::genTexturedRandomClip(size_t index,
 	main_scene_.initGLUT();
 	glutMainLoop();
 
-	//std::cout << "GLUT masks rendering" << std::endl;
-	//glutInit(&argc_, argv_);
-	//glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
-	//glutInitWindowSize(
-	//	main_scene_.getRenderImageSize().width,
-	//	main_scene_.getRenderImageSize().height);
-	//glutInitWindowPosition(0, 0);
-	//glutCreateWindow("Point array");
-	//glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
-	//curr_this_ = this;
-	//glutDisplayFunc(Generator::displayMaskRandomClip);
-	//glutReshapeFunc(Generator::reshape);
-	//main_scene_.resetFrameCount();
-	//main_scene_.resetObjectCount();
-	//main_scene_.initGLUT(0, 0, 0);
-	//glutMainLoop();
-
 	//merge glut scene with source image
 	std::cout << "OpenCV background merging" << std::endl;
 	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
@@ -1177,6 +1203,11 @@ void Generator::genTexturedRandomClip(size_t index,
 		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
 		add_cv::textureFrameDaphnias(frame, merged_frames[frame], gen_RCO_json_,
 			merged_filename, image_ending_);
+		//num_objects = main_scene_.getRCOObjectsNum(frame);
+		//cv::Mat merged_image = cv::imread(merged_filename, cv::IMREAD_GRAYSCALE);
+		//for (int object{}; object < num_objects; ++object) {
+		//	
+		//}
 	}
 
 	std::cout << "Successful end of program!" << std::endl;
