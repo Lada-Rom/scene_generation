@@ -88,8 +88,8 @@ public:
 		const std::array<double, 4>& color_head);
 
 	void reshape(int, int);
-	//void controlSpec(int key, int x, int y);
-	//void controlKey(unsigned char key, int x, int y);
+	void controlSpec(int key, int x, int y);
+	void controlKey(unsigned char key, int x, int y);
 
 	void displayPointGrid();
 	void displayUntexturedRandomClip();
@@ -116,9 +116,9 @@ private:
 	size_t frame_count_{ };
 	size_t object_count_{ };
 
-	//double test_x{9};
-	//double test_y{ };
-	//double test_z{-2};
+	double test_x{};
+	double test_y{};
+	double test_z{};
 };
 
 #endif

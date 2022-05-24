@@ -23,7 +23,8 @@ void Daphnia::setCoords(const std::array<double, 3>& coords) {
 ////////// setAngles //////////
 void Daphnia::setAngles(const std::array<double, 3>& angles) {
 	angles_ = angles;
-	rotation_ = glm::eulerAngleYXZ(angles[0], angles[1], angles[2]);
+	rotation_ = glm::eulerAngleYXZ(
+		glm::radians(angles[0]), glm::radians(angles[1]), glm::radians(angles[2]));
 }
 
 ////////// setDirection //////////
@@ -51,6 +52,13 @@ void Daphnia::drawSimplified(const std::array<double, 4>& color4d) {
 	glEnable(GL_BLEND);
 
 		glTranslated(coords_[0], coords_[1], coords_[2]);
+
+		//glColor3d(1, 0, 0);
+		//glBegin(GL_LINES);
+		//glVertex3d(0, 0, 0);
+		//glVertex3d(direction_[0], direction_[1], direction_[2]);
+		//glEnd();
+
 		glMultMatrixd(&rotation_[0][0]);
 
 		glColor4dv(color4d.data());

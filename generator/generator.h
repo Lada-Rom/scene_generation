@@ -108,8 +108,8 @@ private:
 	static void displayTexturedRandomClip();
 	static void displayMaskRandomClip();
 	static void reshape(int, int);
-	//static void controlKey(unsigned char key, int x, int y);
-	//static void controlSpec(int key, int x, int y);
+	static void controlKey(unsigned char key, int x, int y);
+	static void controlSpec(int key, int x, int y);
 	double normDistGenInRange(std::normal_distribution<>, const double&, const double&);
 
 	const std::string main_json_filename_		{ "../../data/json/generator_params.json" };

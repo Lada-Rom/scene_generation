@@ -460,25 +460,40 @@ void Scene::reshape(int width, int height) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-//////////// controlSpec //////////
-//void Scene::controlSpec(int key, int x, int y) {
-//    if (key == GLUT_KEY_LEFT)
-//        test_x -= 0.1;
-//    if (key == GLUT_KEY_RIGHT)
-//        test_x += 0.1;
-//    if (key == GLUT_KEY_UP)
-//        test_y += 0.1;
-//    if (key == GLUT_KEY_DOWN)
-//        test_y -= 0.1;
-//}
-//
-//////////// controlKey //////////
-//void Scene::controlKey(unsigned char key, int x, int y) {
-//    if (key == 'w')
-//        test_z -= 0.1;
-//    if (key == 's')
-//        test_z += 0.1;
-//}
+////////// controlSpec //////////
+void Scene::controlSpec(int key, int x, int y) {
+    if (key == GLUT_KEY_LEFT) {
+        test_y -= 1;
+    }
+    if (key == GLUT_KEY_RIGHT) {
+        test_y += 1;
+    }
+    if (key == GLUT_KEY_UP) {
+        test_x += 1;
+    }
+    if (key == GLUT_KEY_DOWN) {
+        test_x -= 1;
+    }
+
+    random_clip_objects_[0][0].setAngles({ test_y, test_x, test_z });
+    std::array<double, 3> dir = random_clip_objects_[0][0].calcDirection();
+    random_clip_objects_[0][0].setDirection(dir);
+    std::cout << test_y << " " << test_x << " " << test_z << std::endl;
+}
+
+////////// controlKey //////////
+void Scene::controlKey(unsigned char key, int x, int y) {
+    if (key == 'd') {
+        test_z -= 1;
+    }
+    if (key == 'a') {
+        test_z += 1;
+    }
+    random_clip_objects_[0][0].setAngles({ test_y, test_x, test_z });
+    std::array<double, 3> dir = random_clip_objects_[0][0].calcDirection();
+    random_clip_objects_[0][0].setDirection(dir);
+    std::cout << test_y << " " << test_x << " " << test_z << std::endl;
+}
 
 ////////// displayPointGrid //////////
 void Scene::displayPointGrid() {
@@ -594,7 +609,7 @@ void Scene::displayTexturedRandomClip() {
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
         drawSimplifiedReflection(daphnia, { 0., 0., 0.});
-        daphnia.drawSimplified({ 0., 0., 0., 0.3 });
+        //daphnia.drawSimplified({ 0., 0., 0., 0.3 });
     }
 
     //write to file

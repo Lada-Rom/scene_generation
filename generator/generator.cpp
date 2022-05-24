@@ -1129,10 +1129,12 @@ void Generator::genTexturedRandomClip(size_t index,
 
 			//gen coords - x, y, z
 			buffer = { x_dis(rd_), y_dis(rd_), z_dis(rd_) };
+			//buffer = { 0, 0, -1. };
 			main_scene_.setRCODaphniaCoords(frame, object, buffer);
 
 			//gen angles - apha, beta, gamma
 			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
+			//buffer = { 60, 0, 0 };
 			main_scene_.setRCODaphniaAngles(frame, object, buffer);
 			objdirections[frame][object] = main_scene_.setRCODaphniaDirection(frame, object);
 		}
@@ -1179,6 +1181,7 @@ void Generator::genTexturedRandomClip(size_t index,
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
 	glutDisplayFunc(Generator::displayTexturedRandomClip);
+	glutDisplayFunc(Generator::displayTexturedRandomClip);
 	glutReshapeFunc(Generator::reshape);
 	main_scene_.resetFrameCount();
 	main_scene_.initGLUT();
@@ -1202,12 +1205,20 @@ void Generator::genTexturedRandomClip(size_t index,
 	for (int frame = {}; frame < num_frames; ++frame) {
 		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
 		add_cv::textureFrameDaphnias(frame, merged_frames[frame], gen_RCO_json_,
-			merged_filename, image_ending_);
-		//num_objects = main_scene_.getRCOObjectsNum(frame);
-		//cv::Mat merged_image = cv::imread(merged_filename, cv::IMREAD_GRAYSCALE);
-		//for (int object{}; object < num_objects; ++object) {
-		//	
-		//}
+			rd_, data_path_ + src_dir_ + daphnia_texture_dir_, merged_filename, image_ending_);
+		num_objects = main_scene_.getRCOObjectsNum(frame);
+		cv::Mat merged_image = cv::imread(merged_filename, cv::IMREAD_GRAYSCALE);
+		for (int object{}; object < num_objects; ++object) {
+			std::array<double, 2> center{
+				0.5 * main_scene_.getRenderImageSize().width,
+				0.5 * main_scene_.getRenderImageSize().height };
+			std::array<double, 2> begin = imgpoints[frame][object];
+			std::array<double, 2> end = {
+				imgdirections[frame][object][0] + imgpoints[frame][object][0],
+				imgdirections[frame][object][1] + imgpoints[frame][object][1] };
+			cv::line(merged_image,
+				cv::Point2d{ begin[0], begin[1] }, cv::Point2d{ end[0], end[1] }, {0, 0, 255});
+		}
 	}
 
 	std::cout << "Successful end of program!" << std::endl;
@@ -1252,15 +1263,15 @@ void Generator::reshape(int width, int height) {
 	curr_this_->main_scene_.reshape(width, height);
 }
 
-//////////// controlKey //////////
-//void Generator::controlKey(unsigned char key, int x, int y) {
-//	curr_this_->main_scene_.controlKey(key, x, y);
-//}
-//
-//////////// controlSpec //////////
-//void Generator::controlSpec(int key, int x, int y) {
-//	curr_this_->main_scene_.controlSpec(key, x, y);
-//}
+////////// controlKey //////////
+void Generator::controlKey(unsigned char key, int x, int y) {
+	curr_this_->main_scene_.controlKey(key, x, y);
+}
+
+////////// controlSpec //////////
+void Generator::controlSpec(int key, int x, int y) {
+	curr_this_->main_scene_.controlSpec(key, x, y);
+}
 
 ////////// normDistGenInRange //////////
 double Generator::normDistGenInRange(std::normal_distribution<> norm,

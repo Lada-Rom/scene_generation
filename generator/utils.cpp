@@ -99,26 +99,84 @@ void mergeTexturedImageWithSource(
 }
 
 ////////// textureDaphnia //////////
-void textureDaphnia(cv::Mat& img, const cv::Mat& obj_texture) {
+void textureDaphnia(cv::Mat& img, cv::Mat& obj_texture, const std::array<double, 2>& center) {
+	//roi and mean roi
+	cv::Rect rect_roi(
+		cv::Point2d{ center[0] - 0.5 * obj_texture.cols, center[1] - 0.5 * obj_texture.rows },
+		obj_texture.size());
+	cv::Mat img_roi = img(rect_roi);
+	cv::Mat mean_roi = cv::Mat::zeros(img_roi.size(), img_roi.type());
+	mean_roi += cv::mean(img_roi).val[0];
 
+	//level off brightness
+	double min_val, max_val;
+	cv::minMaxIdx(img, &min_val, &max_val);
+	for (int k = 0; k < obj_texture.cols; k++) {
+		for (int j = 0; j < obj_texture.rows; j++) {
+			if ((double)obj_texture.at<uchar>(j, k) < min_val)
+				obj_texture.at<uchar>(j, k) = min_val;
+		}
+	}
+
+	cv::Mat textured_roi = mean_roi.clone();
+	for (int k = 0; k < obj_texture.cols; k++) {
+		for (int j = 0; j < obj_texture.rows; j++) {
+			obj_texture.at<uchar>(j, k) = cv::saturate_cast<uchar>(
+				1. / 255 * (double)obj_texture.at<uchar>(j, k)
+				* ((double)mean_roi.at<uchar>(j, k) - 0.5 * (double)obj_texture.at<uchar>(j, k))
+				+ 1. / 255 * (255 - (double)obj_texture.at<uchar>(j, k))
+				* (double)img.at<uchar>(
+					center[1] - 0.5 * obj_texture.rows + j,
+					center[0] - 0.5 * obj_texture.cols + k));
+		}
+	}
+	//obj_texture.copyTo(img(rect_roi));
+
+	std::cout << "hello" << std::endl;
+	//add to source image
 }
 
 ////////// textureFrameDaphnias //////////
 void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json,
+	std::random_device& rd, const std::string& texture_path,
 	const std::string& dst_filename, const std::string& format) {
+
 	//get info from json
-	unsigned int num_objects = gen_json["3D_points"][frame_index].size(); //num_objects
-	json frame_json = gen_json["3D_points"][frame_index]; //coords and direction
+	unsigned int num_objects = gen_json["3D_points"][frame_index].size();
+	json frame_3d_json = gen_json["3D_points"][frame_index];
+	json frame_2d_json = gen_json["2D_points"][frame_index];
+
+	//get texture
+	size_t num_ovoid_textures = std::distance(
+		std::filesystem::directory_iterator(texture_path + "ovoid/"),
+		std::filesystem::directory_iterator{});
+	size_t num_circle_textures = std::distance(
+		std::filesystem::directory_iterator(texture_path + "ovoid/"),
+		std::filesystem::directory_iterator{});
+	std::uniform_int_distribution<> tex_ovoid_number(0, num_ovoid_textures - 1);
+	std::uniform_int_distribution<> tex_circle_number(0, num_circle_textures - 1);
+	std::string texture_filename;
 
 	cv::Mat obj_texture;
+	std::array<double, 2> center;
 
 	//for each object of frame
-	for (;;) {
+	for (int object{}; object < num_objects; ++object) {
 		//load texture from directory
+		texture_filename = texture_path;
+		if (std::abs(frame_3d_json[object]["direction"][0].get<double>()) >= 0.85) {
+			texture_filename += "circle/";
+			texture_filename += std::to_string(tex_circle_number(rd)) + format;
+		}
+		else {
+			texture_filename += "ovoid/";
+			texture_filename += std::to_string(tex_ovoid_number(rd)) + format;
+		}
+		obj_texture = cv::imread(texture_filename, cv::IMREAD_GRAYSCALE);
 	
 		//draw objecttexture on frame
-		add_cv::textureDaphnia(img, obj_texture);
-		break;
+		center = frame_2d_json[object]["coords"].get<std::array<double, 2>>();
+		add_cv::textureDaphnia(img, obj_texture, center);
 	}
 
 	//write image to file
