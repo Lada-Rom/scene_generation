@@ -65,6 +65,7 @@ void mergeUntexturedImageAndPoints(const std::string& src_filename,
 	cv::imwrite(dst_filename, grid_merged_3c);
 }
 
+////////// mergeTexturedImageWithSource //////////
 void mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename, const std::string& dst_filename) {
 	cv::Mat glut_image = cv::imread(glut_filename, cv::IMREAD_GRAYSCALE);
@@ -73,6 +74,16 @@ void mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
 	cv::imwrite(dst_filename, glut_image);
 }
 
+////////// mergeTexturedImageWithSource //////////
+cv::Mat mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
+	const std::string& glut_filename) {
+	cv::Mat glut_image = cv::imread(glut_filename, cv::IMREAD_GRAYSCALE);
+
+	cv::bitwise_and(src_image, glut_image, glut_image, mask);
+	return glut_image;
+}
+
+////////// mergeTexturedImageWithSource //////////
 void mergeTexturedImageWithSource(
 	const std::vector<std::array<double, 2>>& imgpoints,
 	const cv::Mat& mask, const cv::Mat& src_image,
@@ -85,6 +96,33 @@ void mergeTexturedImageWithSource(
 	for (auto& point : imgpoints)
 		add_cv::cross(merged_3c, point, { 2, 2 }, { 0, 0, 255 });
 	cv::imwrite(dst_filename, glut_image);
+}
+
+////////// textureDaphnia //////////
+void textureDaphnia(cv::Mat& img, const cv::Mat& obj_texture) {
+
+}
+
+////////// textureFrameDaphnias //////////
+void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json,
+	const std::string& dst_filename, const std::string& format) {
+	//get info from json
+	unsigned int num_objects = gen_json["3D_points"][frame_index].size(); //num_objects
+	json frame_json = gen_json["3D_points"][frame_index]; //coords and direction
+
+	cv::Mat obj_texture;
+
+	//for each object of frame
+	for (;;) {
+		//load texture from directory
+	
+		//draw objecttexture on frame
+		add_cv::textureDaphnia(img, obj_texture);
+		break;
+	}
+
+	//write image to file
+	cv::imwrite(dst_filename, img);
 }
 
 } //namespace add_cv

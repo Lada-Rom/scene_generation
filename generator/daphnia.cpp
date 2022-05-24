@@ -23,6 +23,12 @@ void Daphnia::setCoords(const std::array<double, 3>& coords) {
 ////////// setAngles //////////
 void Daphnia::setAngles(const std::array<double, 3>& angles) {
 	angles_ = angles;
+	rotation_ = glm::eulerAngleYXZ(angles[0], angles[1], angles[2]);
+}
+
+////////// setDirection //////////
+void Daphnia::setDirection(const std::array<double, 3>& direction) {
+	direction_ = direction;
 }
 
 ////////// setScale //////////
@@ -30,22 +36,30 @@ void Daphnia::setScale(const double& scale) {
 	scale_ = scale;
 }
 
+////////// calcDirection //////////
+std::array<double, 3> Daphnia::calcDirection() {
+	glm::dvec4 direction_4d = rotation_ * glm::make_vec4(default_direction_.data());
+	direction_4d /= direction_4d.w;
+	glm::dvec3 direction_3d = glm::normalize(
+		glm::dvec3{ direction_4d.x, direction_4d.y, direction_4d.z });
+	return { direction_3d.x, direction_3d.y, direction_3d.z };
+}
+
 ////////// drawSimplified //////////
 void Daphnia::drawSimplified(const std::array<double, 4>& color4d) {
 	glPushMatrix();
+	glEnable(GL_BLEND);
+
+		glTranslated(coords_[0], coords_[1], coords_[2]);
+		glMultMatrixd(&rotation_[0][0]);
 
 		glColor4dv(color4d.data());
-		glTranslated(coords_[0], coords_[1], coords_[2]);
-		glRotated(angles_[0], 1, 0, 0);
-		glRotated(angles_[1], 0, 1, 0);
-		glRotated(angles_[2], 0, 0, 1);
-
 		glPushMatrix();
 			glScaled(scale_, scale_, scale_);
 			glScaled(length_ratio_, 1., 1.);
 			glutSolidSphere(radius_, 30, 30);
 		glPopMatrix();
-
+	glDisable(GL_BLEND);
 	glPopMatrix();
 }
 
@@ -58,9 +72,7 @@ void Daphnia::drawComplicated(
 	glPushMatrix();
 	glEnable(GL_BLEND);
 		glTranslated(coords_[0], coords_[1], coords_[2]);
-		glRotated(angles_[0], 1, 0, 0);
-		glRotated(angles_[1], 0, 1, 0);
-		glRotated(angles_[2], 0, 0, 1);
+		glMultMatrixd(&rotation_[0][0]);
 		glScaled(scale_, scale_, scale_);
 
 		glPushMatrix();
@@ -106,9 +118,7 @@ void Daphnia::drawSimplifiedReflection(bool horizontal,
 		else
 			glScaled(1, -1, 1);
 		glTranslated(coords[0], coords[1], coords[2]);
-		glRotated(angles_[0], 1, 0, 0);
-		glRotated(angles_[1], 0, 1, 0);
-		glRotated(angles_[2], 0, 0, 1);
+		glMultMatrixd(&rotation_[0][0]);
 
 		glPushMatrix();
 			glScaled(scale_, scale_, scale_);
@@ -134,9 +144,7 @@ void Daphnia::drawComplicatedReflection(bool horizontal,
 		else
 			glScaled(1, -1, 1);
 		glTranslated(coords[0], coords[1], coords[2]);
-		glRotated(angles_[0], 1, 0, 0);
-		glRotated(angles_[1], 0, 1, 0);
-		glRotated(angles_[2], 0, 0, 1);
+		glMultMatrixd(&rotation_[0][0]);
 		glScaled(scale_, scale_, scale_);
 
 		glPushMatrix();

@@ -84,16 +84,21 @@ void Generator::saveMainJSON() {
 ////////// saveGenRCOJSON //////////
 void Generator::saveGenRCOJSON(const std::string& path,
 	const std::vector<std::vector<std::array<double, 3>>>& objpoints,
+	const std::vector<std::vector<std::array<double, 3>>>& objdirections,
 	const std::vector<std::vector<std::array<double, 2>>>& imgpoints) {
 	
 	gen_RCO_json_["3D_points"] = json::array();
 	gen_RCO_json_["2D_points"] = json::array();
 
+	json object_3d, object_2d;
 	for (int frame{}; frame < objpoints.size(); ++frame) {
-		gen_RCO_json_["3D_points"].push_back(json::array());
 		for (int object{}; object < objpoints[frame].size(); ++object) {
-			gen_RCO_json_["3D_points"][frame].push_back(objpoints[frame][object]);
-			gen_RCO_json_["2D_points"][frame].push_back(imgpoints[frame][object]);
+			object_3d["coords"] = objpoints[frame][object];
+			object_3d["direction"] = objdirections[frame][object];
+			object_2d["coords"] = imgpoints[frame][object];
+			object_2d["direction"] = { 0, 0, 0 };
+			gen_RCO_json_["3D_points"][frame].push_back(object_3d);
+			gen_RCO_json_["2D_points"][frame].push_back(object_2d);
 		}
 	}
 
@@ -374,29 +379,105 @@ void Generator::makeEdgeTextures(size_t index) {
 }
 
 ////////// makeDaphniaTextures //////////
-void Generator::makeDaphniaTextures(double mean, double dev) {
-	std::string directory = data_path_ + src_dir_ + daphnia_texture_dir_;
+void Generator::makeDaphniaTextures(size_t index, bool ovoid) {
+	std::string directory;
+	if (ovoid)
+		directory = data_path_ + src_dir_ + daphnia_texture_dir_ + daphnia_ovoid_dir_;
+	else
+		directory = data_path_ + src_dir_ + daphnia_texture_dir_ + daphnia_circle_dir_;
 
 	if (!std::filesystem::exists(directory))
 		std::filesystem::create_directories(directory);
 
-	cv::Mat noise_smaller_32 = cv::Mat::zeros(32, 32, CV_8UC1);
-	cv::Mat noise_bigger_8 = cv::Mat::zeros(8, 8, CV_8UC1);
-	cv::Mat noise_bigger_32 = cv::Mat::zeros(32, 32, CV_8UC1);
+	const int  size = 200;
+	cv::Mat    img = cv::Mat::zeros(size, size, CV_8UC1);
 
-	for (int i{}; i < 3; ++i) {
-		cv::randn(noise_smaller_32, mean, dev);
-		cv::randn(noise_bigger_8, mean, dev);
-		cv::resize(noise_bigger_8, noise_bigger_32, noise_bigger_32.size());
-		noise_smaller_32 += noise_bigger_32;
+	float      t = 0.3f;
+	float      l = 1.565f;
+	uint8_t    base = 200;
+	float      gau_a = 1.0f;
+	float      gau_c = 12.0f;
+	const auto eps = std::numeric_limits<float>::epsilon();
+	float      dx = (2.0f - 2 * eps) / img.cols;
 
-		if (i == 0)
-			cv::imwrite(directory + daphnia_inner_name_ + image_ending_, noise_smaller_32);
-		if (i == 1)
-			cv::imwrite(directory + daphnia_outer_name_ + image_ending_, noise_smaller_32);
-		if (i == 2)
-			cv::imwrite(directory + daphnia_head_name_ + image_ending_, noise_smaller_32);
-	}	
+	int radius = 72;
+	int center = 100;
+
+	float dy{}, gau{};
+	int y_top{}, y_bottom{}, x{};
+	if (ovoid)
+		for (float fx = -1.0f + eps; fx < 1.0f; fx += dx) {
+			dy = t * std::pow((1.0f + fx) / (1.0f - fx),
+				(1.0f - l) / (2.0f * (1.0f + l))) * std::sqrt(1.0f - fx * fx);
+			int y_top = img.rows * (0.45f - dy);
+			int y_bottom = img.rows * (0.55f + dy);
+			int x = fx / dx + img.cols / 2;
+			cv::line(img, { x, y_top }, { x, y_bottom }, { double(base) }, 1);
+		}
+	else
+		cv::circle(img, cv::Point{ center, center }, radius, { (double)base }, -1);
+
+	cv::Mat imb_egg_dt;
+	cv::distanceTransform(img, imb_egg_dt, cv::DIST_L1, 3);
+
+	cv::Mat imf_egg = cv::Mat::zeros(size, size, CV_32FC1);
+	int r{};
+	if (ovoid)
+		for (float fx = -1.0f + eps; fx < 1.0f; fx += dx) {
+			dy = t * std::pow((1.0f + fx) / (1.0f - fx),
+				(1.0f - l) / (2.0f * (1.0f + l))) *	std::sqrt(1.0f - fx * fx);
+			y_top = img.rows * (0.45f - dy);
+			y_bottom = img.rows * (0.55f + dy);
+			x = fx / dx + img.cols / 2;
+			cv::line(img, { x, y_top }, { x, y_bottom }, { double(base) }, 1);
+			for (int y = y_top; y <= y_bottom; y += 1) {
+				r = y - img.rows / 2;
+				gau = gau_a * std::exp(-r * r / (2 * gau_c * gau_c));
+				imf_egg.at<float>(y, x) = cv::saturate_cast<float>(base + (255 - base) * gau);
+			}
+		}
+	else
+		for (int x = center - radius; x < center + radius; ++x) {
+			for (int y = center - radius; y < center + radius; ++y) {
+				if (img.at<uchar>(y, x) < base)
+					continue;
+				r = std::sqrt((x - center) * (x - center) + (y - center) * (y - center));
+				gau = gau_a * std::exp(-r * r / (2 * gau_c * gau_c));
+				imf_egg.at<float>(y, x) = cv::saturate_cast<float>(base + (255 - base) * gau);
+			}
+		}
+
+	imf_egg = imf_egg + imf_egg.mul(imb_egg_dt);
+	cv::normalize(imf_egg, imf_egg, 1.0f, 0.0f, cv::NormTypes::NORM_MINMAX);
+	cv::Mat1f noise_10(size / 10, size / 10);
+	cv::Mat1f noise_25(size / 25, size / 25);
+
+	float     m = 0.5;
+	float     sigma = 0.5;
+	cv::randn(noise_10, m, sigma);
+	cv::randn(noise_25, m, sigma);
+
+	cv::Mat1f noise_scaled;
+	cv::resize(noise_25, noise_scaled, { size, size });
+
+	cv::Mat1f noise = noise_scaled.clone();
+	cv::resize(noise_10, noise_scaled, { size, size });
+	noise += noise_scaled;
+
+	imf_egg = imf_egg + imf_egg.mul(noise);
+	cv::resize(imf_egg, imf_egg, { 20, 20 }, 0.0, 0.0, cv::InterpolationFlags::INTER_LINEAR);
+	cv::normalize(imf_egg, imf_egg, 1.0f, 0.0f, cv::NormTypes::NORM_MINMAX);
+
+	cv::Mat imf_ret;
+	imf_egg.convertTo(imf_ret, CV_8UC1, 255, 0);
+
+	cv::imwrite(directory + std::to_string(index) + image_ending_, imf_ret);
+}
+
+////////// calcObjdirection //////////
+std::array<double, 3> Generator::calcObjdirection(
+	double alpha, double beta, double gamma) {
+	return {0, 0, 0};
 }
 
 ////////// predictPoints //////////
@@ -695,8 +776,13 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 
 	//construct 3D params - coords, angles
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
+	size_t num_objects;
+	std::uniform_int_distribution<>	num_obj;
 
-	std::uniform_int_distribution<>	num_obj(num_objects_range[0], num_objects_range[1]);
+	if (num_objects_range[0] == num_objects_range[1])
+		num_objects = num_objects_range[0];
+	else
+		num_obj = std::uniform_int_distribution<>(num_objects_range[0], num_objects_range[1]);
 	std::uniform_real_distribution<> angles_dis(0., 180.);
 	std::normal_distribution<> size_dis(
 		(size_objects_range[0] + size_objects_range[1]) * 0.5,
@@ -706,14 +792,16 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 	std::uniform_real_distribution<> z_dis;
 
 	std::array<double, 3> buffer;
-	size_t num_objects;
 	double curr_dl;
 	double curr_scale;
 	main_scene_.setRCOFrames(num_frames);
+	std::vector<std::vector<std::array<double, 3>>> objdirections{ num_frames };
 	std::cout << "\nGenerating 3D params" << std::endl;
 	for (int frame = {}; frame < num_frames; ++frame) {
-		num_objects = num_obj(rd_);
+		if (num_objects_range[0] != num_objects_range[1])
+			num_objects = num_obj(rd_);
 		main_scene_.setRCOObjects(frame, num_objects);
+		objdirections[frame] = std::vector<std::array<double, 3>>{ num_objects };
 		for (int object = {}; object < num_objects; ++object) {
 			//gen size scale
 			curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
@@ -732,7 +820,7 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 			//gen angles - apha, beta, gamma
 			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
 			main_scene_.setRCODaphniaAngles(frame, object, buffer);
-
+			objdirections[frame][object] = main_scene_.setRCODaphniaDirection(frame, object);
 		}
 	}
 
@@ -753,7 +841,7 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
+	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints);
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
@@ -823,8 +911,13 @@ void Generator::genUntexturedRandomClip(size_t index,
 
 	//construct 3D params - coords, angles
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
+	size_t num_objects;
+	std::uniform_int_distribution<>	num_obj;
 
-	std::uniform_int_distribution<>	num_obj(num_objects_range[0], num_objects_range[1]);
+	if (num_objects_range[0] == num_objects_range[1])
+		num_objects = num_objects_range[0];
+	else
+		num_obj = std::uniform_int_distribution<>(num_objects_range[0], num_objects_range[1]);
 	std::uniform_real_distribution<> angles_dis(0., 180.);
 	std::normal_distribution<> size_dis(
 		(size_objects_range[0] + size_objects_range[1]) * 0.5,
@@ -834,14 +927,16 @@ void Generator::genUntexturedRandomClip(size_t index,
 	std::uniform_real_distribution<> z_dis;
 
 	std::array<double, 3> buffer;
-	size_t num_objects;
 	double curr_dl;
 	double curr_scale;
 	main_scene_.setRCOFrames(num_frames);
+	std::vector<std::vector<std::array<double, 3>>> objdirections{ num_frames };
 	std::cout << "\nGenerating 3D params" << std::endl;
 	for (int frame = {}; frame < num_frames; ++frame) {
-		num_objects = num_obj(rd_);
+		if (num_objects_range[0] != num_objects_range[1])
+			num_objects = num_obj(rd_);
 		main_scene_.setRCOObjects(frame, num_objects);
+		objdirections[frame] = std::vector<std::array<double, 3>>{ num_objects };
 		for (int object = {}; object < num_objects; ++object) {
 			//gen size scale
 			curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
@@ -860,7 +955,7 @@ void Generator::genUntexturedRandomClip(size_t index,
 			//gen angles - apha, beta, gamma
 			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
 			main_scene_.setRCODaphniaAngles(frame, object, buffer);
-
+			objdirections[frame][object] = main_scene_.setRCODaphniaDirection(frame, object);
 		}
 	}
 
@@ -881,7 +976,7 @@ void Generator::genUntexturedRandomClip(size_t index,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
+	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints);
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
@@ -954,8 +1049,13 @@ void Generator::genTexturedRandomClip(size_t index,
 
 	//construct 3D params - coords, angles
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
+	size_t num_objects;
+	std::uniform_int_distribution<>	num_obj;
 
-	std::uniform_int_distribution<>	num_obj(num_objects_range[0], num_objects_range[1]);
+	if (num_objects_range[0] == num_objects_range[1])
+		num_objects = num_objects_range[0];
+	else
+		num_obj = std::uniform_int_distribution<>(num_objects_range[0], num_objects_range[1]);
 	std::uniform_real_distribution<> angles_dis(0., 180.);
 	std::normal_distribution<> size_dis(
 		(size_objects_range[0] + size_objects_range[1]) * 0.5,
@@ -965,14 +1065,16 @@ void Generator::genTexturedRandomClip(size_t index,
 	std::uniform_real_distribution<> z_dis;
 
 	std::array<double, 3> buffer;
-	size_t num_objects;
 	double curr_dl;
 	double curr_scale;
 	main_scene_.setRCOFrames(num_frames);
+	std::vector<std::vector<std::array<double, 3>>> objdirections{ num_frames };
 	std::cout << "\nGenerating 3D params" << std::endl;
 	for (int frame = {}; frame < num_frames; ++frame) {
-		num_objects = num_obj(rd_);
+		if (num_objects_range[0] != num_objects_range[1])
+			num_objects = num_obj(rd_);
 		main_scene_.setRCOObjects(frame, num_objects);
+		objdirections[frame] = std::vector<std::array<double, 3>>{num_objects};
 		for (int object = {}; object < num_objects; ++object) {
 			//gen size scale
 			curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
@@ -991,6 +1093,7 @@ void Generator::genTexturedRandomClip(size_t index,
 			//gen angles - apha, beta, gamma
 			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
 			main_scene_.setRCODaphniaAngles(frame, object, buffer);
+			objdirections[frame][object] = main_scene_.setRCODaphniaDirection(frame, object);
 		}
 	}
 
@@ -1007,11 +1110,12 @@ void Generator::genTexturedRandomClip(size_t index,
 	}
 
 	std::vector<std::vector<std::array<double, 2>>> imgpoints;
+	std::vector<std::array<double, 2>> imgdirections{ num_frames };
 	predictPoints(imgpoints, objpoints,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, imgpoints);
+	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints);
 
 	//texture settings
 	std::string edge_texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
@@ -1037,21 +1141,22 @@ void Generator::genTexturedRandomClip(size_t index,
 	main_scene_.initGLUT();
 	glutMainLoop();
 
-	std::cout << "GLUT masks rendering" << std::endl;
-	glutInit(&argc_, argv_);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
-	glutInitWindowSize(
-		main_scene_.getRenderImageSize().width,
-		main_scene_.getRenderImageSize().height);
-	glutInitWindowPosition(0, 0);
-	glutCreateWindow("Point array");
-	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
-	curr_this_ = this;
-	glutDisplayFunc(Generator::displayMaskRandomClip);
-	glutReshapeFunc(Generator::reshape);
-	main_scene_.resetFrameCount();
-	main_scene_.initGLUT(0, 0, 0);
-	glutMainLoop();
+	//std::cout << "GLUT masks rendering" << std::endl;
+	//glutInit(&argc_, argv_);
+	//glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	//glutInitWindowSize(
+	//	main_scene_.getRenderImageSize().width,
+	//	main_scene_.getRenderImageSize().height);
+	//glutInitWindowPosition(0, 0);
+	//glutCreateWindow("Point array");
+	//glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	//curr_this_ = this;
+	//glutDisplayFunc(Generator::displayMaskRandomClip);
+	//glutReshapeFunc(Generator::reshape);
+	//main_scene_.resetFrameCount();
+	//main_scene_.resetObjectCount();
+	//main_scene_.initGLUT(0, 0, 0);
+	//glutMainLoop();
 
 	//merge glut scene with source image
 	std::cout << "OpenCV background merging" << std::endl;
@@ -1059,10 +1164,20 @@ void Generator::genTexturedRandomClip(size_t index,
 	cv::Mat mask_source = cv::imread(gen_glut_dir + "0" + image_ending_, cv::IMREAD_GRAYSCALE);
 	cv::Mat mask;
 	cv::threshold(mask_source, mask, 254, 255, cv::THRESH_BINARY);
+
+	std::vector<cv::Mat> merged_frames;
 	for (int frame = {}; frame < num_frames; ++frame)
-		add_cv::mergeTexturedImageWithSource(mask, src_image,
-			gen_glut_dir + std::to_string(frame) + image_ending_,
-			gen_merged_dir + std::to_string(frame) + image_ending_);
+		merged_frames.push_back(
+			add_cv::mergeTexturedImageWithSource(mask, src_image,
+				gen_glut_dir + std::to_string(frame) + image_ending_));
+
+	std::cout << "OpenCV daphnia texturing" << std::endl;
+	std::string merged_filename;
+	for (int frame = {}; frame < num_frames; ++frame) {
+		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
+		add_cv::textureFrameDaphnias(frame, merged_frames[frame], gen_RCO_json_,
+			merged_filename, image_ending_);
+	}
 
 	std::cout << "Successful end of program!" << std::endl;
 }

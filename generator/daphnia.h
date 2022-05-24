@@ -2,6 +2,11 @@
 #define DAPHNIA_DAPHNIA_H_20221605
 
 #include <array>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <GL/freeglut.h>
 
 class Daphnia {
@@ -13,9 +18,12 @@ public:
 	std::array<double, 3> getCoords() const;
 	double getLength();
 
-	void setCoords(const std::array<double, 3>&);
-	void setAngles(const std::array<double, 3>&);
+	void setCoords(const std::array<double, 3>& coords);
+	void setAngles(const std::array<double, 3>& angles);
+	void setDirection(const std::array<double, 3>& direction);
 	void setScale(const double&);
+
+	std::array<double, 3> calcDirection();
 
 	void drawSimplified(const std::array<double, 4>& color4d);
 	void drawComplicated(
@@ -33,7 +41,12 @@ public:
 
 private:
 	std::array<double, 3> coords_{ };
-	std::array<double, 3> angles_{ };
+	std::array<double, 3> angles_{ }; //yaw, pitch, roll
+	std::array<double, 3> direction_{ };
+
+	glm::dmat4 rotation_{ };
+
+	const std::array<double, 3> default_direction_{ 1, 0, 0 };
 
 	double scale_{ 0.5 }; // 0.5 - 0.8
 	double scale_body_{ 1.5 };

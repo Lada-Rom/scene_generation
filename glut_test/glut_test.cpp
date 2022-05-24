@@ -814,135 +814,228 @@
 //}
 
 
-double yaw{}, pitch{}, roll{};
-int image_width_, image_height_, image_comp_;
-GLuint tex;
-GLUquadric* sphere;
+//double yaw{}, pitch{}, roll{};
+//int image_width_, image_height_, image_comp_;
+//GLuint tex;
+//GLUquadric* sphere;
+//
+//void loadTexture(std::string filename) {
+//    unsigned char* data = stbi_load(filename.c_str(), &image_width_, &image_height_, &image_comp_, 3);
+//    if (!data)
+//        return;
+//
+//    glGenTextures(1, &tex);
+//    glBindTexture(GL_TEXTURE_2D, tex);
+//    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, image_width_, image_height_, GL_RGB, GL_UNSIGNED_BYTE, data);
+//
+//    free(data);
+//}
+//
+//void initRendering() {
+//	glClearColor(1.0, 1.0, 1.0, 1.0);
+//	//glEnable(GL_DEPTH_TEST);
+//	glEnable(GL_TEXTURE_2D);
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//
+//	loadTexture("../../data/src/daphnia/outer.png");
+//	sphere = gluNewQuadric();
+//	gluQuadricDrawStyle(sphere, GLU_FILL);
+//	glBindTexture(GL_TEXTURE_2D, tex);
+//	gluQuadricTexture(sphere, GL_TRUE);
+//	gluQuadricNormals(sphere, GLU_SMOOTH);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+//}
+//
+//void handleResize(int w, int h) {
+//	glViewport(0, 0, w, h);
+//	glMatrixMode(GL_PROJECTION);
+//	glLoadIdentity();
+//	gluPerspective(37.0, (float)w / (float)h, 1.0, 200.0);
+//}
+//
+//float ratio = 1.5;
+//float ratio_head = 1.6;
+//
+//float scale = 1.7;
+//float scale_2 = 1.5;
+//float scale_3 = 0.7;
+//
+//float radius = 0.1;
+//void drawScene() {
+//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//	glMatrixMode(GL_MODELVIEW);
+//	glLoadIdentity();
+//
+//	//gluLookAt(0, 0, 0,
+//	//		  0, 0, -1,
+//	//		  0, 1, 0);
+//
+//	glPushMatrix();
+//		glTranslated(-0.5, 0, -3);
+//		glRotated(-pitch, 1, 0, 0);
+//		glRotated(-roll, 0, 1, 0);
+//		glRotated(-yaw, 0, 0, 1);
+//		glScaled(scale, scale, scale);
+//
+//		glPushMatrix();
+//			glPushMatrix();
+//				glTranslated(0.75 * radius * scale_2 * ratio, radius * scale_2 - radius, 0);
+//				glRotated(-40, 0, 0, 1);
+//				glColor4f(0.5, 0.5, 0.5, 0.5);
+//				glScaled(scale_3, scale_3, scale_3);
+//				glScaled(ratio_head, 1., 1.);
+//				glutSolidSphere(radius, 32, 32);
+//			glPopMatrix();
+//
+//			glPushMatrix();
+//				glColor4f(0.5, 0.5, 0.5, 0.5);
+//				glScaled(scale_2, scale_2, scale_2);
+//				glScaled(ratio, 1., 1.);
+//				gluSphere(sphere, radius, 32, 32);
+//			glPopMatrix();
+//
+//			glPushMatrix();
+//				glTranslatef(0, radius * scale_2 - radius, 0);
+//				glColor4f(0.5, 0.5, 0.5, 0.5);
+//				glScaled(ratio, 1., 1.);
+//				glutSolidSphere(radius, 32, 32);
+//			glPopMatrix();
+//		glPopMatrix();
+//	glPopMatrix();
+//
+//	glutSwapBuffers();
+//	glutPostRedisplay();
+//}
+//
+//void handlerKeyboard(unsigned char key, int x, int y) {
+//	switch (key) {
+//	case 'w':
+//		pitch += 1;
+//		break;
+//	case 's':
+//		pitch -= 1;
+//		break;
+//	case 'a':
+//		roll += 1;
+//		break;
+//	case 'd':
+//		roll -= 1;
+//		break;
+//	case 'q':
+//		yaw += 1;
+//		break;
+//	case 'e':
+//		yaw -= 1;
+//		break;
+//	}
+//}
+//
+//void main(int argc, char** argv) {
+//	glutInit(&argc, argv);
+//	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+//	glutInitWindowSize(1000, 1000);
+//
+//	glutCreateWindow("Sphere reflection");
+//	initRendering();
+//	glutDisplayFunc(drawScene);
+//	glutReshapeFunc(handleResize);
+//	glutKeyboardFunc(handlerKeyboard);
+//	glutMainLoop();
+//}
 
-void loadTexture(std::string filename) {
-    unsigned char* data = stbi_load(filename.c_str(), &image_width_, &image_height_, &image_comp_, 3);
-    if (!data)
-        return;
 
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, image_width_, image_height_, GL_RGB, GL_UNSIGNED_BYTE, data);
+double mat_data[] = {
+    0.9848, 0.1736, 0, 0,
+    -0.1736, 0.9848, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+};
 
-    free(data);
+void init() {
+    glClearColor(1., 1., 1., 0.);
+    glShadeModel(GL_FLAT);
 }
 
-void initRendering() {
-	glClearColor(1.0, 1.0, 1.0, 1.0);
-	//glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+void display() {
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(1., 1., 1., 0.);
 
-	loadTexture("../../data/src/daphnia/outer.png");
-	sphere = gluNewQuadric();
-	gluQuadricDrawStyle(sphere, GLU_FILL);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	gluQuadricTexture(sphere, GL_TRUE);
-	gluQuadricNormals(sphere, GLU_SMOOTH);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glLoadIdentity();
+    gluLookAt(0, 0, 0,
+        0, 0, -1,
+        0, 1, 0);
+
+    glLoadMatrixd(&mat_data[0]);
+
+    glColor3f(0, 0, 0);
+    glPushMatrix();
+        glTranslatef(-0.5, 0, -5);
+        glMultMatrixd(&mat_data[0]);
+        //glRotatef(30, 1, 0, 0);
+        //glRotatef(30, 0, 1, 0);
+        //glRotatef(30, 0, 0, 1);
+
+        glPushMatrix();
+            glScalef(0.5, 0.5, 0.5);
+            glScalef(1.5, 1, 1);
+            glutSolidSphere(0.1, 30, 30);
+        glPopMatrix();
+    glPopMatrix();
+
+    glColor3f(0, 0, 0);
+    glPushMatrix();
+        glTranslatef(0.5, 0, -5);
+        glRotatef(30, 1, 0, 0);
+        //glRotatef(30, 0, 1, 0);
+        glRotatef(30, 0, 0, 1);
+
+        glPushMatrix();
+            glScalef(0.5, 0.5, 0.5);
+            glScalef(1.5, 1, 1);
+            glutSolidSphere(0.1, 30, 30);
+        glPopMatrix();
+    glPopMatrix();
+
+    glColor3f(0, 0, 0);
+    glPushMatrix();
+        glTranslatef(0, 0.5, -5);
+        glRotatef(30, 1, 0, 0);
+        glRotatef(30, 0, 1, 0);
+        glRotatef(30, 0, 0, 1);
+
+        glPushMatrix();
+            glScalef(0.5, 0.5, 0.5);
+            glScalef(1.5, 1, 1);
+            glutSolidSphere(0.1, 30, 30);
+        glPopMatrix();
+    glPopMatrix();
+
+    glutSwapBuffers();
+    glutPostRedisplay();
 }
 
-void handleResize(int w, int h) {
-	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(37.0, (float)w / (float)h, 1.0, 200.0);
-}
-
-float ratio = 1.5;
-float ratio_head = 1.6;
-
-float scale = 1.7;
-float scale_2 = 1.5;
-float scale_3 = 0.7;
-
-float radius = 0.1;
-void drawScene() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	//gluLookAt(0, 0, 0,
-	//		  0, 0, -1,
-	//		  0, 1, 0);
-
-	glPushMatrix();
-		glTranslated(-0.5, 0, -3);
-		glRotated(-pitch, 1, 0, 0);
-		glRotated(-roll, 0, 1, 0);
-		glRotated(-yaw, 0, 0, 1);
-		glScaled(scale, scale, scale);
-
-		glPushMatrix();
-			glPushMatrix();
-				glTranslated(0.75 * radius * scale_2 * ratio, radius * scale_2 - radius, 0);
-				glRotated(-40, 0, 0, 1);
-				glColor4f(0.5, 0.5, 0.5, 0.5);
-				glScaled(scale_3, scale_3, scale_3);
-				glScaled(ratio_head, 1., 1.);
-				glutSolidSphere(radius, 32, 32);
-			glPopMatrix();
-
-			glPushMatrix();
-				glColor4f(0.5, 0.5, 0.5, 0.5);
-				glScaled(scale_2, scale_2, scale_2);
-				glScaled(ratio, 1., 1.);
-				gluSphere(sphere, radius, 32, 32);
-			glPopMatrix();
-
-			glPushMatrix();
-				glTranslatef(0, radius * scale_2 - radius, 0);
-				glColor4f(0.5, 0.5, 0.5, 0.5);
-				glScaled(ratio, 1., 1.);
-				glutSolidSphere(radius, 32, 32);
-			glPopMatrix();
-		glPopMatrix();
-	glPopMatrix();
-
-	glutSwapBuffers();
-	glutPostRedisplay();
-}
-
-void handlerKeyboard(unsigned char key, int x, int y) {
-	switch (key) {
-	case 'w':
-		pitch += 1;
-		break;
-	case 's':
-		pitch -= 1;
-		break;
-	case 'a':
-		roll += 1;
-		break;
-	case 'd':
-		roll -= 1;
-		break;
-	case 'q':
-		yaw += 1;
-		break;
-	case 'e':
-		yaw -= 1;
-		break;
-	}
+void reshape(int w, int h) {
+    glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(37, (GLfloat)w / (GLfloat)h, 1.0, 500);
+    glMatrixMode(GL_MODELVIEW);
 }
 
 void main(int argc, char** argv) {
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-	glutInitWindowSize(1000, 1000);
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+    glutInitWindowSize(1280, 1024);
+    glutInitWindowPosition(0, 0);
+    glutCreateWindow("Point array");
 
-	glutCreateWindow("Sphere reflection");
-	initRendering();
-	glutDisplayFunc(drawScene);
-	glutReshapeFunc(handleResize);
-	glutKeyboardFunc(handlerKeyboard);
-	glutMainLoop();
+    glutDisplayFunc(display);
+    glutReshapeFunc(reshape);
+    glutMainLoop();
 }

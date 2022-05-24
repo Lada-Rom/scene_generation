@@ -36,9 +36,10 @@ public:
 	void loadMainJSON();
 	void loadConfigRCOJSON(const std::string& config_filename);
 	void saveMainJSON();
-	void saveGenRCOJSON(const std::string&,
-		const std::vector<std::vector<std::array<double, 3>>>&,
-		const std::vector<std::vector<std::array<double, 2>>>&);
+	void saveGenRCOJSON(const std::string& path,
+		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
+		const std::vector<std::vector<std::array<double, 3>>>& objdirections,
+		const std::vector<std::vector<std::array<double, 2>>>& imgpoints);
 
 	std::vector<cv::Point2d> readInputImgpointsD(size_t);
 	std::vector<cv::Point2i> readInputImgpointsI(size_t);
@@ -60,8 +61,9 @@ public:
 	void makeBackground(const std::string& video_filename, const std::string& bckg_filename);
 	void makeTestTexture(const std::string& filename);
 	void makeEdgeTextures(size_t index);
-	void makeDaphniaTextures(double mean, double dev);
+	void makeDaphniaTextures(size_t index, bool ovoid = true);
 
+	std::array<double, 3> calcObjdirection(double alpha, double beta, double gamma);
 	void predictPoints(std::vector<cv::Point2d>&, const std::vector<cv::Point3d>&,
 		const std::array<double, 9>&,
 		const std::array<double, 9>&, const std::array<double, 3>&);
@@ -69,6 +71,7 @@ public:
 		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
 		const std::array<double, 9>& cmat, const std::array<double, 9>& rmat,
 		const std::array<double, 3>& tvec, const std::array<double, 3>& svec);
+
 	void showPointGrid(size_t, const cv::Size&, double,
 		const std::array<double, 3>& shift = { 0., 0., 0. }, bool save = false);
 	void showPointGrid(size_t, const cv::Size&, double, size_t,
@@ -116,9 +119,8 @@ private:
 	const std::string bottom_edge_name_			{ ".bottom" };
 
 	const std::string daphnia_texture_dir_		{ "daphnia/" };
-	const std::string daphnia_inner_name_		{ "inner" };
-	const std::string daphnia_outer_name_		{ "outer" };
-	const std::string daphnia_head_name_		{ "head" };
+	const std::string daphnia_ovoid_dir_		{ "ovoid/" };
+	const std::string daphnia_circle_dir_		{ "circle/" };
 
 	const std::string generation_json_name_		{ "gen_annotation" };
 	const std::string json_ending_				{ ".json" };

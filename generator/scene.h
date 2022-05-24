@@ -39,11 +39,14 @@ public:
 	void setRCOFrames(const size_t&);
 	void setRCOObjects(const size_t&, const size_t&);
 	void setRCODaphniaCoords(const size_t&, const size_t&, const std::array<double, 3>&);
-	void setRCODaphniaAngles(const size_t&, const size_t&, const std::array<double, 3>&);
+	void setRCODaphniaAngles(
+		const size_t& frame, const size_t& object, const std::array<double, 3>& angles);
+	std::array<double, 3> setRCODaphniaDirection(const size_t& frame, const size_t& object);
 	void setRCODaphniaScale(const size_t&, const size_t&, const double&);
 	void setGenFramesPath(const std::string& path);
 	void setGenMasksPath(const std::string& path);
 	void resetFrameCount();
+	void resetObjectCount();
 
 	void calcOuterCameraParams(const std::vector<cv::Point2d>&,
 		const cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
@@ -111,6 +114,7 @@ private:
 	std::string generation_masks_path_{ };
 	std::string generation_frames_ending_{ ".png" };
 	size_t frame_count_{ };
+	size_t object_count_{ };
 
 	//double test_x{9};
 	//double test_y{ };

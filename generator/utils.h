@@ -12,8 +12,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
 #include <GL/freeglut.h>
+
+using json = nlohmann::json;
 
 namespace add_cv {
 
@@ -27,12 +30,19 @@ void mergeUntexturedImageAndPoints(const std::string&,
 	const std::vector<cv::Point2d>&, const std::string&, const std::string&);
 void mergeUntexturedImageAndPoints(const std::string&,
 	const std::vector<std::array<double, 2>>&, const std::string&, const std::string&);
+
 void mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename, const std::string& dst_filename);
+cv::Mat mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
+	const std::string& glut_filename);
 void mergeTexturedImageWithSource(
 	const std::vector<std::array<double, 2>>& imgpoints,
 	const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename, const std::string& dst_filename);
+
+void textureDaphnia(cv::Mat& img, const cv::Mat& obj_texture);
+void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json,
+	const std::string& dst_filename, const std::string& format);
 
 } //namespace add_cv
 

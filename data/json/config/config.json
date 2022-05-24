@@ -1,11 +1,11 @@
 {
-    "num_frames": 30,
+    "num_frames": 10,
     "object_quantity_range": [
-        50.0,
-        80.0
+        1.0,
+        1.0
     ],
     "object_size_range": [
-        0.4,
-        0.6
+        0.6,
+        0.8
     ]
 }

@@ -23,7 +23,8 @@ try{
 	//generator.makeBackground("../../data/src/video/0.avi", "../../data/src/bckg.0.png");
 	//generator.makeTestTexture("../../data/src/test_texture.png");
 	//generator.makeEdgeTextures(0);
-	//generator.makeDaphniaTextures(127, 50);
+	//generator.makeDaphniaTextures(0, true);
+	//generator.makeDaphniaTextures(0, false);
 
 	generator.genTexturedRandomClip(0, "../../data/json/config/config.json");
 }

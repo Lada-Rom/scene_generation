@@ -94,6 +94,14 @@ void Scene::setRCODaphniaAngles(const size_t& frame, const size_t& object,
     random_clip_objects_[frame][object].setAngles(angles);
 }
 
+////////// setRCODaphniaAnglesWithDirection //////////
+std::array<double, 3> Scene::setRCODaphniaDirection(
+    const size_t& frame, const size_t& object) {
+    std::array<double, 3> direction = random_clip_objects_[frame][object].calcDirection();
+    random_clip_objects_[frame][object].setDirection(direction);
+    return direction;
+}
+
 ////////// setRCODaphniaScale //////////
 void Scene::setRCODaphniaScale(const size_t& frame, const size_t& object,
     const double& scale) {
@@ -113,6 +121,11 @@ void Scene::setGenMasksPath(const std::string& path) {
 ////////// resetFrameCount //////////
 void Scene::resetFrameCount() {
     frame_count_ = 0;
+}
+
+////////// resetObjectCount //////////
+void Scene::resetObjectCount() {
+    object_count_ = 0;
 }
 
 ////////// calcOuterCameraParams //////////
@@ -561,8 +574,8 @@ void Scene::displayTexturedRandomClip() {
 
     glLoadIdentity();
     gluLookAt(0, 0, 0,
-        0, 0, -1,
-        0, 1, 0);
+              0, 0, -1,
+              0, 1, 0);
 
     glLoadMatrixd(&camera_.getRMat()[0][0]);
     glTranslated(
@@ -581,6 +594,7 @@ void Scene::displayTexturedRandomClip() {
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
         drawSimplifiedReflection(daphnia, { 0., 0., 0.});
+        daphnia.drawSimplified({ 0., 0., 0., 0.3 });
     }
 
     //write to file
@@ -616,18 +630,22 @@ void Scene::displayMaskRandomClip() {
         camera_.getSVec()[1],
         camera_.getSVec()[2]);
 
-    //objects
-    for (auto& daphnia : random_clip_objects_[frame_count_]) {
-        daphnia.drawSimplified({ 1, 1, 1, 1 });
-    }
+    //object
+    random_clip_objects_[frame_count_][object_count_].drawSimplified({1, 1, 1, 1});
 
     //write to file
     saveImage(viewport[2], viewport[3], generation_masks_path_
-        + std::to_string(frame_count_) + generation_frames_ending_);
-    ++frame_count_;
+        + std::to_string(frame_count_) + "." + std::to_string(object_count_)
+        + generation_frames_ending_);
+    ++object_count_;
 
     glutSwapBuffers();
     glutPostRedisplay();
+
+    if (object_count_ == random_clip_objects_[frame_count_].size()) {
+        ++frame_count_;
+        object_count_ = 0;
+    }
 
     if (frame_count_ == random_clip_objects_.size())
         glutLeaveMainLoop();
