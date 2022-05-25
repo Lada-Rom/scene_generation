@@ -65,9 +65,9 @@ public:
 	void makeCVDaphniaTexture(size_t index, bool ovoid = true);
 	void makeCVDaphniaMask(bool ovoid = true);
 	void makeGLUTDaphniaTexture(size_t index);
-	void processDaphniaTexture(
+	void processDaphniaTexture(int size,
 		const std::string& src_texture_filename,
-		const cv::Mat& background,
+		const cv::Mat& background_sup,
 		const std::array<double, 2>& center,
 		const std::string& dst_texture_filename);
 

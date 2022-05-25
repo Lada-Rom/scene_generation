@@ -583,19 +583,18 @@ void Generator::makeGLUTDaphniaTexture(size_t index) {
 }
 
 ////////// processDaphniaTexture //////////
-void Generator::processDaphniaTexture(
+void Generator::processDaphniaTexture(int size,
 	const std::string& src_texture_filename,
-	const cv::Mat& background,
+	const cv::Mat& background_sup,
 	const std::array<double, 2>& center,
 	const std::string& dst_texture_filename) {
 
 	cv::Mat texture = cv::imread(src_texture_filename, cv::IMREAD_GRAYSCALE);
 
 	//roi and mean roi
-	int size{ 64 };
 	cv::Rect rect_roi{
-		(int)(center[0] - 0.5 * size), (int)(center[1] - 0.5 * size), size, size };
-	cv::Mat bckg_roi = background(rect_roi);
+		(int)(center[0]), (int)(center[1]), size, size };
+	cv::Mat bckg_roi = background_sup(rect_roi);
 	cv::Mat mean_roi = cv::Mat::zeros(bckg_roi.size(), bckg_roi.type());
 	mean_roi += cv::mean(bckg_roi).val[0];
 
@@ -604,7 +603,7 @@ void Generator::processDaphniaTexture(
 	double scale_y{ 1. * texture.rows / size };
 	double min_val, max_val;
 	int tj, tk;
-	cv::minMaxIdx(background, &min_val, &max_val);
+	cv::minMaxIdx(background_sup, &min_val, &max_val);
 	for (int k = 0; k < size; ++k) {
 		for (int j = 0; j < size; ++j) {
 			for (int sx{}; sx < scale_x; ++sx) {
@@ -630,9 +629,7 @@ void Generator::processDaphniaTexture(
 							(double)mean_roi.at<uchar>(j, k) - 0.5 *
 							(double)texture.at<uchar>(tj, tk)) +
 						1. / 255 * (255 - (double)texture.at<uchar>(tj, tk))
-						* (double)background.at<uchar>(
-							center[1] - 0.5 * size + j,
-							center[0] - 0.5 * size + k));
+						* (double)background_sup.at<uchar>( center[1] + j, center[0] + k));
 				}
 			}
 		}
@@ -645,9 +642,7 @@ void Generator::processDaphniaTexture(
 					tj = scale_y * j + sy;
 					tk = scale_x * k + sx;
 					texture.at<uchar>(tj, tk) = std::min(
-						int(background.at<uchar>(
-							center[1] - 0.5 * size + j,
-							center[0] - 0.5 * size + k)),
+						int(background_sup.at<uchar>(center[1] + j, center[0] + k)),
 						int(texture.at<uchar>(tj, tk)));
 				}
 			}
@@ -1355,12 +1350,14 @@ void Generator::genTexturedRandomClip(size_t index,
 	std::uniform_int_distribution<> texture_index_dis(0, num_objects_range[0] - 1);
 	std::string glut_texture_directory =
 		data_path_ + src_dir_+ daphnia_texture_dir_ + daphnia_glut_dir_;
+	unsigned int size{ 64 };
+	cv::Mat sup_src_image = add_cv::supplementImage(src_image, size);
 	for (int frame{}; frame < objpoints.size(); ++frame) {
 		for (int object{}; object < objpoints[frame].size(); ++object) {
 			int file_index = texture_index_dis(rd_);
 			std::cout << frame << " " << object << " " << file_index << std::endl;
-			processDaphniaTexture(glut_texture_directory + std::to_string(file_index) + image_ending_,
-				src_image, imgpoints[frame][object],
+			processDaphniaTexture(size, glut_texture_directory + std::to_string(file_index) + image_ending_,
+				sup_src_image, imgpoints[frame][object],
 				gen_texture_dir + std::to_string(frame) + "." + std::to_string(object) + image_ending_);
 			main_scene_.setRCODaphniaTextureFilename(frame, object,
 				gen_texture_dir + std::to_string(frame) + "." + std::to_string(object) + image_ending_);

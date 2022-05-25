@@ -41,6 +41,8 @@ void mergeTexturedImageWithSource(
 	const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename, const std::string& dst_filename);
 
+cv::Mat supplementImage(const cv::Mat& src, unsigned int size);
+
 void textureDaphnia(cv::Mat& img, cv::Mat& obj_texture,
 	const std::array<double, 2>& center, const std::array<double, 2>& direction);
 void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json,

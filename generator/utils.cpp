@@ -98,6 +98,63 @@ void mergeTexturedImageWithSource(
 	cv::imwrite(dst_filename, glut_image);
 }
 
+////////// supplementImage //////////
+cv::Mat supplementImage(const cv::Mat& src, unsigned int size) {
+	cv::Mat dst = cv::Mat(src.rows + size, src.cols + size, src.type());
+	cv::Rect upper_roi(0, 0, src.cols, 0.5 * size);
+	cv::Rect lower_roi(0, src.rows - 0.5 * size, src.cols, 0.5 * size);
+	cv::Rect right_roi(src.cols - 0.5 * size, 0, 0.5 * size, src.rows);
+	cv::Rect left_roi(0, 0, 0.5 * size, src.rows);
+	cv::Rect upper_left(0, 0, 0.5 * size, 0.5 * size);
+	cv::Rect upper_right(src.cols - 0.5 * size, 0, 0.5 * size, 0.5 * size);
+	cv::Rect lower_right(src.cols - 0.5 * size, src.rows - 0.5 * size, 0.5 * size, 0.5 * size);
+	cv::Rect lower_left(0, src.rows - 0.5 * size, 0.5 * size, 0.5 * size);
+
+	src.copyTo(dst({ (int)(0.5 * size), (int)(0.5 * size + src.rows) },
+		{ (int)(0.5 * size), (int)(0.5 * size + src.cols) }));
+
+	cv::Mat temp = src(upper_roi).clone();
+	cv::flip(temp, temp, 0);
+	temp.copyTo(dst({ 0, (int)(0.5 * size) },
+		{ (int)(0.5 * size), (int)(src.cols + 0.5 * size) }));
+
+	temp = src(lower_roi).clone();
+	cv::flip(temp, temp, 0);
+	temp.copyTo(dst({ (int)(0.5 * size + src.rows), (int)(src.rows + size) },
+		{ (int)(0.5 * size), (int)(src.cols + 0.5 * size) }));
+
+	temp = src(right_roi).clone();
+	cv::flip(temp, temp, 1);
+	temp.copyTo(dst({ (int)(0.5 * size), (int)(src.rows + 0.5 * size) },
+		{ (int)(0.5 * size + src.cols), (int)(size + src.cols) }));
+
+	temp = src(left_roi).clone();
+	cv::flip(temp, temp, 1);
+	temp.copyTo(dst({ (int)(0.5 * size), (int)(src.rows + 0.5 * size) },
+		{ 0, (int)(0.5 * size) }));
+
+	temp = src(upper_left).clone();
+	cv::flip(temp, temp, -1);
+	temp.copyTo(dst({ 0, (int)(0.5 * size) }, { 0, (int)(0.5 * size) }));
+
+	temp = src(upper_right).clone();
+	cv::flip(temp, temp, -1);
+	temp.copyTo(dst({ 0, (int)(0.5 * size) },
+		{ (int)(0.5 * size + src.cols), (int)(size + src.cols) }));
+
+	temp = src(lower_right).clone();
+	cv::flip(temp, temp, -1);
+	temp.copyTo(dst({ (int)(0.5 * size + src.rows), (int)(size + src.rows) },
+		{ (int)(0.5 * size + src.cols), (int)(size + src.cols) }));
+
+	temp = src(lower_left).clone();
+	cv::flip(temp, temp, -1);
+	temp.copyTo(dst({ (int)(0.5 * size + src.rows), (int)(size + src.rows) },
+		{ 0, (int)(0.5 * size) }));
+
+	return dst;
+}
+
 ////////// textureDaphnia //////////
 void textureDaphnia(cv::Mat& img, cv::Mat& obj_texture,
 	const std::array<double, 2>& center, const std::array<double, 2>& direction) {
