@@ -108,6 +108,12 @@ void Scene::setRCODaphniaScale(const size_t& frame, const size_t& object,
     random_clip_objects_[frame][object].setScale(scale);
 }
 
+////////// setRCODaphniaTextureFilename //////////
+void Scene::setRCODaphniaTextureFilename(const size_t& frame, const size_t& object,
+    const std::string& filename) {
+    random_clip_objects_[frame][object].setTextureFilename(filename);
+}
+
 ////////// setGenFramesPath //////////
 void Scene::setGenFramesPath(const std::string& path) {
     generation_frames_path_ = path;
@@ -608,7 +614,8 @@ void Scene::displayTexturedRandomClip() {
 
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
-        drawSimplifiedReflection(daphnia, { 0., 0., 0.});
+        drawSimplifiedReflection(daphnia, { 0.3, 0.3, 0.3});
+        daphnia.drawTextured();
         //daphnia.drawSimplified({ 0., 0., 0., 0.3 });
     }
 

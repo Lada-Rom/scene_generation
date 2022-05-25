@@ -99,41 +99,82 @@ void mergeTexturedImageWithSource(
 }
 
 ////////// textureDaphnia //////////
-void textureDaphnia(cv::Mat& img, cv::Mat& obj_texture, const std::array<double, 2>& center) {
+void textureDaphnia(cv::Mat& img, cv::Mat& obj_texture,
+	const std::array<double, 2>& center, const std::array<double, 2>& direction) {
 	//roi and mean roi
+	cv::Mat res_obj_texture = cv::Mat::zeros(20, 20, obj_texture.type());
+	cv::resize(obj_texture, res_obj_texture, res_obj_texture.size(), 0, 0, cv::INTER_LINEAR);
 	cv::Rect rect_roi(
-		cv::Point2d{ center[0] - 0.5 * obj_texture.cols, center[1] - 0.5 * obj_texture.rows },
-		obj_texture.size());
+		cv::Point2d{
+			center[0] - 0.5 * res_obj_texture.cols,
+			center[1] - 0.5 * res_obj_texture.rows },
+		res_obj_texture.size());
 	cv::Mat img_roi = img(rect_roi);
 	cv::Mat mean_roi = cv::Mat::zeros(img_roi.size(), img_roi.type());
 	mean_roi += cv::mean(img_roi).val[0];
 
+	//rotate by direction
+	//std::array<double, 2> normalized_direction = {
+	//	direction[0] / std::sqrt(direction[0] * direction[0] + direction[1] * direction[1]),
+	//	direction[1] / std::sqrt(direction[0] * direction[0] + direction[1] * direction[1])
+	//};
+	//double radian_angle = std::acos(normalized_direction[0] * 1. + normalized_direction[1] * 0.);
+	//double degree_angle = 180. * radian_angle / std::acos(-1.);
+	//cv::RotatedRect          dst = cv::RotatedRect(
+	//	cv::Point2f(res_obj_texture.cols - 1, res_obj_texture.rows - 1),
+	//	cv::Size2f(res_obj_texture.cols * 2, res_obj_texture.rows * 2), int(degree_angle));
+	//cv::Point2f dst_[4];
+	//std::vector<cv::Point2f> dst__;
+	//dst.points(dst_);
+	//for (int i = 0; i < 4; i++) {
+	//	dst__.push_back(dst_[i]);
+	//}
+	//std::vector<cv::Point2f> src_;
+	//src_.push_back(cv::Point2f(0, res_obj_texture.rows - 1));
+	//src_.push_back(cv::Point2f(0, 0));
+	//src_.push_back(cv::Point2f(res_obj_texture.cols - 1, 0));
+	//src_.push_back(cv::Point2f(res_obj_texture.cols, res_obj_texture.rows));
+	//cv::Mat H = cv::findHomography(src_, dst__);
+	//cv::Mat daphnia(cv::Size(res_obj_texture.cols * 2, res_obj_texture.rows * 2), CV_64FC1);
+	//cv::warpPerspective(res_obj_texture, res_obj_texture, H,
+	//	cv::Size(res_obj_texture.cols * 2, res_obj_texture.rows * 2));
+
 	//level off brightness
 	double min_val, max_val;
 	cv::minMaxIdx(img, &min_val, &max_val);
-	for (int k = 0; k < obj_texture.cols; k++) {
-		for (int j = 0; j < obj_texture.rows; j++) {
-			if ((double)obj_texture.at<uchar>(j, k) < min_val)
-				obj_texture.at<uchar>(j, k) = min_val;
+	for (int k = 0; k < res_obj_texture.cols; ++k) {
+		for (int j = 0; j < res_obj_texture.rows; ++j) {
+			if ((double)res_obj_texture.at<uchar>(j, k) < min_val)
+				res_obj_texture.at<uchar>(j, k) = min_val;
 		}
 	}
 
 	cv::Mat textured_roi = mean_roi.clone();
-	for (int k = 0; k < obj_texture.cols; k++) {
-		for (int j = 0; j < obj_texture.rows; j++) {
-			obj_texture.at<uchar>(j, k) = cv::saturate_cast<uchar>(
-				1. / 255 * (double)obj_texture.at<uchar>(j, k)
-				* ((double)mean_roi.at<uchar>(j, k) - 0.5 * (double)obj_texture.at<uchar>(j, k))
-				+ 1. / 255 * (255 - (double)obj_texture.at<uchar>(j, k))
+	for (int k = 0; k < res_obj_texture.cols; ++k) {
+		for (int j = 0; j < res_obj_texture.rows; ++j) {
+			res_obj_texture.at<uchar>(j, k) = cv::saturate_cast<uchar>(
+				1. / 255 * (double)res_obj_texture.at<uchar>(j, k) * (
+					(double)mean_roi.at<uchar>(j, k) - 0.5 *
+					(double)res_obj_texture.at<uchar>(j, k)) +
+				1. / 255 * (255 - (double)res_obj_texture.at<uchar>(j, k))
 				* (double)img.at<uchar>(
-					center[1] - 0.5 * obj_texture.rows + j,
-					center[0] - 0.5 * obj_texture.cols + k));
+					center[1] - 0.5 * res_obj_texture.rows + j,
+					center[0] - 0.5 * res_obj_texture.cols + k));
 		}
 	}
-	//obj_texture.copyTo(img(rect_roi));
 
-	std::cout << "hello" << std::endl;
+	for (int k = 0; k < res_obj_texture.cols; ++k) {
+		for (int j = 0; j < res_obj_texture.rows; ++j) {
+			res_obj_texture.at<uchar>(j, k) = std::min(
+					int(img.at<uchar>(
+						center[1] - 0.5 * res_obj_texture.rows + j,
+						center[0] - 0.5 * res_obj_texture.cols + k)),
+					int(res_obj_texture.at<uchar>(j, k)));
+		}
+	}
+
 	//add to source image
+	res_obj_texture.copyTo(img(rect_roi));
 }
 
 ////////// textureFrameDaphnias //////////
@@ -153,12 +194,12 @@ void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json
 	size_t num_circle_textures = std::distance(
 		std::filesystem::directory_iterator(texture_path + "ovoid/"),
 		std::filesystem::directory_iterator{});
-	std::uniform_int_distribution<> tex_ovoid_number(0, num_ovoid_textures - 1);
-	std::uniform_int_distribution<> tex_circle_number(0, num_circle_textures - 1);
+	std::uniform_int_distribution<> tex_ovoid_number(0, num_ovoid_textures - 2);   //excluding mask
+	std::uniform_int_distribution<> tex_circle_number(0, num_circle_textures - 2); //excluding mask
 	std::string texture_filename;
 
 	cv::Mat obj_texture;
-	std::array<double, 2> center;
+	std::array<double, 2> center, direction;
 
 	//for each object of frame
 	for (int object{}; object < num_objects; ++object) {
@@ -176,7 +217,8 @@ void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json
 	
 		//draw objecttexture on frame
 		center = frame_2d_json[object]["coords"].get<std::array<double, 2>>();
-		add_cv::textureDaphnia(img, obj_texture, center);
+		direction = frame_2d_json[object]["direction"].get<std::array<double, 2>>();
+		add_cv::textureDaphnia(img, obj_texture, center, direction);
 	}
 
 	//write image to file
@@ -311,5 +353,29 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	fs::create_directories(path + main_dir + glut_dir);
 	fs::create_directories(path + main_dir + merged_dir);
 	fs::create_directories(path + main_dir + mask_dir);
+	fs::create_directories(path + main_dir + json_dir);
+}
+
+////////// makeGenFileTree //////////
+void makeGenFileTree(const std::string& path, const std::string& main_dir,
+	const std::string& glut_dir, const std::string& merged_dir,
+	const std::string& mask_dir, const std::string& tex_dir,
+	const std::string& json_dir) {
+	namespace fs = std::filesystem;
+
+	//check if path exists
+	fs::file_status s = fs::file_status{};
+	if (!fs::exists(path))
+		throw std::invalid_argument("Path does not exists");
+
+	//check if main_dir exists
+	if (fs::exists(path + main_dir))
+		fs::remove_all(path + main_dir);
+
+	//making subdirectories
+	fs::create_directories(path + main_dir + glut_dir);
+	fs::create_directories(path + main_dir + merged_dir);
+	fs::create_directories(path + main_dir + mask_dir);
+	fs::create_directories(path + main_dir + tex_dir);
 	fs::create_directories(path + main_dir + json_dir);
 }

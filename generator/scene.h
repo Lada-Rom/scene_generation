@@ -43,6 +43,7 @@ public:
 		const size_t& frame, const size_t& object, const std::array<double, 3>& angles);
 	std::array<double, 3> setRCODaphniaDirection(const size_t& frame, const size_t& object);
 	void setRCODaphniaScale(const size_t&, const size_t&, const double&);
+	void setRCODaphniaTextureFilename(const size_t& frame, const size_t& object, const std::string& filename);
 	void setGenFramesPath(const std::string& path);
 	void setGenMasksPath(const std::string& path);
 	void resetFrameCount();

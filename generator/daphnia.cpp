@@ -37,6 +37,11 @@ void Daphnia::setScale(const double& scale) {
 	scale_ = scale;
 }
 
+////////// setTextureFilename //////////
+void Daphnia::setTextureFilename(const std::string& filename) {
+	texture_.filename_ = filename;
+}
+
 ////////// calcDirection //////////
 std::array<double, 3> Daphnia::calcDirection() {
 	glm::dvec4 direction_4d = rotation_ * glm::make_vec4(default_direction_.data());
@@ -45,6 +50,16 @@ std::array<double, 3> Daphnia::calcDirection() {
 		glm::dvec3{ direction_4d.x, direction_4d.y, direction_4d.z });
 	return { direction_3d.x, direction_3d.y, direction_3d.z };
 }
+
+//////////// loadSphereTexture //////////
+//void Daphnia::loadSphereTexture() {
+//	//sphere_ = gluNewQuadric();
+//	loadTexture(texture_);
+//	gluQuadricDrawStyle(sphere_, GLU_FILL);
+//	glBindTexture(GL_TEXTURE_2D, texture_.id_);
+//	gluQuadricTexture(sphere_, GL_TRUE);
+//	gluQuadricNormals(sphere_, GLU_SMOOTH);
+//}
 
 ////////// drawSimplified //////////
 void Daphnia::drawSimplified(const std::array<double, 4>& color4d) {
@@ -110,6 +125,39 @@ void Daphnia::drawComplicated(
 			glPopMatrix();
 		glPopMatrix();
 	glDisable(GL_BLEND);
+	glPopMatrix();
+}
+
+////////// drawTextured //////////
+void Daphnia::drawTextured() {
+	glPushMatrix();
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+		loadTexture(texture_);
+		gluQuadricDrawStyle(sphere_, GLU_FILL);
+		glBindTexture(GL_TEXTURE_2D, texture_.id_);
+		gluQuadricTexture(sphere_, GL_TRUE);
+		gluQuadricNormals(sphere_, GLU_SMOOTH);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+		glColor4d(0., 0., 0., 1.);
+		glTranslated(coords_[0], coords_[1], coords_[2]);
+		glMultMatrixd(&rotation_[0][0]);
+
+		//glColor4dv(color4d.data());
+		glPushMatrix();
+			glRotated(90, 0, 1, 0);
+			glScaled(scale_, scale_, scale_);
+			glScaled(length_ratio_, 1., 1.);
+			glRotated(90, 0, 1, 0);
+			gluSphere(sphere_, radius_, 32, 32);
+			//glutSolidSphere(radius_, 30, 30);
+		glPopMatrix();
+	glDisable(GL_BLEND);
+	glDisable(GL_TEXTURE_2D);
 	glPopMatrix();
 }
 

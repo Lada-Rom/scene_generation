@@ -379,8 +379,8 @@ void Generator::makeEdgeTextures(size_t index) {
 	cv::imwrite(directory + std::to_string(index) + bottom_edge_name_ + image_ending_, bottom_plane);
 }
 
-////////// makeDaphniaTextures //////////
-void Generator::makeDaphniaTextures(size_t index, bool ovoid) {
+////////// makeCVDaphniaTexture //////////
+void Generator::makeCVDaphniaTexture(size_t index, bool ovoid) {
 	std::string directory;
 	if (ovoid)
 		directory = data_path_ + src_dir_ + daphnia_texture_dir_ + daphnia_ovoid_dir_;
@@ -390,7 +390,7 @@ void Generator::makeDaphniaTextures(size_t index, bool ovoid) {
 	if (!std::filesystem::exists(directory))
 		std::filesystem::create_directories(directory);
 
-	const int  size = 200;
+	const int  size = texture_size_;
 	cv::Mat    img = cv::Mat::zeros(size, size, CV_8UC1);
 
 	float      t = 0.3f;
@@ -401,8 +401,8 @@ void Generator::makeDaphniaTextures(size_t index, bool ovoid) {
 	const auto eps = std::numeric_limits<float>::epsilon();
 	float      dx = (2.0f - 2 * eps) / img.cols;
 
-	int radius = 72;
-	int center = 100;
+	int radius = 0.72 * 0.5 * size;
+	int center = 0.5 * size;
 
 	float dy{}, gau{};
 	int y_top{}, y_bottom{}, x{};
@@ -475,8 +475,8 @@ void Generator::makeDaphniaTextures(size_t index, bool ovoid) {
 	cv::imwrite(directory + std::to_string(index) + image_ending_, imf_ret);
 }
 
-////////// makeDaphniaMask //////////
-void Generator::makeDaphniaMask(bool ovoid) {
+////////// makeCVDaphniaMask //////////
+void Generator::makeCVDaphniaMask(bool ovoid) {
 	std::string directory;
 	if (ovoid)
 		directory = data_path_ + src_dir_ + daphnia_texture_dir_ + daphnia_ovoid_dir_;
@@ -486,7 +486,7 @@ void Generator::makeDaphniaMask(bool ovoid) {
 	if (!std::filesystem::exists(directory))
 		std::filesystem::create_directories(directory);
 
-	const int  size = 200;
+	const int  size = texture_size_;
 	cv::Mat    img = cv::Mat::zeros(size, size, CV_8UC1);
 
 	float      t = 0.3f;
@@ -495,8 +495,8 @@ void Generator::makeDaphniaMask(bool ovoid) {
 	const auto eps = std::numeric_limits<float>::epsilon();
 	float      dx = (2.0f - 2 * eps) / img.cols;
 
-	int radius = 72;
-	int center = 100;
+	int radius = 0.72 * 0.5 * size;
+	int center = 0.5 * size;
 
 	float dy{};
 	int y_top{}, y_bottom{}, x{};
@@ -515,10 +515,147 @@ void Generator::makeDaphniaMask(bool ovoid) {
 	cv::imwrite(directory + "mask" + image_ending_, img);
 }
 
-////////// calcObjdirection //////////
-std::array<double, 3> Generator::calcObjdirection(
-	double alpha, double beta, double gamma) {
-	return {0, 0, 0};
+////////// makeGLUTDaphniaTexture //////////
+void Generator::makeGLUTDaphniaTexture(size_t index) {
+	std::string directory = data_path_ + src_dir_ + daphnia_texture_dir_ + daphnia_glut_dir_;
+	if (!std::filesystem::exists(directory))
+		std::filesystem::create_directories(directory);
+	
+	const int  size = texture_size_;
+	cv::Mat    img = cv::Mat::zeros(size + 2, size, CV_8UC1);
+
+	float      t = 0.3f;
+	float      l = 1.565f;
+	uint8_t    base = 200;
+	float      gau_a = 1.0f;
+	float      gau_c = 12.0f;
+	const auto eps = std::numeric_limits<float>::epsilon();
+	float      dx = (2.0f - 2 * eps) / img.cols;
+	float dy{}, gau{};
+	int y_top{}, y_bottom{}, x{}, r{};
+	double center = 0.5 * size;
+
+	img += 255;
+	cv::line(img, { 0, 0 }, { img.cols - 1, 0 }, { 0, 0, 0 });
+	cv::line(img, { 0, img.rows - 1 }, { img.cols - 1, img.rows - 1 }, { 0, 0, 0 });
+
+	cv::Mat imb_egg_dt;
+	cv::distanceTransform(img, imb_egg_dt, cv::DIST_L1, 3);
+	imb_egg_dt = imb_egg_dt(
+		cv::Range(1, imb_egg_dt.rows - 1), cv::Range(0, imb_egg_dt.cols));
+
+	cv::Mat imf_egg = cv::Mat::zeros(size, size, CV_32FC1);
+	for (int y = 0; y < imb_egg_dt.rows; ++y) {
+		r = abs(y - center);
+		gau = gau_a * std::exp(-r * r / (2 * gau_c * gau_c));
+		cv::line(imf_egg, { 0, y }, { imb_egg_dt.cols - 1, y }, cv::saturate_cast<float>( base + (255 - base) * gau ));
+	}
+
+	imf_egg = imf_egg + imf_egg.mul(imb_egg_dt);
+	cv::normalize(imf_egg, imf_egg, 1.0f, 0.0f, cv::NormTypes::NORM_MINMAX);
+	cv::Mat1f noise_10(size / 10, size / 10);
+	cv::Mat1f noise_25(size / 25, size / 25);
+
+	float     m = 0.5;
+	float     sigma = 0.5;
+	cv::randn(noise_10, m, sigma);
+	cv::randn(noise_25, m, sigma);
+
+	cv::Mat1f noise_scaled;
+	cv::resize(noise_25, noise_scaled, { size, size });
+
+	cv::Mat1f noise = noise_scaled.clone();
+	cv::resize(noise_10, noise_scaled, { size, size });
+	noise += noise_scaled;
+
+	imf_egg = imf_egg + imf_egg.mul(noise);
+	//cv::resize(imf_egg, imf_egg, { 20, 20 }, 0.0, 0.0, cv::InterpolationFlags::INTER_LINEAR);
+	
+	cv::Mat imf_ret = cv::Mat::zeros(size, 2 * size, CV_32FC1);
+	cv::rotate(imf_egg, imf_egg, cv::ROTATE_90_CLOCKWISE);
+	imf_egg.copyTo(imf_ret(cv::Range(0, size), cv::Range(0, size)));
+	imf_egg.copyTo(imf_ret(cv::Range(0, size), cv::Range(size, 2 * size)));
+	
+	cv::normalize(imf_ret, imf_ret, 1.0f, 0.5f, cv::NormTypes::NORM_MINMAX);
+	imf_ret.convertTo(imf_ret, CV_8UC1, 255, 0);
+	
+	cv::imwrite(directory + std::to_string(index) + image_ending_, imf_ret);
+}
+
+////////// processDaphniaTexture //////////
+void Generator::processDaphniaTexture(
+	const std::string& src_texture_filename,
+	const cv::Mat& background,
+	const std::array<double, 2>& center,
+	const std::string& dst_texture_filename) {
+
+	cv::Mat texture = cv::imread(src_texture_filename, cv::IMREAD_GRAYSCALE);
+
+	//roi and mean roi
+	int size{ 64 };
+	cv::Rect rect_roi{
+		(int)(center[0] - 0.5 * size), (int)(center[1] - 0.5 * size), size, size };
+	cv::Mat bckg_roi = background(rect_roi);
+	cv::Mat mean_roi = cv::Mat::zeros(bckg_roi.size(), bckg_roi.type());
+	mean_roi += cv::mean(bckg_roi).val[0];
+
+	//level off brightness
+	double scale_x{ 1. * texture.cols / size };
+	double scale_y{ 1. * texture.rows / size };
+	double min_val, max_val;
+	int tj, tk;
+	cv::minMaxIdx(background, &min_val, &max_val);
+	for (int k = 0; k < size; ++k) {
+		for (int j = 0; j < size; ++j) {
+			for (int sx{}; sx < scale_x; ++sx) {
+				for (int sy{}; sy < scale_y; ++sy) {
+					tj = scale_y * j + sy;
+					tk = scale_x * k + sx;
+					if ((double)texture.at<uchar>(tj, tk) < min_val)
+						texture.at<uchar>(tj, tk) = min_val;
+				}
+			}
+		}
+	}
+
+	cv::Mat textured_roi = mean_roi.clone();
+	for (int k = 0; k < size; ++k) {
+		for (int j = 0; j < size; ++j) {
+			for (int sx{}; sx < scale_x; ++sx) {
+				for (int sy{}; sy < scale_y; ++sy) {
+					tj = scale_y * j + sy;
+					tk = scale_x * k + sx;
+					texture.at<uchar>(tj, tk) = cv::saturate_cast<uchar>(
+						1. / 255 * (double)texture.at<uchar>(tj, tk) * (
+							(double)mean_roi.at<uchar>(j, k) - 0.5 *
+							(double)texture.at<uchar>(tj, tk)) +
+						1. / 255 * (255 - (double)texture.at<uchar>(tj, tk))
+						* (double)background.at<uchar>(
+							center[1] - 0.5 * size + j,
+							center[0] - 0.5 * size + k));
+				}
+			}
+		}
+	}
+
+	for (int k = 0; k < size; ++k) {
+		for (int j = 0; j < size; ++j) {
+			for (int sx{}; sx < scale_x; ++sx) {
+				for (int sy{}; sy < scale_y; ++sy) {
+					tj = scale_y * j + sy;
+					tk = scale_x * k + sx;
+					texture.at<uchar>(tj, tk) = std::min(
+						int(background.at<uchar>(
+							center[1] - 0.5 * size + j,
+							center[0] - 0.5 * size + k)),
+						int(texture.at<uchar>(tj, tk)));
+				}
+			}
+		}
+	}
+
+	//write result
+	cv::imwrite(dst_texture_filename, texture);
 }
 
 ////////// predictPoints //////////
@@ -1117,6 +1254,7 @@ void Generator::genTexturedRandomClip(size_t index,
 	std::string gen_glut_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
 	std::string gen_merged_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
 	std::string gen_mask_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_mask_dir_;
+	std::string gen_texture_dir = path + RCO_generation_main_dir_ + generation_textures_dir_;
 	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
 	main_scene_.setGenFramesPath(gen_glut_dir);
 	main_scene_.setGenMasksPath(gen_mask_dir);
@@ -1124,7 +1262,7 @@ void Generator::genTexturedRandomClip(size_t index,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_,
 		generation_frames_dir_ + frames_mask_dir_,
-		generation_json_dir_);
+		gen_texture_dir, generation_json_dir_);
 
 	//construct 3D params - coords, angles
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
@@ -1210,6 +1348,25 @@ void Generator::genTexturedRandomClip(size_t index,
 	main_scene_.setAquariumEdgeTextureFilename("lower", edge_texture_path + lower_edge_name_ + image_ending_);
 	main_scene_.setAquariumEdgeTextureFilename("bottom", edge_texture_path + bottom_edge_name_ + image_ending_);
 
+	for (int i{}; i < num_objects_range[0]; ++i)
+		makeGLUTDaphniaTexture(i);
+
+	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
+	std::uniform_int_distribution<> texture_index_dis(0, num_objects_range[0] - 1);
+	std::string glut_texture_directory =
+		data_path_ + src_dir_+ daphnia_texture_dir_ + daphnia_glut_dir_;
+	for (int frame{}; frame < objpoints.size(); ++frame) {
+		for (int object{}; object < objpoints[frame].size(); ++object) {
+			int file_index = texture_index_dis(rd_);
+			std::cout << frame << " " << object << " " << file_index << std::endl;
+			processDaphniaTexture(glut_texture_directory + std::to_string(file_index) + image_ending_,
+				src_image, imgpoints[frame][object],
+				gen_texture_dir + std::to_string(frame) + "." + std::to_string(object) + image_ending_);
+			main_scene_.setRCODaphniaTextureFilename(frame, object,
+				gen_texture_dir + std::to_string(frame) + "." + std::to_string(object) + image_ending_);
+		}
+	}
+
 	//glut rendering
 	std::cout << "GLUT frames rendering" << std::endl;
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
@@ -1229,37 +1386,43 @@ void Generator::genTexturedRandomClip(size_t index,
 
 	//merge glut scene with source image
 	std::cout << "OpenCV background merging" << std::endl;
-	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
 	cv::Mat mask_source = cv::imread(gen_glut_dir + "0" + image_ending_, cv::IMREAD_GRAYSCALE);
 	cv::Mat mask;
 	cv::threshold(mask_source, mask, 254, 255, cv::THRESH_BINARY);
 
 	std::vector<cv::Mat> merged_frames;
-	for (int frame = {}; frame < num_frames; ++frame)
-		merged_frames.push_back(
-			add_cv::mergeTexturedImageWithSource(mask, src_image,
-				gen_glut_dir + std::to_string(frame) + image_ending_));
-
-	std::cout << "OpenCV daphnia texturing" << std::endl;
 	std::string merged_filename;
 	for (int frame = {}; frame < num_frames; ++frame) {
 		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
-		add_cv::textureFrameDaphnias(frame, merged_frames[frame], gen_RCO_json_,
-			rd_, data_path_ + src_dir_ + daphnia_texture_dir_, merged_filename, image_ending_);
-		num_objects = main_scene_.getRCOObjectsNum(frame);
-		cv::Mat merged_image = cv::imread(merged_filename, cv::IMREAD_GRAYSCALE);
-		for (int object{}; object < num_objects; ++object) {
-			std::array<double, 2> center{
-				0.5 * main_scene_.getRenderImageSize().width,
-				0.5 * main_scene_.getRenderImageSize().height };
-			std::array<double, 2> begin = imgpoints[frame][object];
-			std::array<double, 2> end = {
-				imgdirections[frame][object][0] + imgpoints[frame][object][0],
-				imgdirections[frame][object][1] + imgpoints[frame][object][1] };
-			cv::line(merged_image,
-				cv::Point2d{ begin[0], begin[1] }, cv::Point2d{ end[0], end[1] }, {0, 0, 255});
-		}
+		//merged_frames.push_back(
+		//	add_cv::mergeTexturedImageWithSource(mask, src_image,
+		//		gen_glut_dir + std::to_string(frame) + image_ending_));
+		add_cv::mergeTexturedImageWithSource(mask, src_image,
+			gen_glut_dir + std::to_string(frame) + image_ending_, merged_filename);
 	}
+
+	//std::cout << "OpenCV daphnia texturing" << std::endl;
+	//std::string merged_filename;
+	//for (int frame = {}; frame < num_frames; ++frame) {
+	//
+	//	merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
+	//	add_cv::textureFrameDaphnias(frame, merged_frames[frame], gen_RCO_json_,
+	//		rd_, data_path_ + src_dir_ + daphnia_texture_dir_, merged_filename, image_ending_);
+	//	num_objects = main_scene_.getRCOObjectsNum(frame);
+	//	cv::Mat merged_image = cv::imread(merged_filename, cv::IMREAD_GRAYSCALE);
+	//
+	//	for (int object{}; object < num_objects; ++object) {
+	//		std::array<double, 2> center{
+	//			0.5 * main_scene_.getRenderImageSize().width,
+	//			0.5 * main_scene_.getRenderImageSize().height };
+	//		std::array<double, 2> begin = imgpoints[frame][object];
+	//		std::array<double, 2> end = {
+	//			imgdirections[frame][object][0] + imgpoints[frame][object][0],
+	//			imgdirections[frame][object][1] + imgpoints[frame][object][1] };
+	//		cv::line(merged_image,
+	//			cv::Point2d{ begin[0], begin[1] }, cv::Point2d{ end[0], end[1] }, {0, 0, 255});
+	//	}
+	//}
 
 	std::cout << "Successful end of program!" << std::endl;
 }

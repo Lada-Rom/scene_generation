@@ -62,10 +62,15 @@ public:
 	void makeBackground(const std::string& video_filename, const std::string& bckg_filename);
 	void makeTestTexture(const std::string& filename);
 	void makeEdgeTextures(size_t index);
-	void makeDaphniaTextures(size_t index, bool ovoid = true);
-	void makeDaphniaMask(bool ovoid = true);
+	void makeCVDaphniaTexture(size_t index, bool ovoid = true);
+	void makeCVDaphniaMask(bool ovoid = true);
+	void makeGLUTDaphniaTexture(size_t index);
+	void processDaphniaTexture(
+		const std::string& src_texture_filename,
+		const cv::Mat& background,
+		const std::array<double, 2>& center,
+		const std::string& dst_texture_filename);
 
-	std::array<double, 3> calcObjdirection(double alpha, double beta, double gamma);
 	void predictPoints(std::vector<cv::Point2d>&, const std::vector<cv::Point3d>&,
 		const std::array<double, 9>&,
 		const std::array<double, 9>&, const std::array<double, 3>&);
@@ -130,6 +135,7 @@ private:
 	const std::string daphnia_texture_dir_		{ "daphnia/" };
 	const std::string daphnia_ovoid_dir_		{ "ovoid/" };
 	const std::string daphnia_circle_dir_		{ "circle/" };
+	const std::string daphnia_glut_dir_			{ "glut/" };
 
 	const std::string generation_json_name_		{ "gen_annotation" };
 	const std::string json_ending_				{ ".json" };
@@ -144,9 +150,12 @@ private:
 	const std::string RCO_generation_main_dir_	{ "RCO_generation/" };
 	const std::string generation_frames_dir_	{ "frames/" };
 	const std::string generation_json_dir_		{ "json/" };
+	const std::string generation_textures_dir_	{ "textures/" };
 	const std::string frames_glut_dir_			{ "glut/" };
 	const std::string frames_merged_dir_		{ "merged/" };
 	const std::string frames_mask_dir_			{ "mask/" };
+
+	unsigned int texture_size_{ 128 };
 
 	json main_json_{ };
 	json config_json_{ };

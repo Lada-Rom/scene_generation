@@ -23,14 +23,15 @@ try{
 	//generator.makeBackground("../../data/src/video/0.avi", "../../data/src/bckg.0.png");
 	//generator.makeTestTexture("../../data/src/test_texture.png");
 	//generator.makeEdgeTextures(0);
-	for (int i{}; i < 20; ++i) {
-		generator.makeDaphniaTextures(i, true);
-		generator.makeDaphniaTextures(i, false);
-	}
-	generator.makeDaphniaMask(true);
-	generator.makeDaphniaMask(false);
 
-	//generator.genTexturedRandomClip(0, "../../data/json/config/config.json");
+	//for (int i{}; i < 20; ++i) {
+	//	generator.makeCVDaphniaTexture(i, true);
+	//	generator.makeCVDaphniaTexture(i, false);
+	//}
+	//generator.makeCVDaphniaMask(true);
+	//generator.makeCVDaphniaMask(false);
+
+	generator.genTexturedRandomClip(0, "../../data/json/config/config.json");
 }
 catch (const std::exception& exc) {
 	std::cout << exc.what() << std::endl;

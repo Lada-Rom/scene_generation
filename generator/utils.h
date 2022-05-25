@@ -41,7 +41,8 @@ void mergeTexturedImageWithSource(
 	const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename, const std::string& dst_filename);
 
-void textureDaphnia(cv::Mat& img, cv::Mat& obj_texture, const std::array<double, 2>& center);
+void textureDaphnia(cv::Mat& img, cv::Mat& obj_texture,
+	const std::array<double, 2>& center, const std::array<double, 2>& direction);
 void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json,
 	std::random_device& rd, const std::string& texture_path,
 	const std::string& dst_filename, const std::string& format);
@@ -72,5 +73,9 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	const std::string& glut_dir, const std::string& merged_dir,
 	const std::string& mask_dir, const std::string& json_dir);
+void makeGenFileTree(const std::string& path, const std::string& main_dir,
+	const std::string& glut_dir, const std::string& merged_dir,
+	const std::string& mask_dir, const std::string& tex_dir,
+	const std::string& json_dir);
 
 #endif
