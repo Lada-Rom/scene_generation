@@ -41,6 +41,11 @@ size_t Scene::getRCOObjectsNum(size_t frame) {
     return random_clip_objects_[frame].size();
 }
 
+////////// getSCODaphniaLength //////////
+double Scene::getSCODaphniaLength(size_t object) {
+    return sequent_clip_objects_[object].getLength();
+}
+
 ////////// setCameraRMat //////////
 void Scene::setCameraRMat(const std::array<double, 9>& rmat) {
     camera_.setRMat(rmat);
@@ -132,6 +137,28 @@ void Scene::resetFrameCount() {
 ////////// resetObjectCount //////////
 void Scene::resetObjectCount() {
     object_count_ = 0;
+}
+
+////////// setSCOObjects //////////
+void Scene::setSCOObjects(const size_t& num_objects) {
+    sequent_clip_objects_ = std::vector<Daphnia>{ num_objects };
+}
+
+////////// setSCODaphniaScale //////////
+void Scene::setSCODaphniaScale(const size_t& object, const double& scale) {
+    sequent_clip_objects_[object].setScale(scale);
+}
+
+////////// setSCODaphniaCoords //////////
+void Scene::setSCODaphniaCoords(
+    const size_t& object, const std::array<double, 3>& coords) {
+    sequent_clip_objects_[object].setCoords(coords);
+}
+
+////////// setSCODaphniaAngles //////////
+void Scene::setSCODaphniaAngles(
+    const size_t& object, const std::array<double, 3>& angles) {
+    sequent_clip_objects_[object].setAngles(angles);
 }
 
 ////////// calcOuterCameraParams //////////

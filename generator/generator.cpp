@@ -69,8 +69,8 @@ void Generator::loadMainJSON() {
 	file >> main_json_;
 }
 
-////////// loadConfigRCOJSON //////////
-void Generator::loadConfigRCOJSON(const std::string& config_filename) {
+////////// loadConfigJSON //////////
+void Generator::loadConfigJSON(const std::string& config_filename) {
 	std::ifstream file(config_filename);
 	file >> config_json_;
 }
@@ -155,8 +155,18 @@ std::array<double, 3> Generator::readCameraSVec(size_t index) {
 void Generator::readConfigRCOJSON(size_t& num_frames,
 	std::array<double, 2>& num_objects_range,
 	std::array<double, 2>& size_objects_range, const std::string& filename) {
-	loadConfigRCOJSON(filename);
+	loadConfigJSON(filename);
 	num_frames = config_json_["num_frames"].get<size_t>();
+	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
+	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
+}
+
+////////// readConfigSCOJSON //////////
+void Generator::readConfigSCOJSON(size_t& num_frames,
+	std::array<double, 2>& num_objects_range,
+	std::array<double, 2>& size_objects_range, const std::string& filename) {
+	loadConfigJSON(filename);
+	num_frames = config_json_["duration"].get<int>() * config_json_["fps"].get<int>();
 	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
 	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
 }
@@ -1437,30 +1447,90 @@ void Generator::genTexturedRandomClip(size_t index,
 			gen_glut_dir + std::to_string(frame) + image_ending_, merged_filename);
 	}
 
-	//std::cout << "OpenCV daphnia texturing" << std::endl;
-	//std::string merged_filename;
-	//for (int frame = {}; frame < num_frames; ++frame) {
-	//
-	//	merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
-	//	add_cv::textureFrameDaphnias(frame, merged_frames[frame], gen_RCO_json_,
-	//		rd_, data_path_ + src_dir_ + daphnia_texture_dir_, merged_filename, image_ending_);
-	//	num_objects = main_scene_.getRCOObjectsNum(frame);
-	//	cv::Mat merged_image = cv::imread(merged_filename, cv::IMREAD_GRAYSCALE);
-	//
-	//	for (int object{}; object < num_objects; ++object) {
-	//		std::array<double, 2> center{
-	//			0.5 * main_scene_.getRenderImageSize().width,
-	//			0.5 * main_scene_.getRenderImageSize().height };
-	//		std::array<double, 2> begin = imgpoints[frame][object];
-	//		std::array<double, 2> end = {
-	//			imgdirections[frame][object][0] + imgpoints[frame][object][0],
-	//			imgdirections[frame][object][1] + imgpoints[frame][object][1] };
-	//		cv::line(merged_image,
-	//			cv::Point2d{ begin[0], begin[1] }, cv::Point2d{ end[0], end[1] }, {0, 0, 255});
-	//	}
-	//}
-
 	std::cout << "Successful end of program!" << std::endl;
+}
+
+////////// genTexturedSequentClip //////////
+void Generator::genTexturedSequentClip(size_t index,
+	const std::string& config_filename, std::string path) {
+	//read params from config json
+	size_t num_frames;
+	std::array<double, 2> num_objects_range;
+	std::array<double, 2> size_objects_range;
+	readConfigSCOJSON(num_frames, num_objects_range, size_objects_range, config_filename);
+
+	//read info from main json and set params
+	std::string image_filename = readInputImage(index);
+	std::array<double, 9> rmat = readCameraRMat(index);
+	std::array<double, 3> tvec = readCameraTVec(index);
+	std::array<double, 3> svec = readCameraSVec(index);
+	main_scene_.setCameraRMat(rmat);
+	main_scene_.setCameraTVec(tvec);
+	main_scene_.setCameraSVec(svec);
+
+	//construct 3D params - coords, directions
+	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
+
+	size_t num_objects;
+	std::uniform_int_distribution<>	num_obj;
+	num_objects = (num_objects_range[0] == num_objects_range[1])
+		? num_objects_range[0]
+		: std::uniform_int_distribution<>(num_objects_range[0], num_objects_range[1])(rd_);
+
+	double object_size;
+	std::normal_distribution<> size_dis;
+	if ((size_objects_range[0] - size_objects_range[1]) < std::numeric_limits<double>::epsilon())
+		object_size = size_objects_range[0];
+	else
+		size_dis = std::normal_distribution<>(
+			(size_objects_range[0] + size_objects_range[1]) * 0.5,
+			(size_objects_range[1] - size_objects_range[0]) / 6);
+
+	std::uniform_real_distribution<> x_dis;
+	std::uniform_real_distribution<> y_dis;
+	std::uniform_real_distribution<> z_dis;
+	std::uniform_real_distribution<> angles_dis(0., 180.);
+
+	std::array<double, 3> buffer;
+	main_scene_.setSCOObjects(num_objects);
+	std::cout << "\nGenerating 3D params" << std::endl;
+
+	//frame 0: initial params
+	double curr_scale, curr_dl;
+	for (int object = {}; object < num_objects; ++object) {
+		//gen size scale
+		if ((size_objects_range[0] - size_objects_range[1]) < std::numeric_limits<double>::epsilon())
+			curr_scale = object_size;
+		else
+			curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
+		main_scene_.setSCODaphniaScale(object, curr_scale);
+		curr_dl = 0.5 * main_scene_.getSCODaphniaLength(object);
+
+		//set distributions' range by length of object
+		x_dis = std::uniform_real_distribution<>(-0.5 * aq_size[0] + curr_dl, 0.5 * aq_size[0] - curr_dl);
+		y_dis = std::uniform_real_distribution<>(-0.5 * aq_size[1] + curr_dl, 0.5 * aq_size[1] - curr_dl);
+		z_dis = std::uniform_real_distribution<>(-aq_size[2] + curr_dl, 0 - curr_dl);
+
+		//gen coords - x, y, z
+		buffer = { x_dis(rd_), y_dis(rd_), z_dis(rd_) };
+		main_scene_.setSCODaphniaCoords(object, buffer);
+
+		//gen angles - apha, beta, gamma
+		buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
+		main_scene_.setSCODaphniaAngles(object, buffer);
+	}
+
+	//other frames
+	for (int frame = { 1 }; frame < num_frames; ++frame) {
+		for (int object = {}; object < num_objects; ++object) {
+			//gen direction deviation
+
+			//gen shift
+
+			//process edge situation
+
+		}
+	}
 }
 
 ////////// cvtMatToVector //////////

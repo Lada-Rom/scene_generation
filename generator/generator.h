@@ -34,7 +34,7 @@ public:
 		const std::array<double, 2>& num_object_range,
 		const std::array<double, 2>& size_object_range);
 	void loadMainJSON();
-	void loadConfigRCOJSON(const std::string& config_filename);
+	void loadConfigJSON(const std::string& config_filename);
 	void saveMainJSON();
 	void saveGenRCOJSON(const std::string& path,
 		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
@@ -49,6 +49,8 @@ public:
 	std::array<double, 3> readCameraTVec(size_t);
 	std::array<double, 3> readCameraSVec(size_t);
 	void readConfigRCOJSON(size_t&, std::array<double, 2>&,
+		std::array<double, 2>&, const std::string& filename);
+	void readConfigSCOJSON(size_t&, std::array<double, 2>&,
 		std::array<double, 2>&, const std::string& filename);
 
 	void writeCameraRMat(const cv::Mat&, size_t);
@@ -98,6 +100,8 @@ public:
 	void genUntexturedRandomClip(size_t index,
 		const std::string& config_filename, std::string path = {});
 	void genTexturedRandomClip(size_t index,
+		const std::string& config_filename, std::string path = {});
+	void genTexturedSequentClip(size_t index,
 		const std::string& config_filename, std::string path = {});
 
 	std::vector<double> cvtMatToVector(const cv::Mat&);

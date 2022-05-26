@@ -23,9 +23,11 @@ public:
 	std::array<double, 3> getAquariumSize();
 
 	double getScale();
-	Daphnia getRCODaphnia(size_t, size_t);
-	double getRCODaphniaLength(size_t, size_t);
-	size_t getRCOObjectsNum(size_t);
+	Daphnia getRCODaphnia(size_t frame, size_t object);
+	double getRCODaphniaLength(size_t frame, size_t object);
+	size_t getRCOObjectsNum(size_t frame);
+
+	double getSCODaphniaLength(size_t object);
 
 	void setCameraRMat(const std::array<double, 9>&);
 	void setCameraTVec(const std::array<double, 3>&);
@@ -36,18 +38,25 @@ public:
 	void setAquariumEdgeTextureFilename(
 		const std::string& edge, const std::string& filename);
 
-	void setRCOFrames(const size_t&);
-	void setRCOObjects(const size_t&, const size_t&);
-	void setRCODaphniaCoords(const size_t&, const size_t&, const std::array<double, 3>&);
-	void setRCODaphniaAngles(
-		const size_t& frame, const size_t& object, const std::array<double, 3>& angles);
+	void setRCOFrames(const size_t& num_frames);
+	void setRCOObjects(const size_t& index, const size_t& num_objects);
+	void setRCODaphniaCoords(const size_t& frame,
+		const size_t& object, const std::array<double, 3>& coords);
+	void setRCODaphniaAngles(const size_t& frame,
+		const size_t& object, const std::array<double, 3>& angles);
 	std::array<double, 3> setRCODaphniaDirection(const size_t& frame, const size_t& object);
-	void setRCODaphniaScale(const size_t&, const size_t&, const double&);
-	void setRCODaphniaTextureFilename(const size_t& frame, const size_t& object, const std::string& filename);
+	void setRCODaphniaScale(const size_t& frame, const size_t& object, const double& scale);
+	void setRCODaphniaTextureFilename(const size_t& frame,
+		const size_t& object, const std::string& filename);
 	void setGenFramesPath(const std::string& path);
 	void setGenMasksPath(const std::string& path);
 	void resetFrameCount();
 	void resetObjectCount();
+
+	void setSCOObjects(const size_t& num_objects);
+	void setSCODaphniaScale(const size_t& object, const double& scale);
+	void setSCODaphniaCoords(const size_t& object, const std::array<double, 3>& coords);
+	void setSCODaphniaAngles(const size_t& object, const std::array<double, 3>& angles);
 
 	void calcOuterCameraParams(const std::vector<cv::Point2d>&,
 		const cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
@@ -116,6 +125,8 @@ private:
 	std::string generation_frames_ending_{ ".png" };
 	size_t frame_count_{ };
 	size_t object_count_{ };
+
+	std::vector<Daphnia> sequent_clip_objects_{ }; //SCO
 
 	double test_x{};
 	double test_y{};
