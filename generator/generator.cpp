@@ -539,47 +539,71 @@ void Generator::makeGLUTDaphniaTexture(size_t index) {
 	cv::line(img, { 0, 0 }, { img.cols - 1, 0 }, { 0, 0, 0 });
 	cv::line(img, { 0, img.rows - 1 }, { img.cols - 1, img.rows - 1 }, { 0, 0, 0 });
 
-	cv::Mat imb_egg_dt;
-	cv::distanceTransform(img, imb_egg_dt, cv::DIST_L1, 3);
-	imb_egg_dt = imb_egg_dt(
-		cv::Range(1, imb_egg_dt.rows - 1), cv::Range(0, imb_egg_dt.cols));
+	//horizontal heatmap - most brightness in the center
+	cv::Mat img_dt;
+	cv::distanceTransform(img, img_dt, cv::DIST_L1, 3);
+	img_dt = img_dt(cv::Range(1, img_dt.rows - 1), cv::Range(0, img_dt.cols));
 
-	cv::Mat imf_egg = cv::Mat::zeros(size, size, CV_32FC1);
-	for (int y = 0; y < imb_egg_dt.rows; ++y) {
+	//saturate casting
+	cv::Mat img_base = cv::Mat::zeros(size, size, CV_32FC1);
+	for (int y = 0; y < img_dt.rows; ++y) {
 		r = abs(y - center);
 		gau = gau_a * std::exp(-r * r / (2 * gau_c * gau_c));
-		cv::line(imf_egg, { 0, y }, { imb_egg_dt.cols - 1, y }, cv::saturate_cast<float>( base + (255 - base) * gau ));
+		cv::line(img_base, { 0, y }, { img_dt.cols - 1, y }, cv::saturate_cast<float>( base + (255 - base) * gau ));
 	}
 
-	imf_egg = imf_egg + imf_egg.mul(imb_egg_dt);
-	cv::normalize(imf_egg, imf_egg, 1.0f, 0.0f, cv::NormTypes::NORM_MINMAX);
-	cv::Mat1f noise_10(size / 10, size / 10);
-	cv::Mat1f noise_25(size / 25, size / 25);
+	img_base = img_base + img_base.mul(img_dt);
+	cv::normalize(img_base, img_base, 1.0f, 0.0f, cv::NormTypes::NORM_MINMAX);
 
+	//adding noises of different sizes
 	float     m = 0.5;
 	float     sigma = 0.5;
+	cv::Mat1f noise_10(size / 10, size / 10);
+	cv::Mat1f noise_25(size / 25, size / 25);
+	cv::Mat1f noise_scaled;
 	cv::randn(noise_10, m, sigma);
 	cv::randn(noise_25, m, sigma);
 
-	cv::Mat1f noise_scaled;
 	cv::resize(noise_25, noise_scaled, { size, size });
-
 	cv::Mat1f noise = noise_scaled.clone();
+
 	cv::resize(noise_10, noise_scaled, { size, size });
 	noise += noise_scaled;
 
-	imf_egg = imf_egg + imf_egg.mul(noise);
-	//cv::resize(imf_egg, imf_egg, { 20, 20 }, 0.0, 0.0, cv::InterpolationFlags::INTER_LINEAR);
+	img_base = img_base + img_base.mul(noise);
 	
-	cv::Mat imf_ret = cv::Mat::zeros(size, 2 * size, CV_32FC1);
-	cv::rotate(imf_egg, imf_egg, cv::ROTATE_90_CLOCKWISE);
-	imf_egg.copyTo(imf_ret(cv::Range(0, size), cv::Range(0, size)));
-	imf_egg.copyTo(imf_ret(cv::Range(0, size), cv::Range(size, 2 * size)));
+	//making target texture from generated base
+	//vertical center element
+	cv::Mat dst = cv::Mat::zeros(size, 2 * size, CV_32FC1);
+	cv::Mat img_base_res = cv::Mat::zeros(img_base.size(), img_base.type());
+	cv::rotate(img_base, img_base_res, cv::ROTATE_90_CLOCKWISE);
+	img_base_res.copyTo(dst(cv::Range(0, size), cv::Range(0.5 * size, 1.5 * size)));
+
+	//vetical side elements
+	cv::resize(img_base_res, img_base_res, { (int)(0.5 * size), size }, 0, 0, cv::INTER_LINEAR);
+	img_base_res.copyTo(dst(cv::Range(0, size), cv::Range(0, 0.5 * size)));
+	img_base_res.copyTo(dst(cv::Range(0, size), cv::Range(1.5 * size, 2 * size)));
 	
-	cv::normalize(imf_ret, imf_ret, 1.0f, 0.5f, cv::NormTypes::NORM_MINMAX);
-	imf_ret.convertTo(imf_ret, CV_8UC1, 255, 0);
+	//horizontal darker part - head
+	img_base(cv::Range(0.5 * size, size), cv::Range(0, size)).copyTo(img_base_res);
+	img_base_res = img_base_res.mul(img_dt(cv::Range(0.5 * size, size), cv::Range(0, size))) / (0.5 * size);
+	cv::resize(img_base_res, img_base_res, {2 * size, size}, 0, 0, cv::INTER_LINEAR);
+	dst(cv::Range(0, img_base_res.rows), cv::Range(0, 2 * size))
+		= cv::max(img_base_res, dst(cv::Range(0, img_base_res.rows), cv::Range(0, img_base_res.cols)));
+
+	//horizontal lighter part - tail
+	cv::Mat img_dt_res = img_dt(cv::Range(0.5 * size, size), cv::Range(0, size)).clone();
+	cv::resize(img_dt_res, img_dt_res, {2 * size, (int)(0.6 * size)}, 0, 0, cv::INTER_LINEAR);
+	cv::normalize(img_dt_res, img_dt_res, 1.0f, 0.0f, cv::NormTypes::NORM_MINMAX);
+	dst(cv::Range(size - img_dt_res.rows, size), cv::Range(0, 2 * size))
+		= dst(cv::Range(size - img_dt_res.rows, size), cv::Range(0, 2 * size)).mul(img_dt_res);
+
+	//writing texture template
+	cv::normalize(dst, dst, 1.0f, 0.39f, cv::NormTypes::NORM_MINMAX);
+	dst.convertTo(dst, CV_8UC1, 255, 0);
+	cv::flip(dst, dst, 0);
 	
-	cv::imwrite(directory + std::to_string(index) + image_ending_, imf_ret);
+	cv::imwrite(directory + std::to_string(index) + image_ending_, dst);
 }
 
 ////////// processDaphniaTexture //////////
@@ -1262,16 +1286,22 @@ void Generator::genTexturedRandomClip(size_t index,
 	//construct 3D params - coords, angles
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
 	size_t num_objects;
+	double object_size;
 	std::uniform_int_distribution<>	num_obj;
+	std::normal_distribution<> size_dis;
 
 	if (num_objects_range[0] == num_objects_range[1])
 		num_objects = num_objects_range[0];
 	else
 		num_obj = std::uniform_int_distribution<>(num_objects_range[0], num_objects_range[1]);
+	if ((size_objects_range[0] - size_objects_range[1]) < std::numeric_limits<double>::epsilon())
+		object_size = size_objects_range[0];
+	else
+		size_dis = std::normal_distribution<>(
+			(size_objects_range[0] + size_objects_range[1]) * 0.5,
+			(size_objects_range[1] - size_objects_range[0]) / 6);
+
 	std::uniform_real_distribution<> angles_dis(0., 180.);
-	std::normal_distribution<> size_dis(
-		(size_objects_range[0] + size_objects_range[1]) * 0.5,
-		(size_objects_range[1] - size_objects_range[0]) / 6);
 	std::uniform_real_distribution<> x_dis;
 	std::uniform_real_distribution<> y_dis;
 	std::uniform_real_distribution<> z_dis;
@@ -1291,7 +1321,10 @@ void Generator::genTexturedRandomClip(size_t index,
 
 		for (int object = {}; object < num_objects; ++object) {
 			//gen size scale
-			curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
+			if ((size_objects_range[0] - size_objects_range[1]) < std::numeric_limits<double>::epsilon())
+				curr_scale = object_size;
+			else
+				curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
 			main_scene_.setRCODaphniaScale(frame, object, curr_scale);
 			curr_dl = 0.5 * main_scene_.getRCODaphniaLength(frame, object);
 

@@ -61,7 +61,7 @@ private:
 	double scale_body_{ 1.5 };
 	double scale_head_{ 0.7 };
 
-	double length_ratio_{ 1.5 };
+	double length_ratio_{ 2.0 };
 	double head_ratio_{ 1.6 };
 
 	double radius_{ 0.1 };

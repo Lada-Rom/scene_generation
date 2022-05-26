@@ -136,11 +136,11 @@ void Daphnia::drawTextured() {
 	glPushMatrix();
 		glTranslated(coords_[0], coords_[1], coords_[2]);
 
-		glColor4d(1., 0., 0., 1.);
-		glBegin(GL_LINES);
-		glVertex3d(0., 0., 0.);
-		glVertex3d(direction_[0], direction_[1], direction_[2]);
-		glEnd();
+		//glColor4d(1., 0., 0., 1.);
+		//glBegin(GL_LINES);
+		//glVertex3d(0., 0., 0.);
+		//glVertex3d(direction_[0], direction_[1], direction_[2]);
+		//glEnd();
 
 		glMultMatrixd(&rotation_[0][0]);
 
