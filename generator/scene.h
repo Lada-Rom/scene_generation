@@ -39,18 +39,29 @@ public:
 	void setRCOFrames(const size_t&);
 	void setRCOObjects(const size_t&, const size_t&);
 	void setRCODaphniaCoords(const size_t&, const size_t&, const std::array<double, 3>&);
-	void setRCODaphniaAngles(const size_t&, const size_t&, const std::array<double, 3>&);
+	void setRCODaphniaAngles(
+		const size_t& frame, const size_t& object, const std::array<double, 3>& angles);
+	std::array<double, 3> setRCODaphniaDirection(const size_t& frame, const size_t& object);
 	void setRCODaphniaScale(const size_t&, const size_t&, const double&);
-	void setGenFramesPath(const std::string&);
+	void setRCODaphniaTextureFilename(const size_t& frame, const size_t& object, const std::string& filename);
+	void setGenFramesPath(const std::string& path);
+	void setGenMasksPath(const std::string& path);
 	void resetFrameCount();
+	void resetObjectCount();
 
 	void calcOuterCameraParams(const std::vector<cv::Point2d>&,
 		const cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
 
 	void initGLUT(GLfloat red = 1, GLfloat green = 1, GLfloat blue = 1);
 	void drawAxis();
-	void drawReflection(const Daphnia& daphnia,
+
+	void drawSimplifiedReflection(const Daphnia& daphnia,
 		const std::array<double, 3>& color3d);
+	void drawComplicatedReflection(const Daphnia& daphnia,
+		const std::array<double, 4>& color_inner,
+		const std::array<double, 4>& color_outer,
+		const std::array<double, 4>& color_head);
+
 	void drawRightPlaneReflection(const Daphnia& daphnia,
 		const std::array<double, 3>& color3d);
 	void drawLeftPlaneReflection(const Daphnia& daphnia,
@@ -59,13 +70,32 @@ public:
 		const std::array<double, 3>& color3d);
 	void drawLowerPlaneReflection(const Daphnia& daphnia,
 		const std::array<double, 3>& color3d);
+
+	void drawRightPlaneComplicatedReflection(const Daphnia& daphnia,
+		const std::array<double, 4>& color_inner,
+		const std::array<double, 4>& color_outer,
+		const std::array<double, 4>& color_head);
+	void drawLeftPlaneComplicatedReflection(const Daphnia& daphnia,
+		const std::array<double, 4>& color_inner,
+		const std::array<double, 4>& color_outer,
+		const std::array<double, 4>& color_head);
+	void drawUpperPlaneComplicatedReflection(const Daphnia& daphnia,
+		const std::array<double, 4>& color_inner,
+		const std::array<double, 4>& color_outer,
+		const std::array<double, 4>& color_head);
+	void drawLowerPlaneComplicatedReflection(const Daphnia& daphnia,
+		const std::array<double, 4>& color_inner,
+		const std::array<double, 4>& color_outer,
+		const std::array<double, 4>& color_head);
+
 	void reshape(int, int);
-	//void controlSpec(int key, int x, int y);
-	//void controlKey(unsigned char key, int x, int y);
+	void controlSpec(int key, int x, int y);
+	void controlKey(unsigned char key, int x, int y);
 
 	void displayPointGrid();
 	void displayUntexturedRandomClip();
 	void displayTexturedRandomClip();
+	void displayMaskRandomClip();
 
 private:
 	cv::Size2i render_image_size_{ 1280, 1024 };
@@ -82,12 +112,14 @@ private:
 
 	std::vector<std::vector<Daphnia>> random_clip_objects_{ }; //RCO
 	std::string generation_frames_path_{ };
+	std::string generation_masks_path_{ };
 	std::string generation_frames_ending_{ ".png" };
 	size_t frame_count_{ };
+	size_t object_count_{ };
 
-	//double test_x{9};
-	//double test_y{ };
-	//double test_z{-2};
+	double test_x{};
+	double test_y{};
+	double test_z{};
 };
 
 #endif

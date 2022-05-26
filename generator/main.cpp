@@ -24,6 +24,13 @@ try{
 	//generator.makeTestTexture("../../data/src/test_texture.png");
 	//generator.makeEdgeTextures(0);
 
+	//for (int i{}; i < 20; ++i) {
+	//	generator.makeCVDaphniaTexture(i, true);
+	//	generator.makeCVDaphniaTexture(i, false);
+	//}
+	//generator.makeCVDaphniaMask(true);
+	//generator.makeCVDaphniaMask(false);
+
 	generator.genTexturedRandomClip(0, "../../data/json/config/config.json");
 }
 catch (const std::exception& exc) {

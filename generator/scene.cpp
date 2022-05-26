@@ -94,10 +94,24 @@ void Scene::setRCODaphniaAngles(const size_t& frame, const size_t& object,
     random_clip_objects_[frame][object].setAngles(angles);
 }
 
+////////// setRCODaphniaAnglesWithDirection //////////
+std::array<double, 3> Scene::setRCODaphniaDirection(
+    const size_t& frame, const size_t& object) {
+    std::array<double, 3> direction = random_clip_objects_[frame][object].calcDirection();
+    random_clip_objects_[frame][object].setDirection(direction);
+    return direction;
+}
+
 ////////// setRCODaphniaScale //////////
 void Scene::setRCODaphniaScale(const size_t& frame, const size_t& object,
     const double& scale) {
     random_clip_objects_[frame][object].setScale(scale);
+}
+
+////////// setRCODaphniaTextureFilename //////////
+void Scene::setRCODaphniaTextureFilename(const size_t& frame, const size_t& object,
+    const std::string& filename) {
+    random_clip_objects_[frame][object].setTextureFilename(filename);
 }
 
 ////////// setGenFramesPath //////////
@@ -105,9 +119,19 @@ void Scene::setGenFramesPath(const std::string& path) {
     generation_frames_path_ = path;
 }
 
+////////// setGenMasksPath //////////
+void Scene::setGenMasksPath(const std::string& path) {
+    generation_masks_path_ = path;
+}
+
 ////////// resetFrameCount //////////
 void Scene::resetFrameCount() {
     frame_count_ = 0;
+}
+
+////////// resetObjectCount //////////
+void Scene::resetObjectCount() {
+    object_count_ = 0;
 }
 
 ////////// calcOuterCameraParams //////////
@@ -167,8 +191,8 @@ void Scene::drawAxis() {
     glPopMatrix();
 }
 
-////////// drawReflection //////////
-void Scene::drawReflection(const Daphnia& daphnia,
+////////// drawSimplifiedReflection //////////
+void Scene::drawSimplifiedReflection(const Daphnia& daphnia,
     const std::array<double, 3>& color3d) {
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
@@ -190,6 +214,31 @@ void Scene::drawReflection(const Daphnia& daphnia,
         drawLowerPlaneReflection(daphnia, color3d);
 }
 
+////////// drawComplicatedReflection //////////
+void Scene::drawComplicatedReflection(const Daphnia& daphnia,
+    const std::array<double, 4>& color_inner,
+    const std::array<double, 4>& color_outer,
+    const std::array<double, 4>& color_head) {
+    std::array<double, 3> aq_size = aquarium_.getSize();
+    std::array<double, 3> coords = daphnia.getCoords();
+
+    //right plane
+    if (coords[0] > 0.5 * aq_size[0] - reflection_distance_limit_)
+        drawRightPlaneComplicatedReflection(daphnia, color_inner, color_outer, color_head);
+
+    //left plane
+    if (coords[0] < -0.5 * aq_size[0] + reflection_distance_limit_)
+        drawLeftPlaneComplicatedReflection(daphnia, color_inner, color_outer, color_head);
+
+    //upper plane
+    if (coords[1] > 0.5 * aq_size[1] - reflection_distance_limit_)
+        drawUpperPlaneComplicatedReflection(daphnia, color_inner, color_outer, color_head);
+
+    //lower plane
+    if (coords[1] < -0.5 * aq_size[1] + reflection_distance_limit_)
+        drawLowerPlaneComplicatedReflection(daphnia, color_inner, color_outer, color_head);
+}
+
 ////////// drawRightPlaneReflection //////////
 void Scene::drawRightPlaneReflection(const Daphnia& daphnia,
     const std::array<double, 3>& color3d) {
@@ -208,7 +257,7 @@ void Scene::drawRightPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[0]) - abs(coords[0]));
-    daphnia.drawReflection(true,
+    daphnia.drawSimplifiedReflection(true,
         { -0.5 * aq_size[0] - diff, coords[1], coords[2] },
         { color3d[0], color3d[1], color3d[2], reflection_strength_});
 
@@ -234,7 +283,7 @@ void Scene::drawLeftPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[0]) - abs(coords[0]));
-    daphnia.drawReflection(true,
+    daphnia.drawSimplifiedReflection(true,
         { 0.5 * aq_size[0] + diff, coords[1], coords[2] },
         { color3d[0], color3d[1], color3d[2], reflection_strength_ });
 
@@ -260,7 +309,7 @@ void Scene::drawUpperPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[1]) - abs(coords[1]));
-    daphnia.drawReflection(false,
+    daphnia.drawSimplifiedReflection(false,
         { coords[0], -0.5 * aq_size[1] - diff, coords[2] },
         { color3d[0], color3d[1], color3d[2], reflection_strength_ });
 
@@ -286,9 +335,121 @@ void Scene::drawLowerPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[1]) - abs(coords[1]));
-    daphnia.drawReflection(false,
+    daphnia.drawSimplifiedReflection(false,
         { coords[0], 0.5 * aq_size[1] + diff, coords[2] },
         { color3d[0], color3d[1], color3d[2], reflection_strength_ });
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+}
+
+////////// drawRightPlaneComplicatedReflection //////////
+void Scene::drawRightPlaneComplicatedReflection(const Daphnia& daphnia,
+    const std::array<double, 4>& color_inner,
+    const std::array<double, 4>& color_outer,
+    const std::array<double, 4>& color_head) {
+    glEnable(GL_STENCIL_TEST);
+
+    glColorMask(0, 0, 0, 0); //disable drawing colors
+    glStencilFunc(GL_ALWAYS, 1, 1); //make the stencil test always pass
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); //set 1 to pixels that passed stencil test
+    aquarium_.drawRightPlane(); //set right plane pixels to 1
+
+    glColorMask(1, 1, 1, 1); //enable drawing colors
+    glStencilFunc(GL_EQUAL, 1, 1); //make pixel pass when pixel is 1 in stencil buffer
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); //make the stencil buffer not change
+
+    //draw reflection
+    std::array<double, 3> aq_size = aquarium_.getSize();
+    std::array<double, 3> coords = daphnia.getCoords();
+    double diff = abs(abs(0.5 * aq_size[0]) - abs(coords[0]));
+    daphnia.drawComplicatedReflection(true,
+        { -0.5 * aq_size[0] - diff, coords[1], coords[2] },
+        color_inner, color_outer, color_head);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+}
+
+////////// drawLeftPlaneComplicatedReflection //////////
+void Scene::drawLeftPlaneComplicatedReflection(const Daphnia& daphnia,
+    const std::array<double, 4>& color_inner,
+    const std::array<double, 4>& color_outer,
+    const std::array<double, 4>& color_head) {
+    glEnable(GL_STENCIL_TEST);
+
+    glColorMask(0, 0, 0, 0); //disable drawing colors
+    glStencilFunc(GL_ALWAYS, 1, 1); //make the stencil test always pass
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); //set 1 to pixels that passed stencil test
+    aquarium_.drawLeftPlane(); //set right plane pixels to 1
+
+    glColorMask(1, 1, 1, 1); //enable drawing colors
+    glStencilFunc(GL_EQUAL, 1, 1); //make pixel pass when pixel is 1 in stencil buffer
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); //make the stencil buffer not change
+
+    //draw reflection
+    std::array<double, 3> aq_size = aquarium_.getSize();
+    std::array<double, 3> coords = daphnia.getCoords();
+    double diff = abs(abs(0.5 * aq_size[0]) - abs(coords[0]));
+    daphnia.drawComplicatedReflection(true,
+        { 0.5 * aq_size[0] + diff, coords[1], coords[2] },
+        color_inner, color_outer, color_head);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+}
+
+////////// drawUpperPlaneComplicatedReflection //////////
+void Scene::drawUpperPlaneComplicatedReflection(const Daphnia& daphnia,
+    const std::array<double, 4>& color_inner,
+    const std::array<double, 4>& color_outer,
+    const std::array<double, 4>& color_head) {
+    glEnable(GL_STENCIL_TEST);
+
+    glColorMask(0, 0, 0, 0); //disable drawing colors
+    glStencilFunc(GL_ALWAYS, 1, 1); //make the stencil test always pass
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); //set 1 to pixels that passed stencil test
+    aquarium_.drawUpperPlane(); //set right plane pixels to 1
+
+    glColorMask(1, 1, 1, 1); //enable drawing colors
+    glStencilFunc(GL_EQUAL, 1, 1); //make pixel pass when pixel is 1 in stencil buffer
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); //make the stencil buffer not change
+
+    //draw reflection
+    std::array<double, 3> aq_size = aquarium_.getSize();
+    std::array<double, 3> coords = daphnia.getCoords();
+    double diff = abs(abs(0.5 * aq_size[1]) - abs(coords[1]));
+    daphnia.drawComplicatedReflection(false,
+        { coords[0], -0.5 * aq_size[1] - diff, coords[2] },
+        color_inner, color_outer, color_head);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+}
+
+////////// drawLowerPlaneComplicatedReflection //////////
+void Scene::drawLowerPlaneComplicatedReflection(const Daphnia& daphnia,
+    const std::array<double, 4>& color_inner,
+    const std::array<double, 4>& color_outer,
+    const std::array<double, 4>& color_head) {
+    glEnable(GL_STENCIL_TEST);
+
+    glColorMask(0, 0, 0, 0); //disable drawing colors
+    glStencilFunc(GL_ALWAYS, 1, 1); //make the stencil test always pass
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); //set 1 to pixels that passed stencil test
+    aquarium_.drawLowerPlane(); //set right plane pixels to 1
+
+    glColorMask(1, 1, 1, 1); //enable drawing colors
+    glStencilFunc(GL_EQUAL, 1, 1); //make pixel pass when pixel is 1 in stencil buffer
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); //make the stencil buffer not change
+
+    //draw reflection
+    std::array<double, 3> aq_size = aquarium_.getSize();
+    std::array<double, 3> coords = daphnia.getCoords();
+    double diff = abs(abs(0.5 * aq_size[1]) - abs(coords[1]));
+    daphnia.drawComplicatedReflection(false,
+        { coords[0], 0.5 * aq_size[1] + diff, coords[2] },
+        color_inner, color_outer, color_head);
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
@@ -305,25 +466,40 @@ void Scene::reshape(int width, int height) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-//////////// controlSpec //////////
-//void Scene::controlSpec(int key, int x, int y) {
-//    if (key == GLUT_KEY_LEFT)
-//        test_x -= 0.1;
-//    if (key == GLUT_KEY_RIGHT)
-//        test_x += 0.1;
-//    if (key == GLUT_KEY_UP)
-//        test_y += 0.1;
-//    if (key == GLUT_KEY_DOWN)
-//        test_y -= 0.1;
-//}
-//
-//////////// controlKey //////////
-//void Scene::controlKey(unsigned char key, int x, int y) {
-//    if (key == 'w')
-//        test_z -= 0.1;
-//    if (key == 's')
-//        test_z += 0.1;
-//}
+////////// controlSpec //////////
+void Scene::controlSpec(int key, int x, int y) {
+    if (key == GLUT_KEY_LEFT) {
+        test_y -= 1;
+    }
+    if (key == GLUT_KEY_RIGHT) {
+        test_y += 1;
+    }
+    if (key == GLUT_KEY_UP) {
+        test_x += 1;
+    }
+    if (key == GLUT_KEY_DOWN) {
+        test_x -= 1;
+    }
+
+    random_clip_objects_[0][0].setAngles({ test_y, test_x, test_z });
+    std::array<double, 3> dir = random_clip_objects_[0][0].calcDirection();
+    random_clip_objects_[0][0].setDirection(dir);
+    std::cout << test_y << " " << test_x << " " << test_z << std::endl;
+}
+
+////////// controlKey //////////
+void Scene::controlKey(unsigned char key, int x, int y) {
+    if (key == 'd') {
+        test_z -= 1;
+    }
+    if (key == 'a') {
+        test_z += 1;
+    }
+    random_clip_objects_[0][0].setAngles({ test_y, test_x, test_z });
+    std::array<double, 3> dir = random_clip_objects_[0][0].calcDirection();
+    random_clip_objects_[0][0].setDirection(dir);
+    std::cout << test_y << " " << test_x << " " << test_z << std::endl;
+}
 
 ////////// displayPointGrid //////////
 void Scene::displayPointGrid() {
@@ -391,8 +567,8 @@ void Scene::displayUntexturedRandomClip() {
 
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
-        daphnia.draw({ 0., 0., 0., 1. });
-        drawReflection(daphnia, { 0., 0., 0. });
+        daphnia.drawSimplified({ 0., 0., 0., 1. });
+        drawSimplifiedReflection(daphnia, { 0., 0., 0. });
     }
 
     //aquarium
@@ -419,8 +595,8 @@ void Scene::displayTexturedRandomClip() {
 
     glLoadIdentity();
     gluLookAt(0, 0, 0,
-        0, 0, -1,
-        0, 1, 0);
+              0, 0, -1,
+              0, 1, 0);
 
     glLoadMatrixd(&camera_.getRMat()[0][0]);
     glTranslated(
@@ -438,8 +614,9 @@ void Scene::displayTexturedRandomClip() {
 
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
-        drawReflection(daphnia, { 0., 0., 0. });
-        daphnia.draw({ 0., 0., 0., 1. });
+        drawSimplifiedReflection(daphnia, { 0.3, 0.3, 0.3});
+        daphnia.drawTextured();
+        //daphnia.drawSimplified({ 0., 0., 0., 0.3 });
     }
 
     //write to file
@@ -449,6 +626,48 @@ void Scene::displayTexturedRandomClip() {
 
     glutSwapBuffers();
     glutPostRedisplay();
+
+    if (frame_count_ == random_clip_objects_.size())
+        glutLeaveMainLoop();
+}
+
+////////// displayMaskRandomClip //////////
+void Scene::displayMaskRandomClip() {
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    gluLookAt(0, 0, 0,
+              0, 0, -1,
+              0, 1, 0);
+
+    glLoadMatrixd(&camera_.getRMat()[0][0]);
+    glTranslated(
+        camera_.getTVec()[0],
+        -camera_.getTVec()[1],
+        -abs(camera_.getTVec()[2]));
+    glTranslated(
+        camera_.getSVec()[0],
+        camera_.getSVec()[1],
+        camera_.getSVec()[2]);
+
+    //object
+    random_clip_objects_[frame_count_][object_count_].drawSimplified({1, 1, 1, 1});
+
+    //write to file
+    saveImage(viewport[2], viewport[3], generation_masks_path_
+        + std::to_string(frame_count_) + "." + std::to_string(object_count_)
+        + generation_frames_ending_);
+    ++object_count_;
+
+    glutSwapBuffers();
+    glutPostRedisplay();
+
+    if (object_count_ == random_clip_objects_[frame_count_].size()) {
+        ++frame_count_;
+        object_count_ = 0;
+    }
 
     if (frame_count_ == random_clip_objects_.size())
         glutLeaveMainLoop();

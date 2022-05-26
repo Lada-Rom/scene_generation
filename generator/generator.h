@@ -36,9 +36,11 @@ public:
 	void loadMainJSON();
 	void loadConfigRCOJSON(const std::string& config_filename);
 	void saveMainJSON();
-	void saveGenRCOJSON(const std::string&,
-		const std::vector<std::vector<std::array<double, 3>>>&,
-		const std::vector<std::vector<std::array<double, 2>>>&);
+	void saveGenRCOJSON(const std::string& path,
+		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
+		const std::vector<std::vector<std::array<double, 3>>>& objdirections,
+		const std::vector<std::vector<std::array<double, 2>>>& imgpoints,
+		const std::vector<std::vector<std::array<double, 2>>>& imgdirections);
 
 	std::vector<cv::Point2d> readInputImgpointsD(size_t);
 	std::vector<cv::Point2i> readInputImgpointsI(size_t);
@@ -60,6 +62,14 @@ public:
 	void makeBackground(const std::string& video_filename, const std::string& bckg_filename);
 	void makeTestTexture(const std::string& filename);
 	void makeEdgeTextures(size_t index);
+	void makeCVDaphniaTexture(size_t index, bool ovoid = true);
+	void makeCVDaphniaMask(bool ovoid = true);
+	void makeGLUTDaphniaTexture(size_t index);
+	void processDaphniaTexture(int size,
+		const std::string& src_texture_filename,
+		const cv::Mat& background_sup,
+		const std::array<double, 2>& center,
+		const std::string& dst_texture_filename);
 
 	void predictPoints(std::vector<cv::Point2d>&, const std::vector<cv::Point3d>&,
 		const std::array<double, 9>&,
@@ -68,6 +78,14 @@ public:
 		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
 		const std::array<double, 9>& cmat, const std::array<double, 9>& rmat,
 		const std::array<double, 3>& tvec, const std::array<double, 3>& svec);
+	void predictDirections(
+		std::vector<std::vector<std::array<double, 2>>>& imgdirections,
+		std::vector<std::vector<std::array<double, 3>>> objdirections,
+		const std::vector<std::vector<std::array<double, 2>>>& imgpoints,
+		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
+		const std::array<double, 9>& cmat, const std::array<double, 9>& rmat,
+		const std::array<double, 3>& tvec, const std::array<double, 3>& svec);
+
 	void showPointGrid(size_t, const cv::Size&, double,
 		const std::array<double, 3>& shift = { 0., 0., 0. }, bool save = false);
 	void showPointGrid(size_t, const cv::Size&, double, size_t,
@@ -94,15 +112,18 @@ private:
 	static void displayPointGrid();
 	static void displayUntexturedRandomClip();
 	static void displayTexturedRandomClip();
+	static void displayMaskRandomClip();
 	static void reshape(int, int);
-	//static void controlKey(unsigned char key, int x, int y);
-	//static void controlSpec(int key, int x, int y);
+	static void controlKey(unsigned char key, int x, int y);
+	static void controlSpec(int key, int x, int y);
 	double normDistGenInRange(std::normal_distribution<>, const double&, const double&);
 
 	const std::string main_json_filename_		{ "../../data/json/generator_params.json" };
 	const std::string json_dir_					{ "json/" };
+
 	const std::string config_json_dir_			{ "config/" };
 	const std::string config_json_name_			{ "config" };
+
 	const std::string src_dir_					{ "src/" };
 	const std::string edges_dir_				{ "edges/" };
 	const std::string right_edge_name_			{ ".right" };
@@ -110,6 +131,12 @@ private:
 	const std::string upper_edge_name_			{ ".upper" };
 	const std::string lower_edge_name_			{ ".lower" };
 	const std::string bottom_edge_name_			{ ".bottom" };
+
+	const std::string daphnia_texture_dir_		{ "daphnia/" };
+	const std::string daphnia_ovoid_dir_		{ "ovoid/" };
+	const std::string daphnia_circle_dir_		{ "circle/" };
+	const std::string daphnia_glut_dir_			{ "glut/" };
+
 	const std::string generation_json_name_		{ "gen_annotation" };
 	const std::string json_ending_				{ ".json" };
 
@@ -123,8 +150,12 @@ private:
 	const std::string RCO_generation_main_dir_	{ "RCO_generation/" };
 	const std::string generation_frames_dir_	{ "frames/" };
 	const std::string generation_json_dir_		{ "json/" };
+	const std::string generation_textures_dir_	{ "textures/" };
 	const std::string frames_glut_dir_			{ "glut/" };
 	const std::string frames_merged_dir_		{ "merged/" };
+	const std::string frames_mask_dir_			{ "mask/" };
+
+	unsigned int texture_size_{ 128 };
 
 	json main_json_{ };
 	json config_json_{ };
