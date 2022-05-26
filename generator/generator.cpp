@@ -1346,6 +1346,7 @@ void Generator::genTexturedRandomClip(size_t index,
 	for (int i{}; i < num_objects_range[0]; ++i)
 		makeGLUTDaphniaTexture(i);
 
+	std::cout << "Daphnia textures brightness leveling off" << std::endl;
 	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
 	std::uniform_int_distribution<> texture_index_dis(0, num_objects_range[0] - 1);
 	std::string glut_texture_directory =
@@ -1355,7 +1356,6 @@ void Generator::genTexturedRandomClip(size_t index,
 	for (int frame{}; frame < objpoints.size(); ++frame) {
 		for (int object{}; object < objpoints[frame].size(); ++object) {
 			int file_index = texture_index_dis(rd_);
-			std::cout << frame << " " << object << " " << file_index << std::endl;
 			processDaphniaTexture(size, glut_texture_directory + std::to_string(file_index) + image_ending_,
 				sup_src_image, imgpoints[frame][object],
 				gen_texture_dir + std::to_string(frame) + "." + std::to_string(object) + image_ending_);

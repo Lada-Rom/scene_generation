@@ -44,7 +44,9 @@ void Daphnia::setTextureFilename(const std::string& filename) {
 
 ////////// calcDirection //////////
 std::array<double, 3> Daphnia::calcDirection() {
-	glm::dvec4 direction_4d = rotation_ * glm::make_vec4(default_direction_.data());
+	glm::dvec4 direction_default = glm::make_vec4(default_direction_.data());
+	direction_default[3] = 1.;
+	glm::dvec4 direction_4d = rotation_ * direction_default;
 	direction_4d /= direction_4d.w;
 	glm::dvec3 direction_3d = glm::normalize(
 		glm::dvec3{ direction_4d.x, direction_4d.y, direction_4d.z });
@@ -78,6 +80,7 @@ void Daphnia::drawSimplified(const std::array<double, 4>& color4d) {
 
 		glColor4dv(color4d.data());
 		glPushMatrix();
+			glRotated(90, 0, 1, 0);
 			glScaled(scale_, scale_, scale_);
 			glScaled(length_ratio_, 1., 1.);
 			glutSolidSphere(radius_, 30, 30);
@@ -131,8 +134,19 @@ void Daphnia::drawComplicated(
 ////////// drawTextured //////////
 void Daphnia::drawTextured() {
 	glPushMatrix();
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
+		glTranslated(coords_[0], coords_[1], coords_[2]);
+
+		glColor4d(1., 0., 0., 1.);
+		glBegin(GL_LINES);
+		glVertex3d(0., 0., 0.);
+		glVertex3d(direction_[0], direction_[1], direction_[2]);
+		glEnd();
+
+		glMultMatrixd(&rotation_[0][0]);
+
+		glEnable(GL_BLEND);
+		glEnable(GL_TEXTURE_2D);
+
 		loadTexture(texture_);
 		gluQuadricDrawStyle(sphere_, GLU_FILL);
 		glBindTexture(GL_TEXTURE_2D, texture_.id_);
@@ -144,20 +158,15 @@ void Daphnia::drawTextured() {
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 		glColor4d(0., 0., 0., 1.);
-		glTranslated(coords_[0], coords_[1], coords_[2]);
-		glMultMatrixd(&rotation_[0][0]);
-
-		//glColor4dv(color4d.data());
 		glPushMatrix();
-			glRotated(90, 0, 1, 0);
 			glScaled(scale_, scale_, scale_);
 			glScaled(length_ratio_, 1., 1.);
 			glRotated(90, 0, 1, 0);
 			gluSphere(sphere_, radius_, 32, 32);
-			//glutSolidSphere(radius_, 30, 30);
 		glPopMatrix();
-	glDisable(GL_BLEND);
-	glDisable(GL_TEXTURE_2D);
+
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_BLEND);
 	glPopMatrix();
 }
 
@@ -179,6 +188,7 @@ void Daphnia::drawSimplifiedReflection(bool horizontal,
 		glPushMatrix();
 			glScaled(scale_, scale_, scale_);
 			glScaled(length_ratio_, 1., 1.);
+			glRotated(90, 0, 1, 0);
 			glutSolidSphere(radius_, 30, 30);
 		glPopMatrix();
 

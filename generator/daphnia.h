@@ -58,7 +58,7 @@ private:
 	Texture texture_{ };
 
 	double scale_{ 0.5 }; // 0.5 - 0.8
-	double scale_body_{ 1.6 };
+	double scale_body_{ 1.5 };
 	double scale_head_{ 0.7 };
 
 	double length_ratio_{ 1.5 };
