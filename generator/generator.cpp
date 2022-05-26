@@ -599,7 +599,7 @@ void Generator::makeGLUTDaphniaTexture(size_t index) {
 		= dst(cv::Range(size - img_dt_res.rows, size), cv::Range(0, 2 * size)).mul(img_dt_res);
 
 	//writing texture template
-	cv::normalize(dst, dst, 1.0f, 0.39f, cv::NormTypes::NORM_MINMAX);
+	cv::normalize(dst, dst, 1.0f, 0.5f, cv::NormTypes::NORM_MINMAX);
 	dst.convertTo(dst, CV_8UC1, 255, 0);
 	cv::flip(dst, dst, 0);
 	
@@ -1376,14 +1376,20 @@ void Generator::genTexturedRandomClip(size_t index,
 	main_scene_.setAquariumEdgeTextureFilename("lower", edge_texture_path + lower_edge_name_ + image_ending_);
 	main_scene_.setAquariumEdgeTextureFilename("bottom", edge_texture_path + bottom_edge_name_ + image_ending_);
 
-	for (int i{}; i < num_objects_range[0]; ++i)
-		makeGLUTDaphniaTexture(i);
+	std::string glut_texture_directory =
+		data_path_ + src_dir_ + daphnia_texture_dir_ + daphnia_glut_dir_;
+	unsigned int num_glut_textures = std::distance(
+		std::filesystem::directory_iterator(glut_texture_directory),
+		std::filesystem::directory_iterator{});
+	if (num_glut_textures < num_objects_range[0]) {
+		for (int i{ (int)num_glut_textures }; i < num_objects_range[0]; ++i)
+			makeGLUTDaphniaTexture(i);
+		num_glut_textures = num_objects_range[0];
+	}
 
 	std::cout << "Daphnia textures brightness leveling off" << std::endl;
 	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
-	std::uniform_int_distribution<> texture_index_dis(0, num_objects_range[0] - 1);
-	std::string glut_texture_directory =
-		data_path_ + src_dir_+ daphnia_texture_dir_ + daphnia_glut_dir_;
+	std::uniform_int_distribution<> texture_index_dis(0, num_glut_textures - 1);
 	unsigned int size{ 64 };
 	cv::Mat sup_src_image = add_cv::supplementImage(src_image, size);
 	for (int frame{}; frame < objpoints.size(); ++frame) {
