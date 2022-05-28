@@ -10,9 +10,29 @@ std::array<double, 3> Daphnia::getCoords() const {
 	return coords_;
 }
 
+////////// getAngles //////////
+std::array<double, 3> Daphnia::getAngles() {
+	return angles_;
+}
+
+////////// getAngles //////////
+std::array<double, 3> Daphnia::getAngles() const {
+	return angles_;
+}
+
 ////////// getLength //////////
 double Daphnia::getLength() {
 	return radius_ * length_ratio_ * scale_;
+}
+
+////////// getDirection //////////
+std::array<double, 3> Daphnia::getDirection() {
+	return direction_;
+}
+
+////////// getDirection //////////
+std::array<double, 3> Daphnia::getDirection() const {
+	return direction_;
 }
 
 ////////// setCoords //////////
@@ -52,16 +72,6 @@ std::array<double, 3> Daphnia::calcDirection() {
 		glm::dvec3{ direction_4d.x, direction_4d.y, direction_4d.z });
 	return { direction_3d.x, direction_3d.y, direction_3d.z };
 }
-
-//////////// loadSphereTexture //////////
-//void Daphnia::loadSphereTexture() {
-//	//sphere_ = gluNewQuadric();
-//	loadTexture(texture_);
-//	gluQuadricDrawStyle(sphere_, GLU_FILL);
-//	glBindTexture(GL_TEXTURE_2D, texture_.id_);
-//	gluQuadricTexture(sphere_, GL_TRUE);
-//	gluQuadricNormals(sphere_, GLU_SMOOTH);
-//}
 
 ////////// drawSimplified //////////
 void Daphnia::drawSimplified(const std::array<double, 4>& color4d) {

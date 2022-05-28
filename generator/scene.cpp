@@ -43,7 +43,7 @@ size_t Scene::getRCOObjectsNum(size_t frame) {
 
 ////////// getSCODaphniaLength //////////
 double Scene::getSCODaphniaLength(size_t object) {
-    return sequent_clip_objects_[object].getLength();
+    return sequent_clip_objects_[0][object].getLength();
 }
 
 ////////// setCameraRMat //////////
@@ -139,26 +139,63 @@ void Scene::resetObjectCount() {
     object_count_ = 0;
 }
 
+////////// setSCOFrames //////////
+void Scene::setSCOFrames(const size_t& num_frames) {
+    sequent_clip_objects_ = std::vector<std::vector<Daphnia>>{ num_frames };
+}
+
 ////////// setSCOObjects //////////
 void Scene::setSCOObjects(const size_t& num_objects) {
-    sequent_clip_objects_ = std::vector<Daphnia>{ num_objects };
+    for (auto& frame : sequent_clip_objects_)
+        frame = std::vector<Daphnia>{ num_objects };
 }
 
 ////////// setSCODaphniaScale //////////
 void Scene::setSCODaphniaScale(const size_t& object, const double& scale) {
-    sequent_clip_objects_[object].setScale(scale);
+    for (auto& frame : sequent_clip_objects_)
+        frame[object].setScale(scale);
 }
 
 ////////// setSCODaphniaCoords //////////
-void Scene::setSCODaphniaCoords(
+void Scene::setSCODaphniaCoords(const size_t& frame,
     const size_t& object, const std::array<double, 3>& coords) {
-    sequent_clip_objects_[object].setCoords(coords);
+    sequent_clip_objects_[frame][object].setCoords(coords);
 }
 
 ////////// setSCODaphniaAngles //////////
-void Scene::setSCODaphniaAngles(
+void Scene::setSCODaphniaAngles(const size_t& frame,
     const size_t& object, const std::array<double, 3>& angles) {
-    sequent_clip_objects_[object].setAngles(angles);
+    sequent_clip_objects_[frame][object].setAngles(angles);
+}
+
+////////// addSCONextDaphniaAngles //////////
+void Scene::addSCONextDaphniaAngles(const size_t& frame,
+    const size_t& object, const std::array<double, 3>& angles) {
+    std::array<double, 3> prev_angles = sequent_clip_objects_[frame - 1][object].getAngles();
+    sequent_clip_objects_[frame][object].setAngles({
+        prev_angles[0] + angles[0],
+        prev_angles[1] + angles[1], 
+        prev_angles[2] + angles[2]});
+}
+
+////////// setSCODaphniaDirection //////////
+std::array<double, 3> Scene::setSCODaphniaDirection(
+    const size_t& frame, const size_t& object) {
+    std::array<double, 3> direction = sequent_clip_objects_[frame][object].calcDirection();
+    sequent_clip_objects_[frame][object].setDirection(direction);
+    return direction;
+}
+
+////////// applySCODaphniaShift //////////
+void Scene::applySCODaphniaShift(const size_t& frame, 
+    const size_t& object, const double& shift) {
+    std::array<double, 3> prev_coords = sequent_clip_objects_[frame - 1][object].getCoords();
+    std::array<double, 3> curr_direction = sequent_clip_objects_[frame][object].getDirection();
+    std::array<double, 3> curr_coords = {
+        prev_coords[0] + curr_direction[0] * shift,
+        prev_coords[1] + curr_direction[1] * shift,
+        prev_coords[2] + curr_direction[2] * shift};
+    sequent_clip_objects_[frame][object].setCoords(curr_coords);
 }
 
 ////////// calcOuterCameraParams //////////
@@ -697,5 +734,50 @@ void Scene::displayMaskRandomClip() {
     }
 
     if (frame_count_ == random_clip_objects_.size())
+        glutLeaveMainLoop();
+}
+
+////////// displayTexturedSequentClip //////////
+void Scene::displayTexturedSequentClip() {
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    gluLookAt(0, 0, 0,
+        0, 0, -1,
+        0, 1, 0);
+
+    glLoadMatrixd(&camera_.getRMat()[0][0]);
+    glTranslated(
+        camera_.getTVec()[0],
+        -camera_.getTVec()[1],
+        -abs(camera_.getTVec()[2]));
+    glTranslated(
+        camera_.getSVec()[0],
+        camera_.getSVec()[1],
+        camera_.getSVec()[2]);
+
+    //aquarium
+    glColor3d(1., 1., 1.);
+    //aquarium_.drawTextured();
+    aquarium_.drawWire();
+
+    //objects
+    for (auto& daphnia : sequent_clip_objects_[frame_count_]) {
+        drawSimplifiedReflection(daphnia, { 0.3, 0.3, 0.3 });
+        //daphnia.drawTextured();
+        daphnia.drawSimplified({ 0., 0., 0., 0.3 });
+    }
+
+    //write to file
+    //saveImage(viewport[2], viewport[3], generation_frames_path_
+    //    + std::to_string(frame_count_) + generation_frames_ending_);
+    ++frame_count_;
+
+    glutSwapBuffers();
+    glutPostRedisplay();
+
+    if (frame_count_ == sequent_clip_objects_.size())
         glutLeaveMainLoop();
 }

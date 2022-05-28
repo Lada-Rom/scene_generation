@@ -53,10 +53,18 @@ public:
 	void resetFrameCount();
 	void resetObjectCount();
 
+	void setSCOFrames(const size_t& num_frames);
 	void setSCOObjects(const size_t& num_objects);
 	void setSCODaphniaScale(const size_t& object, const double& scale);
-	void setSCODaphniaCoords(const size_t& object, const std::array<double, 3>& coords);
-	void setSCODaphniaAngles(const size_t& object, const std::array<double, 3>& angles);
+	void setSCODaphniaCoords(const size_t& frame,
+		const size_t& object, const std::array<double, 3>& coords);
+	void setSCODaphniaAngles(const size_t& frame,
+		const size_t& object, const std::array<double, 3>& angles);
+	void addSCONextDaphniaAngles(const size_t& frame,
+		const size_t& object, const std::array<double, 3>& angles);
+	std::array<double, 3> setSCODaphniaDirection(const size_t& frame, const size_t& object);
+	void applySCODaphniaShift(const size_t& frame,
+		const size_t& object, const double& shift);
 
 	void calcOuterCameraParams(const std::vector<cv::Point2d>&,
 		const cv::Mat&, cv::Mat&, cv::Mat&, cv::Mat&);
@@ -105,6 +113,7 @@ public:
 	void displayUntexturedRandomClip();
 	void displayTexturedRandomClip();
 	void displayMaskRandomClip();
+	void displayTexturedSequentClip();
 
 private:
 	cv::Size2i render_image_size_{ 1280, 1024 };
@@ -126,7 +135,8 @@ private:
 	size_t frame_count_{ };
 	size_t object_count_{ };
 
-	std::vector<Daphnia> sequent_clip_objects_{ }; //SCO
+	//std::vector<Daphnia> sequent_clip_objects_{ }; //SCO
+	std::vector<std::vector<Daphnia>> sequent_clip_objects_{ }; //SCO
 
 	double test_x{};
 	double test_y{};

@@ -1,12 +1,12 @@
 {
-    "duration": 1,
-	"fps": 5,
+    "num_frames": 1,
     "object_quantity_range": [
-        70.0,
-        70.0
+        1.0,
+        1.0
     ],
     "object_size_range": [
         0.5,
         0.5
-    ]
+    ],
+	"camera_params_index": 0
 }

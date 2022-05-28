@@ -48,10 +48,10 @@ public:
 	std::array<double, 9> readCameraRMat(size_t);
 	std::array<double, 3> readCameraTVec(size_t);
 	std::array<double, 3> readCameraSVec(size_t);
-	void readConfigRCOJSON(size_t&, std::array<double, 2>&,
+	void readConfigRCOJSON(size_t& index, size_t&, std::array<double, 2>&,
 		std::array<double, 2>&, const std::string& filename);
-	void readConfigSCOJSON(size_t&, std::array<double, 2>&,
-		std::array<double, 2>&, const std::string& filename);
+	void readConfigSCOJSON(size_t& index, size_t&, std::array<double, 2>&,
+		std::array<double, 2>&,const std::string& filename);
 
 	void writeCameraRMat(const cv::Mat&, size_t);
 	void writeCameraTVec(const cv::Mat&, size_t);
@@ -97,11 +97,11 @@ public:
 		const std::array<double, 2>& num_objects_range,
 		const std::array<double, 2>& size_objects_range = { 0.5, 0.5 },
 		std::string path = {});
-	void genUntexturedRandomClip(size_t index,
+	void genUntexturedRandomClip(
 		const std::string& config_filename, std::string path = {});
-	void genTexturedRandomClip(size_t index,
+	void genTexturedRandomClip(
 		const std::string& config_filename, std::string path = {});
-	void genTexturedSequentClip(size_t index,
+	void genTexturedSequentClip(
 		const std::string& config_filename, std::string path = {});
 
 	std::vector<double> cvtMatToVector(const cv::Mat&);
@@ -117,9 +117,13 @@ private:
 	static void displayUntexturedRandomClip();
 	static void displayTexturedRandomClip();
 	static void displayMaskRandomClip();
+
+	static void displayTexturedSequentClip();
+
 	static void reshape(int, int);
 	static void controlKey(unsigned char key, int x, int y);
 	static void controlSpec(int key, int x, int y);
+
 	double normDistGenInRange(std::normal_distribution<>, const double&, const double&);
 
 	const std::string main_json_filename_		{ "../../data/json/generator_params.json" };

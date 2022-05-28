@@ -19,7 +19,11 @@ public:
 
 	std::array<double, 3> getCoords();
 	std::array<double, 3> getCoords() const;
+	std::array<double, 3> getAngles();
+	std::array<double, 3> getAngles() const;
 	double getLength();
+	std::array<double, 3> getDirection();
+	std::array<double, 3> getDirection() const;
 
 	void setCoords(const std::array<double, 3>& coords);
 	void setAngles(const std::array<double, 3>& angles);
@@ -46,9 +50,9 @@ public:
 		const std::array<double, 4>& color_head) const;
 
 private:
-	std::array<double, 3> coords_{ };
-	std::array<double, 3> angles_{ }; //yaw, pitch, roll
-	std::array<double, 3> direction_{ };
+	std::array<double, 3> coords_{ 0, 0, 0 };
+	std::array<double, 3> angles_{ 0, 0, 0 }; //yaw, pitch, roll
+	std::array<double, 3> direction_{ 1, 0, 0 };
 
 	glm::dmat4 rotation_{ };
 
