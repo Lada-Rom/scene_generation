@@ -19,18 +19,23 @@ public:
 
 	std::array<double, 3> getCoords();
 	std::array<double, 3> getCoords() const;
+	std::array<double, 3> getAngles();
+	std::array<double, 3> getAngles() const;
 	double getLength();
+	std::array<double, 3> getDirection();
+	std::array<double, 3> getDirection() const;
+	std::string getTextureSourceFilename();
 
 	void setCoords(const std::array<double, 3>& coords);
 	void setAngles(const std::array<double, 3>& angles);
 	void setDirection(const std::array<double, 3>& direction);
-	void setScale(const double&);
+	void setScale(const double& scale);
 	void setTextureFilename(const std::string& filename);
+	void setTextureSourceFilename(const std::string& filename);
 
 	std::array<double, 3> calcDirection();
-	//void loadSphereTexture();
 
-	void drawSimplified(const std::array<double, 4>& color4d);
+	void drawSimplified(const std::array<double, 4>& color4d, bool direction = true);
 	void drawComplicated(
 		const std::array<double, 4>& color_inner,
 		const std::array<double, 4>& color_outer,
@@ -46,9 +51,9 @@ public:
 		const std::array<double, 4>& color_head) const;
 
 private:
-	std::array<double, 3> coords_{ };
-	std::array<double, 3> angles_{ }; //yaw, pitch, roll
-	std::array<double, 3> direction_{ };
+	std::array<double, 3> coords_{ 0, 0, 0 };
+	std::array<double, 3> angles_{ 0, 0, 0 }; //yaw, pitch, roll
+	std::array<double, 3> direction_{ 1, 0, 0 };
 
 	glm::dmat4 rotation_{ };
 
@@ -56,6 +61,7 @@ private:
 
 	GLUquadric* sphere_{ gluNewQuadric() };
 	Texture texture_{ };
+	std::string texture_source_filename_{  };
 
 	double scale_{ 0.5 }; // 0.5 - 0.8
 	double scale_body_{ 1.5 };

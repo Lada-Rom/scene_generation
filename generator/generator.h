@@ -34,9 +34,9 @@ public:
 		const std::array<double, 2>& num_object_range,
 		const std::array<double, 2>& size_object_range);
 	void loadMainJSON();
-	void loadConfigRCOJSON(const std::string& config_filename);
+	void loadConfigJSON(const std::string& config_filename);
 	void saveMainJSON();
-	void saveGenRCOJSON(const std::string& path,
+	void saveGenCOJSON(const std::string& path,
 		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
 		const std::vector<std::vector<std::array<double, 3>>>& objdirections,
 		const std::vector<std::vector<std::array<double, 2>>>& imgpoints,
@@ -45,11 +45,21 @@ public:
 	std::vector<cv::Point2d> readInputImgpointsD(size_t);
 	std::vector<cv::Point2i> readInputImgpointsI(size_t);
 	std::string readInputImage(size_t);
-	std::array<double, 9> readCameraRMat(size_t);
-	std::array<double, 3> readCameraTVec(size_t);
-	std::array<double, 3> readCameraSVec(size_t);
-	void readConfigRCOJSON(size_t&, std::array<double, 2>&,
-		std::array<double, 2>&, const std::string& filename);
+	std::array<double, 9> readCameraRMat(size_t index);
+	std::array<double, 3> readCameraTVec(size_t index);
+	std::array<double, 3> readCameraSVec(size_t index);
+	void readConfigRCOJSON(size_t& index, size_t& num_frames,
+		std::array<double, 2>& num_objects_range, 
+		std::array<double, 2>& size_objects_range,
+		const std::string& filename);
+	void readConfigSCOJSON(size_t& index, size_t& num_frames,
+		std::array<double, 2>& num_objects_range,
+		std::array<double, 2>& size_objects_range,
+		const std::string& filename);
+	void readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
+		std::array<double, 2>& num_objects_range,
+		std::array<double, 2>& size_objects_range,
+		const std::string& filename);
 
 	void writeCameraRMat(const cv::Mat&, size_t);
 	void writeCameraTVec(const cv::Mat&, size_t);
@@ -95,9 +105,11 @@ public:
 		const std::array<double, 2>& num_objects_range,
 		const std::array<double, 2>& size_objects_range = { 0.5, 0.5 },
 		std::string path = {});
-	void genUntexturedRandomClip(size_t index,
+	void genUntexturedRandomClip(
 		const std::string& config_filename, std::string path = {});
-	void genTexturedRandomClip(size_t index,
+	void genTexturedRandomClip(
+		const std::string& config_filename, std::string path = {});
+	void genTexturedSequentClip(
 		const std::string& config_filename, std::string path = {});
 
 	std::vector<double> cvtMatToVector(const cv::Mat&);
@@ -113,9 +125,14 @@ private:
 	static void displayUntexturedRandomClip();
 	static void displayTexturedRandomClip();
 	static void displayMaskRandomClip();
+
+	static void displayTexturedSequentClip();
+	static void displayMaskSequentClip();
+
 	static void reshape(int, int);
 	static void controlKey(unsigned char key, int x, int y);
 	static void controlSpec(int key, int x, int y);
+
 	double normDistGenInRange(std::normal_distribution<>, const double&, const double&);
 
 	const std::string main_json_filename_		{ "../../data/json/generator_params.json" };
@@ -148,7 +165,9 @@ private:
 	const std::string grid_merged_name_			{ "grid_merged" };
 
 	const std::string RCO_generation_main_dir_	{ "RCO_generation/" };
+	const std::string SCO_generation_main_dir_	{ "SCO_generation/" };
 	const std::string generation_frames_dir_	{ "frames/" };
+	const std::string generation_video_dir_		{ "video/" };
 	const std::string generation_json_dir_		{ "json/" };
 	const std::string generation_textures_dir_	{ "textures/" };
 	const std::string frames_glut_dir_			{ "glut/" };

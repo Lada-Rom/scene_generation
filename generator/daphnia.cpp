@@ -10,9 +10,34 @@ std::array<double, 3> Daphnia::getCoords() const {
 	return coords_;
 }
 
+////////// getAngles //////////
+std::array<double, 3> Daphnia::getAngles() {
+	return angles_;
+}
+
+////////// getAngles //////////
+std::array<double, 3> Daphnia::getAngles() const {
+	return angles_;
+}
+
 ////////// getLength //////////
 double Daphnia::getLength() {
 	return radius_ * length_ratio_ * scale_;
+}
+
+////////// getDirection //////////
+std::array<double, 3> Daphnia::getDirection() {
+	return direction_;
+}
+
+////////// getDirection //////////
+std::array<double, 3> Daphnia::getDirection() const {
+	return direction_;
+}
+
+////////// getTextureSourceFilename //////////
+std::string Daphnia::getTextureSourceFilename() {
+	return texture_source_filename_;
 }
 
 ////////// setCoords //////////
@@ -42,6 +67,11 @@ void Daphnia::setTextureFilename(const std::string& filename) {
 	texture_.filename_ = filename;
 }
 
+////////// setTextureSourceFilename //////////
+void Daphnia::setTextureSourceFilename(const std::string& filename) {
+	texture_source_filename_ = filename;
+}
+
 ////////// calcDirection //////////
 std::array<double, 3> Daphnia::calcDirection() {
 	glm::dvec4 direction_default = glm::make_vec4(default_direction_.data());
@@ -53,36 +83,28 @@ std::array<double, 3> Daphnia::calcDirection() {
 	return { direction_3d.x, direction_3d.y, direction_3d.z };
 }
 
-//////////// loadSphereTexture //////////
-//void Daphnia::loadSphereTexture() {
-//	//sphere_ = gluNewQuadric();
-//	loadTexture(texture_);
-//	gluQuadricDrawStyle(sphere_, GLU_FILL);
-//	glBindTexture(GL_TEXTURE_2D, texture_.id_);
-//	gluQuadricTexture(sphere_, GL_TRUE);
-//	gluQuadricNormals(sphere_, GLU_SMOOTH);
-//}
-
 ////////// drawSimplified //////////
-void Daphnia::drawSimplified(const std::array<double, 4>& color4d) {
+void Daphnia::drawSimplified(const std::array<double, 4>& color4d, bool direction) {
 	glPushMatrix();
 	glEnable(GL_BLEND);
 
 		glTranslated(coords_[0], coords_[1], coords_[2]);
 
-		//glColor3d(1, 0, 0);
-		//glBegin(GL_LINES);
-		//glVertex3d(0, 0, 0);
-		//glVertex3d(direction_[0], direction_[1], direction_[2]);
-		//glEnd();
+		if (direction) {
+			glColor3d(1, 0, 0);
+			glBegin(GL_LINES);
+			glVertex3d(0, 0, 0);
+			glVertex3d(direction_[0], direction_[1], direction_[2]);
+			glEnd();
+		}
 
 		glMultMatrixd(&rotation_[0][0]);
 
 		glColor4dv(color4d.data());
 		glPushMatrix();
-			glRotated(90, 0, 1, 0);
 			glScaled(scale_, scale_, scale_);
 			glScaled(length_ratio_, 1., 1.);
+			glRotated(90, 0, 1, 0);
 			glutSolidSphere(radius_, 30, 30);
 		glPopMatrix();
 	glDisable(GL_BLEND);

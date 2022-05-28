@@ -19,10 +19,10 @@ public:
 	glm::dvec3 getTVec();
 	glm::dvec3 getSVec();
 
-	void setOpticalCenter(const cv::Size2d&);
-	void setRMat(const std::array<double, 9>&);
-	void setTVec(const std::array<double, 3>&);
-	void setSVec(const std::array<double, 3>&);
+	void setOpticalCenter(const cv::Size2d& image_size);
+	void setRMat(const std::array<double, 9>& rmat);
+	void setTVec(const std::array<double, 3>& tvec);
+	void setSVec(const std::array<double, 3>& svec);
 
 	void calcIntrinsicMatrix();
 

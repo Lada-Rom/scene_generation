@@ -41,6 +41,7 @@ void Generator::constructConfigRCOJSON(size_t num_frames,
 	config["num_frames"] = num_frames;
 	config["object_quantity_range"] = num_object_range;
 	config["object_size_range"] = size_object_range;
+	config["camera_params_index"] = 0;
 
 	std::ofstream file(data_path_ + json_dir_
 		+ config_json_dir_+ config_json_name_ + json_ending_);
@@ -56,6 +57,7 @@ void Generator::constructConfigRCOJSON(size_t config_index, size_t num_frames,
 	config["num_frames"] = num_frames;
 	config["object_quantity_range"] = num_object_range;
 	config["object_size_range"] = size_object_range;
+	config["camera_params_index"] = 0;
 
 	std::ofstream file(data_path_ + json_dir_ + config_json_dir_
 		+ config_json_name_ + "." + std::to_string(config_index) + json_ending_);
@@ -69,8 +71,8 @@ void Generator::loadMainJSON() {
 	file >> main_json_;
 }
 
-////////// loadConfigRCOJSON //////////
-void Generator::loadConfigRCOJSON(const std::string& config_filename) {
+////////// loadConfigJSON //////////
+void Generator::loadConfigJSON(const std::string& config_filename) {
 	std::ifstream file(config_filename);
 	file >> config_json_;
 }
@@ -81,8 +83,8 @@ void Generator::saveMainJSON() {
 	file << main_json_.dump(4) << std::endl;
 }
 
-////////// saveGenRCOJSON //////////
-void Generator::saveGenRCOJSON(const std::string& path,
+////////// saveGenCOJSON //////////
+void Generator::saveGenCOJSON(const std::string& path,
 	const std::vector<std::vector<std::array<double, 3>>>& objpoints,
 	const std::vector<std::vector<std::array<double, 3>>>& objdirections,
 	const std::vector<std::vector<std::array<double, 2>>>& imgpoints,
@@ -152,11 +154,38 @@ std::array<double, 3> Generator::readCameraSVec(size_t index) {
 }
 
 ////////// readConfigRCOJSON //////////
-void Generator::readConfigRCOJSON(size_t& num_frames,
+void Generator::readConfigRCOJSON(size_t& index, size_t& num_frames,
 	std::array<double, 2>& num_objects_range,
-	std::array<double, 2>& size_objects_range, const std::string& filename) {
-	loadConfigRCOJSON(filename);
+	std::array<double, 2>& size_objects_range,
+	const std::string& filename) {
+	loadConfigJSON(filename);
+	index = config_json_["camera_params_index"].get<size_t>();
 	num_frames = config_json_["num_frames"].get<size_t>();
+	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
+	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
+}
+
+////////// readConfigSCOJSON //////////
+void Generator::readConfigSCOJSON(size_t& index, size_t& num_frames,
+	std::array<double, 2>& num_objects_range,
+	std::array<double, 2>& size_objects_range,
+	const std::string& filename) {
+	loadConfigJSON(filename);
+	index = config_json_["camera_params_index"].get<size_t>();
+	num_frames = config_json_["duration"].get<int>() * config_json_["fps"].get<int>();
+	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
+	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
+}
+
+////////// readConfigSCOJSON //////////
+void Generator::readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
+	std::array<double, 2>& num_objects_range,
+	std::array<double, 2>& size_objects_range,
+	const std::string& filename) {
+	loadConfigJSON(filename);
+	index = config_json_["camera_params_index"].get<size_t>();
+	fps = config_json_["fps"].get<int>();
+	num_frames = config_json_["duration"].get<int>() * fps;
 	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
 	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
 }
@@ -1061,7 +1090,7 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
 		for (int object = {}; object < num_objects; ++object) {
 			objpoints[frame][object] =
-				main_scene_.getRCODaphnia(frame, object).getCoords();
+				main_scene_.getRCODaphniaCoords(frame, object);
 		}
 	}
 
@@ -1073,7 +1102,7 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
+	saveGenCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
@@ -1103,14 +1132,15 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 }
 
 ////////// genUntexturedRandomClip //////////
-void Generator::genUntexturedRandomClip(size_t index,
+void Generator::genUntexturedRandomClip(
 	const std::string& config_filename,	std::string path) {
 
 	//read params from config json
+	size_t index;
 	size_t num_frames;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
-	readConfigRCOJSON(num_frames, num_objects_range, size_objects_range, config_filename);
+	readConfigRCOJSON(index, num_frames, num_objects_range, size_objects_range, config_filename);
 
 	//read info from main json and set params
 	std::string image_filename = readInputImage(index);
@@ -1199,7 +1229,7 @@ void Generator::genUntexturedRandomClip(size_t index,
 		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
 		for (int object = {}; object < num_objects; ++object) {
 			objpoints[frame][object] =
-				main_scene_.getRCODaphnia(frame, object).getCoords();
+				main_scene_.getRCODaphniaCoords(frame, object);
 		}
 	}
 
@@ -1211,7 +1241,7 @@ void Generator::genUntexturedRandomClip(size_t index,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
+	saveGenCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
@@ -1241,13 +1271,14 @@ void Generator::genUntexturedRandomClip(size_t index,
 }
 
 ////////// genTexturedRandomClip //////////
-void Generator::genTexturedRandomClip(size_t index,
+void Generator::genTexturedRandomClip(
 	const std::string& config_filename, std::string path) {
 	//read params from config json
+	size_t index;
 	size_t num_frames;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
-	readConfigRCOJSON(num_frames, num_objects_range, size_objects_range, config_filename);
+	readConfigRCOJSON(index, num_frames, num_objects_range, size_objects_range, config_filename);
 
 	//read info from main json and set params
 	std::string image_filename = readInputImage(index);
@@ -1354,7 +1385,7 @@ void Generator::genTexturedRandomClip(size_t index,
 		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
 		for (int object = {}; object < num_objects; ++object) {
 			objpoints[frame][object] =
-				main_scene_.getRCODaphnia(frame, object).getCoords();
+				main_scene_.getRCODaphniaCoords(frame, object);
 		}
 	}
 
@@ -1366,7 +1397,7 @@ void Generator::genTexturedRandomClip(size_t index,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
+	saveGenCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//texture settings
 	std::string edge_texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
@@ -1414,7 +1445,6 @@ void Generator::genTexturedRandomClip(size_t index,
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
 	glutDisplayFunc(Generator::displayTexturedRandomClip);
-	glutDisplayFunc(Generator::displayTexturedRandomClip);
 	glutReshapeFunc(Generator::reshape);
 	main_scene_.resetFrameCount();
 	main_scene_.initGLUT();
@@ -1437,30 +1467,266 @@ void Generator::genTexturedRandomClip(size_t index,
 			gen_glut_dir + std::to_string(frame) + image_ending_, merged_filename);
 	}
 
-	//std::cout << "OpenCV daphnia texturing" << std::endl;
-	//std::string merged_filename;
-	//for (int frame = {}; frame < num_frames; ++frame) {
-	//
-	//	merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
-	//	add_cv::textureFrameDaphnias(frame, merged_frames[frame], gen_RCO_json_,
-	//		rd_, data_path_ + src_dir_ + daphnia_texture_dir_, merged_filename, image_ending_);
-	//	num_objects = main_scene_.getRCOObjectsNum(frame);
-	//	cv::Mat merged_image = cv::imread(merged_filename, cv::IMREAD_GRAYSCALE);
-	//
-	//	for (int object{}; object < num_objects; ++object) {
-	//		std::array<double, 2> center{
-	//			0.5 * main_scene_.getRenderImageSize().width,
-	//			0.5 * main_scene_.getRenderImageSize().height };
-	//		std::array<double, 2> begin = imgpoints[frame][object];
-	//		std::array<double, 2> end = {
-	//			imgdirections[frame][object][0] + imgpoints[frame][object][0],
-	//			imgdirections[frame][object][1] + imgpoints[frame][object][1] };
-	//		cv::line(merged_image,
-	//			cv::Point2d{ begin[0], begin[1] }, cv::Point2d{ end[0], end[1] }, {0, 0, 255});
-	//	}
-	//}
+	std::cout << "Successful end of program!" << std::endl;
+}
+
+////////// genTexturedSequentClip //////////
+void Generator::genTexturedSequentClip(
+	const std::string& config_filename, std::string path) {
+	//read params from config json
+	size_t index;
+	double fps;
+	size_t num_frames;
+	std::array<double, 2> num_objects_range;
+	std::array<double, 2> size_objects_range;
+	readConfigSCOJSON(index, fps, num_frames, num_objects_range, size_objects_range, config_filename);
+
+	//read info from main json and set params
+	std::string image_filename = readInputImage(index);
+	std::array<double, 9> rmat = readCameraRMat(index);
+	std::array<double, 3> tvec = readCameraTVec(index);
+	std::array<double, 3> svec = readCameraSVec(index);
+	main_scene_.setCameraRMat(rmat);
+	main_scene_.setCameraTVec(tvec);
+	main_scene_.setCameraSVec(svec);
+
+	std::cout << "Rotation matrix:\n" << rmat << std::endl;
+	std::cout << "Translation vector:\t" << tvec << std::endl;
+	std::cout << "Shift vector:\t\t" << svec << std::endl;
+
+	//set directories for generation
+	if (path.empty()) {
+		path = data_path_;
+	}
+	else if (path.compare(path.size() - 1, 1, "/")) {
+		std::cout << "Warning: path ends not with \"/\" and will be supplemented" << std::endl;
+		path += "/";
+	}
+	std::string gen_glut_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
+	std::string gen_merged_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
+	std::string gen_mask_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_mask_dir_;
+	std::string gen_texture_dir = path + SCO_generation_main_dir_ + generation_textures_dir_;
+	std::string gen_json_dir = path + SCO_generation_main_dir_ + generation_json_dir_;
+	std::string gen_video_dir = path + SCO_generation_main_dir_ + generation_video_dir_;
+	main_scene_.setGenFramesPath(gen_glut_dir);
+	main_scene_.setGenMasksPath(gen_mask_dir);
+	makeGenFileTree(data_path_, SCO_generation_main_dir_,
+		generation_frames_dir_ + frames_glut_dir_,
+		generation_frames_dir_ + frames_merged_dir_,
+		generation_frames_dir_ + frames_mask_dir_,
+		gen_texture_dir, gen_video_dir, generation_json_dir_);
+
+	//construct 3D params - coords, directions
+	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
+
+	size_t num_objects;
+	std::uniform_int_distribution<>	num_obj;
+	num_objects = (num_objects_range[0] == num_objects_range[1])
+		? num_objects_range[0]
+		: std::uniform_int_distribution<>(num_objects_range[0], num_objects_range[1])(rd_);
+
+	double object_size{};
+	std::normal_distribution<> size_dis;
+	if ((size_objects_range[0] - size_objects_range[1]) < std::numeric_limits<double>::epsilon())
+		object_size = size_objects_range[0];
+	else
+		size_dis = std::normal_distribution<>(
+			(size_objects_range[0] + size_objects_range[1]) * 0.5,
+			(size_objects_range[1] - size_objects_range[0]) / 6);
+
+	std::uniform_real_distribution<> x_dis;
+	std::uniform_real_distribution<> y_dis;
+	std::uniform_real_distribution<> z_dis;
+	std::uniform_real_distribution<> angles_dis(0., 180.);
+
+	std::array<double, 3> buffer;
+	main_scene_.setSCOFrames(num_frames);
+	main_scene_.setSCOObjects(num_objects);
+	std::cout << "\nGenerating 3D params" << std::endl;
+
+	//frame 0: initial params
+	double curr_scale{}, curr_dl{};
+	std::vector<std::vector<std::array<double, 3>>> objdirections{ num_frames };
+	objdirections[0] = std::vector<std::array<double, 3>>{ num_objects };
+	for (int object = {}; object < num_objects; ++object) {
+		//gen size scale
+		if ((size_objects_range[0] - size_objects_range[1]) < std::numeric_limits<double>::epsilon())
+			curr_scale = object_size;
+		else
+			curr_scale = normDistGenInRange(size_dis, size_objects_range[0], size_objects_range[1]);
+		main_scene_.setSCODaphniaScale(object, curr_scale);
+		curr_dl = 0.5 * main_scene_.getSCODaphniaLength(object);
+
+		//set distributions' range by length of object
+		x_dis = std::uniform_real_distribution<>(-0.5 * aq_size[0] + curr_dl, 0.5 * aq_size[0] - curr_dl);
+		y_dis = std::uniform_real_distribution<>(-0.5 * aq_size[1] + curr_dl, 0.5 * aq_size[1] - curr_dl);
+		z_dis = std::uniform_real_distribution<>(-aq_size[2] + curr_dl, 0 - curr_dl);
+
+		//gen coords - x, y, z
+		buffer = { x_dis(rd_), y_dis(rd_), z_dis(rd_) };
+		main_scene_.setSCODaphniaCoords(0, object, buffer);
+
+		//gen angles - apha, beta, gamma
+		buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
+		main_scene_.setSCODaphniaAngles(0, object, buffer);
+		objdirections[0][object] = main_scene_.setSCODaphniaDirection(0, object);
+	}
+
+	//other frames
+	angles_dis = std::uniform_real_distribution<> (0., 10.);
+	double min_shift{ 0. }, max_shift{ 0.2 };
+	double shift{};
+	std::normal_distribution<> shift_dis(
+		(min_shift + max_shift) * 0.5, (max_shift - min_shift) / 6);
+	for (int frame = { 1 }; frame < num_frames; ++frame) {
+		objdirections[frame] = std::vector<std::array<double, 3>>{ num_objects };
+		for (int object = {}; object < num_objects; ++object) {
+			//gen direction deviation
+			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
+			main_scene_.addSCONextDaphniaAngles(frame, object, buffer);
+			objdirections[frame][object] = main_scene_.setSCODaphniaDirection(frame, object);
+
+			//gen shift
+			shift = shift_dis(rd_);
+			main_scene_.applySCODaphniaShift(frame, object, shift);
+		}
+	}
+
+	//calc 2D params from 3D
+	std::cout << "Calculating 2D coords" << std::endl;
+	std::vector<std::vector<std::array<double, 3>>> objpoints{ num_frames };
+	for (int frame{}; frame < num_frames; ++frame) {
+		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
+		for (int object = {}; object < num_objects; ++object) {
+			objpoints[frame][object] =
+				main_scene_.getSCODaphniaCoords(frame, object);
+		}
+	}
+
+	std::vector<std::vector<std::array<double, 2>>> imgpoints;
+	std::vector<std::vector<std::array<double, 2>>> imgdirections{ num_frames };
+	predictPoints(imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
+	predictDirections(imgdirections, objdirections, imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
+
+	//saving objoints and imgpoints to json
+	saveGenCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
+
+	//texture settings
+	std::string edge_texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
+	main_scene_.setAquariumEdgeTextureFilename("right", edge_texture_path + right_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("left", edge_texture_path + left_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("upper", edge_texture_path + upper_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("lower", edge_texture_path + lower_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("bottom", edge_texture_path + bottom_edge_name_ + image_ending_);
+
+	std::string glut_texture_directory =
+		data_path_ + src_dir_ + daphnia_texture_dir_ + daphnia_glut_dir_;
+	unsigned int num_glut_textures = std::distance(
+		std::filesystem::directory_iterator(glut_texture_directory),
+		std::filesystem::directory_iterator{});
+	if (num_glut_textures < num_objects_range[0]) {
+		for (int i{ (int)num_glut_textures }; i < num_objects_range[0]; ++i)
+			makeGLUTDaphniaTexture(i);
+		num_glut_textures = num_objects_range[0];
+	}
+
+	std::cout << "Daphnia textures brightness leveling off" << std::endl;
+	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
+	std::uniform_int_distribution<> texture_index_dis(0, num_glut_textures - 1);
+	unsigned int size{ 64 };
+	cv::Mat sup_src_image = add_cv::supplementImage(src_image, size);
+
+	//gen texture number and set for each object on all frames
+	int file_index{};
+	std::string texture_source_filename{};
+	for (int object{}; object < num_objects; ++object) {
+		file_index = texture_index_dis(rd_);
+		texture_source_filename = glut_texture_directory + std::to_string(file_index) + image_ending_;
+		main_scene_.setSCODaphniaTextureSourceFilename(object, texture_source_filename);
+	}
+
+	//process texture for each object
+	for (int frame{}; frame < num_frames; ++frame) {
+		for (int object{}; object < num_objects; ++object) {
+			texture_source_filename = main_scene_.getSCODaphniaTextureSourceFilename(frame, object);
+			processDaphniaTexture(size, texture_source_filename, sup_src_image, imgpoints[frame][object],
+				gen_texture_dir + std::to_string(frame) + "." + std::to_string(object) + image_ending_);
+			main_scene_.setSCODaphniaTextureFilename(frame, object,
+				gen_texture_dir + std::to_string(frame) + "." + std::to_string(object) + image_ending_);
+		}
+	}
+
+	//glut rendering
+	std::cout << "GLUT frames rendering" << std::endl;
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Point array");
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayTexturedSequentClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT();
+	glutMainLoop();
+
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Point array");
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayMaskSequentClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT(0, 0, 0);
+	glutMainLoop();
+
+	//merge glut scene with source image
+	std::cout << "OpenCV background merging" << std::endl;
+	cv::Mat mask_source = cv::imread(gen_glut_dir + "0" + image_ending_, cv::IMREAD_GRAYSCALE);
+	cv::Mat mask;
+	cv::threshold(mask_source, mask, 254, 255, cv::THRESH_BINARY);
+
+	std::vector<cv::Mat> merged_frames;
+	std::string merged_filename;
+	for (int frame = {}; frame < num_frames; ++frame) {
+		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
+		merged_frames.push_back(
+			add_cv::mergeTexturedImageWithSource(mask, src_image,
+				gen_glut_dir + std::to_string(frame) + image_ending_, merged_filename));
+	}
+
+	//make video from frames
+	std::cout << "Video making" << std::endl;
+	auto video = cv::VideoWriter(gen_video_dir + "frames.mp4",
+		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), fps, merged_frames[0].size());
+	for (const auto& frame : merged_frames)
+		video.write(frame);
+	video.release();
+
+	std::vector<cv::Mat> masked_frames;
+	std::string masked_filename;
+	for (int i{}; i < num_frames; ++i) {
+		masked_filename = gen_mask_dir + std::to_string(i) + image_ending_;
+		masked_frames.push_back(cv::imread(masked_filename, cv::IMREAD_GRAYSCALE));
+	}
+	video = cv::VideoWriter(gen_video_dir + "masks.mp4",
+		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), fps, masked_frames[0].size());
+	for (const auto& frame : masked_frames)
+		video.write(frame);
+	video.release();
 
 	std::cout << "Successful end of program!" << std::endl;
+
 }
 
 ////////// cvtMatToVector //////////
@@ -1495,6 +1761,16 @@ void Generator::displayTexturedRandomClip() {
 ////////// displayMaskRandomClip //////////
 void Generator::displayMaskRandomClip() {
 	curr_this_->main_scene_.displayMaskRandomClip();
+}
+
+////////// displayTexturedSequentClip //////////
+void Generator::displayTexturedSequentClip() {
+	curr_this_->main_scene_.displayTexturedSequentClip();
+}
+
+////////// displayMaskSequentClip //////////
+void Generator::displayMaskSequentClip() {
+	curr_this_->main_scene_.displayMaskSequentClip();
 }
 
 ////////// reshape //////////

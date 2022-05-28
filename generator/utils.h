@@ -32,11 +32,11 @@ void mergeUntexturedImageAndPoints(const std::string&,
 void mergeUntexturedImageAndPoints(const std::string&,
 	const std::vector<std::array<double, 2>>&, const std::string&, const std::string&);
 
-void mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
+cv::Mat mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename, const std::string& dst_filename);
 cv::Mat mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename);
-void mergeTexturedImageWithSource(
+cv::Mat mergeTexturedImageWithSource(
 	const std::vector<std::array<double, 2>>& imgpoints,
 	const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename, const std::string& dst_filename);
@@ -79,5 +79,9 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	const std::string& glut_dir, const std::string& merged_dir,
 	const std::string& mask_dir, const std::string& tex_dir,
 	const std::string& json_dir);
+void makeGenFileTree(const std::string& path, const std::string& main_dir,
+	const std::string& glut_dir, const std::string& merged_dir,
+	const std::string& mask_dir, const std::string& tex_dir,
+	const std::string& video_dir, const std::string& json_dir);
 
 #endif
