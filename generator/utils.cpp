@@ -66,12 +66,13 @@ void mergeUntexturedImageAndPoints(const std::string& src_filename,
 }
 
 ////////// mergeTexturedImageWithSource //////////
-void mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
+cv::Mat mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename, const std::string& dst_filename) {
 	cv::Mat glut_image = cv::imread(glut_filename, cv::IMREAD_GRAYSCALE);
 
 	cv::bitwise_and(src_image, glut_image, glut_image, mask);
 	cv::imwrite(dst_filename, glut_image);
+	return glut_image;
 }
 
 ////////// mergeTexturedImageWithSource //////////
@@ -84,7 +85,7 @@ cv::Mat mergeTexturedImageWithSource(const cv::Mat& mask, const cv::Mat& src_ima
 }
 
 ////////// mergeTexturedImageWithSource //////////
-void mergeTexturedImageWithSource(
+cv::Mat mergeTexturedImageWithSource(
 	const std::vector<std::array<double, 2>>& imgpoints,
 	const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename, const std::string& dst_filename) {
@@ -96,6 +97,7 @@ void mergeTexturedImageWithSource(
 	for (auto& point : imgpoints)
 		add_cv::cross(merged_3c, point, { 2, 2 }, { 0, 0, 255 });
 	cv::imwrite(dst_filename, glut_image);
+	return glut_image;
 }
 
 ////////// supplementImage //////////
@@ -435,4 +437,30 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	fs::create_directories(path + main_dir + mask_dir);
 	fs::create_directories(path + main_dir + tex_dir);
 	fs::create_directories(path + main_dir + json_dir);
+}
+
+////////// makeGenFileTree //////////
+void makeGenFileTree(const std::string& path, const std::string& main_dir,
+	const std::string& glut_dir, const std::string& merged_dir,
+	const std::string& mask_dir, const std::string& tex_dir,
+	const std::string& video_dir, const std::string& json_dir) {
+	namespace fs = std::filesystem;
+
+	//check if path exists
+	fs::file_status s = fs::file_status{};
+	if (!fs::exists(path))
+		throw std::invalid_argument("Path does not exists");
+
+	//check if main_dir exists
+	if (fs::exists(path + main_dir))
+		fs::remove_all(path + main_dir);
+
+	//making subdirectories
+	fs::create_directories(path + main_dir + glut_dir);
+	fs::create_directories(path + main_dir + merged_dir);
+	fs::create_directories(path + main_dir + mask_dir);
+	fs::create_directories(path + main_dir + tex_dir);
+	fs::create_directories(path + main_dir + json_dir);
+	fs::create_directories(path + main_dir + video_dir);
+
 }

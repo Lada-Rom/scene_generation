@@ -56,6 +56,10 @@ public:
 		std::array<double, 2>& num_objects_range,
 		std::array<double, 2>& size_objects_range,
 		const std::string& filename);
+	void readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
+		std::array<double, 2>& num_objects_range,
+		std::array<double, 2>& size_objects_range,
+		const std::string& filename);
 
 	void writeCameraRMat(const cv::Mat&, size_t);
 	void writeCameraTVec(const cv::Mat&, size_t);
@@ -162,6 +166,7 @@ private:
 	const std::string RCO_generation_main_dir_	{ "RCO_generation/" };
 	const std::string SCO_generation_main_dir_	{ "SCO_generation/" };
 	const std::string generation_frames_dir_	{ "frames/" };
+	const std::string generation_video_dir_		{ "video/" };
 	const std::string generation_json_dir_		{ "json/" };
 	const std::string generation_textures_dir_	{ "textures/" };
 	const std::string frames_glut_dir_			{ "glut/" };

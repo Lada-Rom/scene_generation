@@ -177,6 +177,19 @@ void Generator::readConfigSCOJSON(size_t& index, size_t& num_frames,
 	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
 }
 
+////////// readConfigSCOJSON //////////
+void Generator::readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
+	std::array<double, 2>& num_objects_range,
+	std::array<double, 2>& size_objects_range,
+	const std::string& filename) {
+	loadConfigJSON(filename);
+	index = config_json_["camera_params_index"].get<size_t>();
+	fps = config_json_["fps"].get<int>();
+	num_frames = config_json_["duration"].get<int>() * fps;
+	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
+	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
+}
+
 ////////// writeCameraRMat //////////
 void Generator::writeCameraRMat(const cv::Mat& rmat, size_t i) {
 	main_json_["camera"][i]["rmat"] = cvtMatToVector(rmat);
@@ -1462,10 +1475,11 @@ void Generator::genTexturedSequentClip(
 	const std::string& config_filename, std::string path) {
 	//read params from config json
 	size_t index;
+	double fps;
 	size_t num_frames;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
-	readConfigSCOJSON(index, num_frames, num_objects_range, size_objects_range, config_filename);
+	readConfigSCOJSON(index, fps, num_frames, num_objects_range, size_objects_range, config_filename);
 
 	//read info from main json and set params
 	std::string image_filename = readInputImage(index);
@@ -1493,13 +1507,14 @@ void Generator::genTexturedSequentClip(
 	std::string gen_mask_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_mask_dir_;
 	std::string gen_texture_dir = path + SCO_generation_main_dir_ + generation_textures_dir_;
 	std::string gen_json_dir = path + SCO_generation_main_dir_ + generation_json_dir_;
+	std::string gen_video_dir = path + SCO_generation_main_dir_ + generation_video_dir_;
 	main_scene_.setGenFramesPath(gen_glut_dir);
 	main_scene_.setGenMasksPath(gen_mask_dir);
 	makeGenFileTree(data_path_, SCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_,
 		generation_frames_dir_ + frames_mask_dir_,
-		gen_texture_dir, generation_json_dir_);
+		gen_texture_dir, gen_video_dir, generation_json_dir_);
 
 	//construct 3D params - coords, directions
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
@@ -1669,9 +1684,19 @@ void Generator::genTexturedSequentClip(
 	std::string merged_filename;
 	for (int frame = {}; frame < num_frames; ++frame) {
 		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
-		add_cv::mergeTexturedImageWithSource(mask, src_image,
-			gen_glut_dir + std::to_string(frame) + image_ending_, merged_filename);
+		merged_frames.push_back(
+			add_cv::mergeTexturedImageWithSource(mask, src_image,
+				gen_glut_dir + std::to_string(frame) + image_ending_, merged_filename));
 	}
+
+	//make video from frames
+	std::cout << "Video making" << std::endl;
+	auto frame_video = cv::VideoWriter(gen_video_dir + "frames.mp4",
+		cv::VideoWriter::fourcc('P', 'I', 'M','1'), fps,
+		cv::Size(mask_source.cols, mask_source.rows));
+	for (const auto& frame : merged_frames)
+		frame_video.write(frame);
+	frame_video.release();
 
 	std::cout << "Successful end of program!" << std::endl;
 
