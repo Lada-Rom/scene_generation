@@ -1674,6 +1674,22 @@ void Generator::genTexturedSequentClip(
 	main_scene_.initGLUT();
 	glutMainLoop();
 
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Point array");
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayMaskSequentClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT(0, 0, 0);
+	glutMainLoop();
+
 	//merge glut scene with source image
 	std::cout << "OpenCV background merging" << std::endl;
 	cv::Mat mask_source = cv::imread(gen_glut_dir + "0" + image_ending_, cv::IMREAD_GRAYSCALE);
@@ -1691,11 +1707,23 @@ void Generator::genTexturedSequentClip(
 
 	//make video from frames
 	std::cout << "Video making" << std::endl;
-	auto frame_video = cv::VideoWriter(gen_video_dir + "frames.mp4",
+	auto video = cv::VideoWriter(gen_video_dir + "frames.mp4",
 		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), fps, merged_frames[0].size());
 	for (const auto& frame : merged_frames)
-		frame_video.write(frame);
-	frame_video.release();
+		video.write(frame);
+	video.release();
+
+	std::vector<cv::Mat> masked_frames;
+	std::string masked_filename;
+	for (int i{}; i < num_frames; ++i) {
+		masked_filename = gen_mask_dir + std::to_string(i) + image_ending_;
+		masked_frames.push_back(cv::imread(masked_filename, cv::IMREAD_GRAYSCALE));
+	}
+	video = cv::VideoWriter(gen_video_dir + "masks.mp4",
+		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), fps, masked_frames[0].size());
+	for (const auto& frame : masked_frames)
+		video.write(frame);
+	video.release();
 
 	std::cout << "Successful end of program!" << std::endl;
 
@@ -1738,6 +1766,11 @@ void Generator::displayMaskRandomClip() {
 ////////// displayTexturedSequentClip //////////
 void Generator::displayTexturedSequentClip() {
 	curr_this_->main_scene_.displayTexturedSequentClip();
+}
+
+////////// displayMaskSequentClip //////////
+void Generator::displayMaskSequentClip() {
+	curr_this_->main_scene_.displayMaskSequentClip();
 }
 
 ////////// reshape //////////

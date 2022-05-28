@@ -127,6 +127,7 @@ private:
 	static void displayMaskRandomClip();
 
 	static void displayTexturedSequentClip();
+	static void displayMaskSequentClip();
 
 	static void reshape(int, int);
 	static void controlKey(unsigned char key, int x, int y);

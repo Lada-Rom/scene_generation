@@ -84,17 +84,19 @@ std::array<double, 3> Daphnia::calcDirection() {
 }
 
 ////////// drawSimplified //////////
-void Daphnia::drawSimplified(const std::array<double, 4>& color4d) {
+void Daphnia::drawSimplified(const std::array<double, 4>& color4d, bool direction) {
 	glPushMatrix();
 	glEnable(GL_BLEND);
 
 		glTranslated(coords_[0], coords_[1], coords_[2]);
 
-		glColor3d(1, 0, 0);
-		glBegin(GL_LINES);
-		glVertex3d(0, 0, 0);
-		glVertex3d(direction_[0], direction_[1], direction_[2]);
-		glEnd();
+		if (direction) {
+			glColor3d(1, 0, 0);
+			glBegin(GL_LINES);
+			glVertex3d(0, 0, 0);
+			glVertex3d(direction_[0], direction_[1], direction_[2]);
+			glEnd();
+		}
 
 		glMultMatrixd(&rotation_[0][0]);
 

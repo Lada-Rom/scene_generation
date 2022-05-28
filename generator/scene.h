@@ -117,6 +117,7 @@ public:
 	void displayTexturedRandomClip();
 	void displayMaskRandomClip();
 	void displayTexturedSequentClip();
+	void displayMaskSequentClip();
 
 private:
 	cv::Size2i render_image_size_{ 1280, 1024 };

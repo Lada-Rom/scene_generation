@@ -786,8 +786,8 @@ void Scene::displayTexturedSequentClip() {
 
     glLoadIdentity();
     gluLookAt(0, 0, 0,
-        0, 0, -1,
-        0, 1, 0);
+              0, 0, -1,
+              0, 1, 0);
 
     glLoadMatrixd(&camera_.getRMat()[0][0]);
     glTranslated(
@@ -812,6 +812,43 @@ void Scene::displayTexturedSequentClip() {
 
     //write to file
     saveImage(viewport[2], viewport[3], generation_frames_path_
+        + std::to_string(frame_count_) + generation_frames_ending_);
+    ++frame_count_;
+
+    glutSwapBuffers();
+    glutPostRedisplay();
+
+    if (frame_count_ == sequent_clip_objects_.size())
+        glutLeaveMainLoop();
+}
+
+////////// displayMaskSequentClip //////////
+void Scene::displayMaskSequentClip() {
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    gluLookAt(0, 0, 0,
+              0, 0, -1,
+              0, 1, 0);
+
+    glLoadMatrixd(&camera_.getRMat()[0][0]);
+    glTranslated(
+        camera_.getTVec()[0],
+        -camera_.getTVec()[1],
+        -abs(camera_.getTVec()[2]));
+    glTranslated(
+        camera_.getSVec()[0],
+        camera_.getSVec()[1],
+        camera_.getSVec()[2]);
+
+    //objects
+    for (auto& daphnia : sequent_clip_objects_[frame_count_])
+        daphnia.drawSimplified({ 1, 1, 1, 1 }, false);
+
+    //write to file
+    saveImage(viewport[2], viewport[3], generation_masks_path_
         + std::to_string(frame_count_) + generation_frames_ending_);
     ++frame_count_;
 

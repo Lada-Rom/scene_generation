@@ -35,7 +35,7 @@ public:
 
 	std::array<double, 3> calcDirection();
 
-	void drawSimplified(const std::array<double, 4>& color4d);
+	void drawSimplified(const std::array<double, 4>& color4d, bool direction = true);
 	void drawComplicated(
 		const std::array<double, 4>& color_inner,
 		const std::array<double, 4>& color_outer,
