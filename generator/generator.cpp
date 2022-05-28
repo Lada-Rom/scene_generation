@@ -1552,6 +1552,14 @@ void Generator::genTexturedSequentClip(
 		}
 	}
 
+	//texture settings
+	std::string edge_texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
+	main_scene_.setAquariumEdgeTextureFilename("right", edge_texture_path + right_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("left", edge_texture_path + left_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("upper", edge_texture_path + upper_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("lower", edge_texture_path + lower_edge_name_ + image_ending_);
+	main_scene_.setAquariumEdgeTextureFilename("bottom", edge_texture_path + bottom_edge_name_ + image_ending_);
+
 	//glut rendering
 	std::cout << "GLUT frames rendering" << std::endl;
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);

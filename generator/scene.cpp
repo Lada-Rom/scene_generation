@@ -191,11 +191,30 @@ void Scene::applySCODaphniaShift(const size_t& frame,
     const size_t& object, const double& shift) {
     std::array<double, 3> prev_coords = sequent_clip_objects_[frame - 1][object].getCoords();
     std::array<double, 3> curr_direction = sequent_clip_objects_[frame][object].getDirection();
-    std::array<double, 3> curr_coords = {
+    std::array<double, 3> new_coords = {
         prev_coords[0] + curr_direction[0] * shift,
         prev_coords[1] + curr_direction[1] * shift,
         prev_coords[2] + curr_direction[2] * shift};
-    sequent_clip_objects_[frame][object].setCoords(curr_coords);
+
+    std::array<double, 3> aq_size = aquarium_.getSize();
+    double daph_length = sequent_clip_objects_[frame][object].getLength();
+
+    if (new_coords[0] > 0.5 * aq_size[0] - daph_length)
+        new_coords[0] = 0.5 * aq_size[0] - daph_length;
+    if (new_coords[0] < -0.5 * aq_size[0] + daph_length)
+        new_coords[0] = -0.5 * aq_size[0] + daph_length;
+
+    if (new_coords[1] > 0.5 * aq_size[1] - daph_length)
+        new_coords[1] = 0.5 * aq_size[1] - daph_length;
+    if (new_coords[1] < -0.5 * aq_size[1] + daph_length)
+        new_coords[1] = -0.5 * aq_size[1] + daph_length;
+
+    if (new_coords[2] > -daph_length)
+        new_coords[2] = -daph_length;
+    if (new_coords[2] < -aq_size[2] + daph_length)
+        new_coords[2] = -aq_size[2] + daph_length;
+
+    sequent_clip_objects_[frame][object].setCoords(new_coords);
 }
 
 ////////// calcOuterCameraParams //////////
@@ -760,14 +779,13 @@ void Scene::displayTexturedSequentClip() {
 
     //aquarium
     glColor3d(1., 1., 1.);
-    //aquarium_.drawTextured();
-    aquarium_.drawWire();
+    aquarium_.drawTextured();
 
     //objects
     for (auto& daphnia : sequent_clip_objects_[frame_count_]) {
         drawSimplifiedReflection(daphnia, { 0.3, 0.3, 0.3 });
         //daphnia.drawTextured();
-        daphnia.drawSimplified({ 0., 0., 0., 0.3 });
+        daphnia.drawSimplified({ 0., 0., 0., 1. });
     }
 
     //write to file
