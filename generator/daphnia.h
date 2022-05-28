@@ -24,15 +24,16 @@ public:
 	double getLength();
 	std::array<double, 3> getDirection();
 	std::array<double, 3> getDirection() const;
+	std::string getTextureSourceFilename();
 
 	void setCoords(const std::array<double, 3>& coords);
 	void setAngles(const std::array<double, 3>& angles);
 	void setDirection(const std::array<double, 3>& direction);
-	void setScale(const double&);
+	void setScale(const double& scale);
 	void setTextureFilename(const std::string& filename);
+	void setTextureSourceFilename(const std::string& filename);
 
 	std::array<double, 3> calcDirection();
-	//void loadSphereTexture();
 
 	void drawSimplified(const std::array<double, 4>& color4d);
 	void drawComplicated(
@@ -60,6 +61,7 @@ private:
 
 	GLUquadric* sphere_{ gluNewQuadric() };
 	Texture texture_{ };
+	std::string texture_source_filename_{  };
 
 	double scale_{ 0.5 }; // 0.5 - 0.8
 	double scale_body_{ 1.5 };

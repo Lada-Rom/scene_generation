@@ -45,13 +45,17 @@ public:
 	std::vector<cv::Point2d> readInputImgpointsD(size_t);
 	std::vector<cv::Point2i> readInputImgpointsI(size_t);
 	std::string readInputImage(size_t);
-	std::array<double, 9> readCameraRMat(size_t);
-	std::array<double, 3> readCameraTVec(size_t);
-	std::array<double, 3> readCameraSVec(size_t);
-	void readConfigRCOJSON(size_t& index, size_t&, std::array<double, 2>&,
-		std::array<double, 2>&, const std::string& filename);
-	void readConfigSCOJSON(size_t& index, size_t&, std::array<double, 2>&,
-		std::array<double, 2>&,const std::string& filename);
+	std::array<double, 9> readCameraRMat(size_t index);
+	std::array<double, 3> readCameraTVec(size_t index);
+	std::array<double, 3> readCameraSVec(size_t index);
+	void readConfigRCOJSON(size_t& index, size_t& num_frames,
+		std::array<double, 2>& num_objects_range, 
+		std::array<double, 2>& size_objects_range,
+		const std::string& filename);
+	void readConfigSCOJSON(size_t& index, size_t& num_frames,
+		std::array<double, 2>& num_objects_range,
+		std::array<double, 2>& size_objects_range,
+		const std::string& filename);
 
 	void writeCameraRMat(const cv::Mat&, size_t);
 	void writeCameraTVec(const cv::Mat&, size_t);
@@ -156,6 +160,7 @@ private:
 	const std::string grid_merged_name_			{ "grid_merged" };
 
 	const std::string RCO_generation_main_dir_	{ "RCO_generation/" };
+	const std::string SCO_generation_main_dir_	{ "SCO_generation/" };
 	const std::string generation_frames_dir_	{ "frames/" };
 	const std::string generation_json_dir_		{ "json/" };
 	const std::string generation_textures_dir_	{ "textures/" };

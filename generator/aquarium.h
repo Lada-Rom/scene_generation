@@ -19,7 +19,7 @@ public:
 	std::array<double, 3> getSize();
 	std::array<std::array<double, 3>, 8> getVertices();
 	std::vector<cv::Point3d> getObjpoints();
-	std::vector<cv::Point3d> getObjpoints(double);
+	std::vector<cv::Point3d> getObjpoints(double scale);
 
 	void setTextureFilename(const std::string& plane, const std::string& filename);
 

@@ -35,6 +35,11 @@ std::array<double, 3> Daphnia::getDirection() const {
 	return direction_;
 }
 
+////////// getTextureSourceFilename //////////
+std::string Daphnia::getTextureSourceFilename() {
+	return texture_source_filename_;
+}
+
 ////////// setCoords //////////
 void Daphnia::setCoords(const std::array<double, 3>& coords) {
 	coords_ = coords;
@@ -60,6 +65,11 @@ void Daphnia::setScale(const double& scale) {
 ////////// setTextureFilename //////////
 void Daphnia::setTextureFilename(const std::string& filename) {
 	texture_.filename_ = filename;
+}
+
+////////// setTextureSourceFilename //////////
+void Daphnia::setTextureSourceFilename(const std::string& filename) {
+	texture_source_filename_ = filename;
 }
 
 ////////// calcDirection //////////

@@ -26,9 +26,9 @@ double Scene::getScale() {
     return scale_;
 }
 
-////////// getRCODaphnia //////////
-Daphnia Scene::getRCODaphnia(size_t frame, size_t object) {
-    return random_clip_objects_[frame][object];
+////////// getRCODaphniaCoords //////////
+std::array<double, 3> Scene::getRCODaphniaCoords(size_t frame, size_t object) {
+    return random_clip_objects_[frame][object].getCoords();
 }
 
 ////////// getRCODaphniaLength //////////
@@ -39,6 +39,16 @@ double Scene::getRCODaphniaLength(size_t frame, size_t object) {
 ////////// getRCOObjectsNum //////////
 size_t Scene::getRCOObjectsNum(size_t frame) {
     return random_clip_objects_[frame].size();
+}
+
+////////// getSCODaphniaCoords //////////
+std::array<double, 3> Scene::getSCODaphniaCoords(size_t frame, size_t object) {
+    return sequent_clip_objects_[frame][object].getCoords();
+}
+
+////////// getSCODaphniaTextureSourceFilename //////////
+std::string Scene::getSCODaphniaTextureSourceFilename(size_t frame, size_t object) {
+    return sequent_clip_objects_[frame][object].getTextureSourceFilename();
 }
 
 ////////// getSCODaphniaLength //////////
@@ -78,43 +88,42 @@ void Scene::setAquariumEdgeTextureFilename(
 }
 
 ////////// setRCOFrames //////////
-void Scene::setRCOFrames(const size_t& num_frames) {
+void Scene::setRCOFrames(size_t num_frames) {
     random_clip_objects_ = std::vector<std::vector<Daphnia>>{ num_frames };
 }
 
 ////////// setRCOObjects //////////
-void Scene::setRCOObjects(const size_t& index, const size_t& num_objects) {
+void Scene::setRCOObjects(size_t index, size_t num_objects) {
     random_clip_objects_[index] = std::vector<Daphnia>{ num_objects };
 }
 
 ////////// setRCODaphniaCoords //////////
-void Scene::setRCODaphniaCoords(const size_t& frame, const size_t& object,
+void Scene::setRCODaphniaCoords(size_t frame, size_t object,
     const std::array<double, 3>& coords) {
     random_clip_objects_[frame][object].setCoords(coords);
 }
 
 ////////// setRCODaphniaAngles //////////
-void Scene::setRCODaphniaAngles(const size_t& frame, const size_t& object,
+void Scene::setRCODaphniaAngles(size_t frame, size_t object,
     const std::array<double, 3>& angles) {
     random_clip_objects_[frame][object].setAngles(angles);
 }
 
 ////////// setRCODaphniaAnglesWithDirection //////////
-std::array<double, 3> Scene::setRCODaphniaDirection(
-    const size_t& frame, const size_t& object) {
+std::array<double, 3> Scene::setRCODaphniaDirection(size_t frame, size_t object) {
     std::array<double, 3> direction = random_clip_objects_[frame][object].calcDirection();
     random_clip_objects_[frame][object].setDirection(direction);
     return direction;
 }
 
 ////////// setRCODaphniaScale //////////
-void Scene::setRCODaphniaScale(const size_t& frame, const size_t& object,
+void Scene::setRCODaphniaScale(size_t frame, size_t object,
     const double& scale) {
     random_clip_objects_[frame][object].setScale(scale);
 }
 
 ////////// setRCODaphniaTextureFilename //////////
-void Scene::setRCODaphniaTextureFilename(const size_t& frame, const size_t& object,
+void Scene::setRCODaphniaTextureFilename(size_t frame, size_t object,
     const std::string& filename) {
     random_clip_objects_[frame][object].setTextureFilename(filename);
 }
@@ -140,37 +149,37 @@ void Scene::resetObjectCount() {
 }
 
 ////////// setSCOFrames //////////
-void Scene::setSCOFrames(const size_t& num_frames) {
+void Scene::setSCOFrames(size_t num_frames) {
     sequent_clip_objects_ = std::vector<std::vector<Daphnia>>{ num_frames };
 }
 
 ////////// setSCOObjects //////////
-void Scene::setSCOObjects(const size_t& num_objects) {
+void Scene::setSCOObjects(size_t num_objects) {
     for (auto& frame : sequent_clip_objects_)
         frame = std::vector<Daphnia>{ num_objects };
 }
 
 ////////// setSCODaphniaScale //////////
-void Scene::setSCODaphniaScale(const size_t& object, const double& scale) {
+void Scene::setSCODaphniaScale(size_t object, const double& scale) {
     for (auto& frame : sequent_clip_objects_)
         frame[object].setScale(scale);
 }
 
 ////////// setSCODaphniaCoords //////////
-void Scene::setSCODaphniaCoords(const size_t& frame,
-    const size_t& object, const std::array<double, 3>& coords) {
+void Scene::setSCODaphniaCoords(size_t frame, size_t object,
+    const std::array<double, 3>& coords) {
     sequent_clip_objects_[frame][object].setCoords(coords);
 }
 
 ////////// setSCODaphniaAngles //////////
-void Scene::setSCODaphniaAngles(const size_t& frame,
-    const size_t& object, const std::array<double, 3>& angles) {
+void Scene::setSCODaphniaAngles(size_t frame, size_t object,
+    const std::array<double, 3>& angles) {
     sequent_clip_objects_[frame][object].setAngles(angles);
 }
 
 ////////// addSCONextDaphniaAngles //////////
-void Scene::addSCONextDaphniaAngles(const size_t& frame,
-    const size_t& object, const std::array<double, 3>& angles) {
+void Scene::addSCONextDaphniaAngles(size_t frame, size_t object,
+    const std::array<double, 3>& angles) {
     std::array<double, 3> prev_angles = sequent_clip_objects_[frame - 1][object].getAngles();
     sequent_clip_objects_[frame][object].setAngles({
         prev_angles[0] + angles[0],
@@ -179,16 +188,15 @@ void Scene::addSCONextDaphniaAngles(const size_t& frame,
 }
 
 ////////// setSCODaphniaDirection //////////
-std::array<double, 3> Scene::setSCODaphniaDirection(
-    const size_t& frame, const size_t& object) {
+std::array<double, 3> Scene::setSCODaphniaDirection(size_t frame, size_t object) {
     std::array<double, 3> direction = sequent_clip_objects_[frame][object].calcDirection();
     sequent_clip_objects_[frame][object].setDirection(direction);
     return direction;
 }
 
 ////////// applySCODaphniaShift //////////
-void Scene::applySCODaphniaShift(const size_t& frame, 
-    const size_t& object, const double& shift) {
+void Scene::applySCODaphniaShift(size_t frame, size_t object,
+    const double& shift) {
     std::array<double, 3> prev_coords = sequent_clip_objects_[frame - 1][object].getCoords();
     std::array<double, 3> curr_direction = sequent_clip_objects_[frame][object].getDirection();
     std::array<double, 3> new_coords = {
@@ -215,6 +223,20 @@ void Scene::applySCODaphniaShift(const size_t& frame,
         new_coords[2] = -aq_size[2] + daph_length;
 
     sequent_clip_objects_[frame][object].setCoords(new_coords);
+}
+
+////////// setSCODaphniaTextureSourceFilename //////////
+void Scene::setSCODaphniaTextureSourceFilename(size_t object,
+    const std::string& filename) {
+    for (auto& frame : sequent_clip_objects_) {
+        frame[object].setTextureSourceFilename(filename);
+    }
+}
+
+////////// setSCODaphniaTextureFilename //////////
+void Scene::setSCODaphniaTextureFilename(size_t frame, size_t object,
+    const std::string& filename) {
+    sequent_clip_objects_[frame][object].setTextureFilename(filename);
 }
 
 ////////// calcOuterCameraParams //////////
@@ -784,13 +806,13 @@ void Scene::displayTexturedSequentClip() {
     //objects
     for (auto& daphnia : sequent_clip_objects_[frame_count_]) {
         drawSimplifiedReflection(daphnia, { 0.3, 0.3, 0.3 });
-        //daphnia.drawTextured();
-        daphnia.drawSimplified({ 0., 0., 0., 1. });
+        daphnia.drawTextured();
+        //daphnia.drawSimplified({ 0., 0., 0., 1. });
     }
 
     //write to file
-    //saveImage(viewport[2], viewport[3], generation_frames_path_
-    //    + std::to_string(frame_count_) + generation_frames_ending_);
+    saveImage(viewport[2], viewport[3], generation_frames_path_
+        + std::to_string(frame_count_) + generation_frames_ending_);
     ++frame_count_;
 
     glutSwapBuffers();

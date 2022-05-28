@@ -1077,7 +1077,7 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
 		for (int object = {}; object < num_objects; ++object) {
 			objpoints[frame][object] =
-				main_scene_.getRCODaphnia(frame, object).getCoords();
+				main_scene_.getRCODaphniaCoords(frame, object);
 		}
 	}
 
@@ -1216,7 +1216,7 @@ void Generator::genUntexturedRandomClip(
 		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
 		for (int object = {}; object < num_objects; ++object) {
 			objpoints[frame][object] =
-				main_scene_.getRCODaphnia(frame, object).getCoords();
+				main_scene_.getRCODaphniaCoords(frame, object);
 		}
 	}
 
@@ -1372,7 +1372,7 @@ void Generator::genTexturedRandomClip(
 		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
 		for (int object = {}; object < num_objects; ++object) {
 			objpoints[frame][object] =
-				main_scene_.getRCODaphnia(frame, object).getCoords();
+				main_scene_.getRCODaphniaCoords(frame, object);
 		}
 	}
 
@@ -1476,6 +1476,31 @@ void Generator::genTexturedSequentClip(
 	main_scene_.setCameraTVec(tvec);
 	main_scene_.setCameraSVec(svec);
 
+	std::cout << "Rotation matrix:\n" << rmat << std::endl;
+	std::cout << "Translation vector:\t" << tvec << std::endl;
+	std::cout << "Shift vector:\t\t" << svec << std::endl;
+
+	//set directories for generation
+	if (path.empty()) {
+		path = data_path_;
+	}
+	else if (path.compare(path.size() - 1, 1, "/")) {
+		std::cout << "Warning: path ends not with \"/\" and will be supplemented" << std::endl;
+		path += "/";
+	}
+	std::string gen_glut_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
+	std::string gen_merged_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
+	std::string gen_mask_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_mask_dir_;
+	std::string gen_texture_dir = path + SCO_generation_main_dir_ + generation_textures_dir_;
+	std::string gen_json_dir = path + SCO_generation_main_dir_ + generation_json_dir_;
+	main_scene_.setGenFramesPath(gen_glut_dir);
+	main_scene_.setGenMasksPath(gen_mask_dir);
+	makeGenFileTree(data_path_, SCO_generation_main_dir_,
+		generation_frames_dir_ + frames_glut_dir_,
+		generation_frames_dir_ + frames_merged_dir_,
+		generation_frames_dir_ + frames_mask_dir_,
+		gen_texture_dir, generation_json_dir_);
+
 	//construct 3D params - coords, directions
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
 
@@ -1506,6 +1531,8 @@ void Generator::genTexturedSequentClip(
 
 	//frame 0: initial params
 	double curr_scale{}, curr_dl{};
+	std::vector<std::vector<std::array<double, 3>>> objdirections{ num_frames };
+	objdirections[0] = std::vector<std::array<double, 3>>{ num_objects };
 	for (int object = {}; object < num_objects; ++object) {
 		//gen size scale
 		if ((size_objects_range[0] - size_objects_range[1]) < std::numeric_limits<double>::epsilon())
@@ -1527,7 +1554,7 @@ void Generator::genTexturedSequentClip(
 		//gen angles - apha, beta, gamma
 		buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
 		main_scene_.setSCODaphniaAngles(0, object, buffer);
-		main_scene_.setSCODaphniaDirection(0, object);
+		objdirections[0][object] = main_scene_.setSCODaphniaDirection(0, object);
 	}
 
 	//other frames
@@ -1537,20 +1564,39 @@ void Generator::genTexturedSequentClip(
 	std::normal_distribution<> shift_dis(
 		(min_shift + max_shift) * 0.5, (max_shift - min_shift) / 6);
 	for (int frame = { 1 }; frame < num_frames; ++frame) {
+		objdirections[frame] = std::vector<std::array<double, 3>>{ num_objects };
 		for (int object = {}; object < num_objects; ++object) {
 			//gen direction deviation
 			buffer = { angles_dis(rd_), angles_dis(rd_), angles_dis(rd_) };
 			main_scene_.addSCONextDaphniaAngles(frame, object, buffer);
-			main_scene_.setSCODaphniaDirection(frame, object);
+			objdirections[frame][object] = main_scene_.setSCODaphniaDirection(frame, object);
 
 			//gen shift
 			shift = shift_dis(rd_);
 			main_scene_.applySCODaphniaShift(frame, object, shift);
-
-			//process edge situation
-
 		}
 	}
+
+	//calc 2D params from 3D
+	std::cout << "Calculating 2D coords" << std::endl;
+	std::vector<std::vector<std::array<double, 3>>> objpoints{ num_frames };
+	for (int frame{}; frame < num_frames; ++frame) {
+		objpoints[frame] = std::vector<std::array<double, 3>>{ num_objects };
+		for (int object = {}; object < num_objects; ++object) {
+			objpoints[frame][object] =
+				main_scene_.getSCODaphniaCoords(frame, object);
+		}
+	}
+
+	std::vector<std::vector<std::array<double, 2>>> imgpoints;
+	std::vector<std::vector<std::array<double, 2>>> imgdirections{ num_frames };
+	predictPoints(imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
+	predictDirections(imgdirections, objdirections, imgpoints, objpoints,
+		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
+
+	//saving objoints and imgpoints to json
+	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//texture settings
 	std::string edge_texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
@@ -1559,6 +1605,43 @@ void Generator::genTexturedSequentClip(
 	main_scene_.setAquariumEdgeTextureFilename("upper", edge_texture_path + upper_edge_name_ + image_ending_);
 	main_scene_.setAquariumEdgeTextureFilename("lower", edge_texture_path + lower_edge_name_ + image_ending_);
 	main_scene_.setAquariumEdgeTextureFilename("bottom", edge_texture_path + bottom_edge_name_ + image_ending_);
+
+	std::string glut_texture_directory =
+		data_path_ + src_dir_ + daphnia_texture_dir_ + daphnia_glut_dir_;
+	unsigned int num_glut_textures = std::distance(
+		std::filesystem::directory_iterator(glut_texture_directory),
+		std::filesystem::directory_iterator{});
+	if (num_glut_textures < num_objects_range[0]) {
+		for (int i{ (int)num_glut_textures }; i < num_objects_range[0]; ++i)
+			makeGLUTDaphniaTexture(i);
+		num_glut_textures = num_objects_range[0];
+	}
+
+	std::cout << "Daphnia textures brightness leveling off" << std::endl;
+	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
+	std::uniform_int_distribution<> texture_index_dis(0, num_glut_textures - 1);
+	unsigned int size{ 64 };
+	cv::Mat sup_src_image = add_cv::supplementImage(src_image, size);
+
+	//gen texture number and set for each object on all frames
+	int file_index{};
+	std::string texture_source_filename{};
+	for (int object{}; object < num_objects; ++object) {
+		file_index = texture_index_dis(rd_);
+		texture_source_filename = glut_texture_directory + std::to_string(file_index) + image_ending_;
+		main_scene_.setSCODaphniaTextureSourceFilename(object, texture_source_filename);
+	}
+
+	//process texture for each object
+	for (int frame{}; frame < num_frames; ++frame) {
+		for (int object{}; object < num_objects; ++object) {
+			texture_source_filename = main_scene_.getSCODaphniaTextureSourceFilename(frame, object);
+			processDaphniaTexture(size, texture_source_filename, sup_src_image, imgpoints[frame][object],
+				gen_texture_dir + std::to_string(frame) + "." + std::to_string(object) + image_ending_);
+			main_scene_.setSCODaphniaTextureFilename(frame, object,
+				gen_texture_dir + std::to_string(frame) + "." + std::to_string(object) + image_ending_);
+		}
+	}
 
 	//glut rendering
 	std::cout << "GLUT frames rendering" << std::endl;
@@ -1575,6 +1658,22 @@ void Generator::genTexturedSequentClip(
 	main_scene_.resetFrameCount();
 	main_scene_.initGLUT();
 	glutMainLoop();
+
+	//merge glut scene with source image
+	std::cout << "OpenCV background merging" << std::endl;
+	cv::Mat mask_source = cv::imread(gen_glut_dir + "0" + image_ending_, cv::IMREAD_GRAYSCALE);
+	cv::Mat mask;
+	cv::threshold(mask_source, mask, 254, 255, cv::THRESH_BINARY);
+
+	std::vector<cv::Mat> merged_frames;
+	std::string merged_filename;
+	for (int frame = {}; frame < num_frames; ++frame) {
+		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
+		add_cv::mergeTexturedImageWithSource(mask, src_image,
+			gen_glut_dir + std::to_string(frame) + image_ending_, merged_filename);
+	}
+
+	std::cout << "Successful end of program!" << std::endl;
 
 }
 
