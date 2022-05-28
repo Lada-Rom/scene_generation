@@ -83,8 +83,8 @@ void Generator::saveMainJSON() {
 	file << main_json_.dump(4) << std::endl;
 }
 
-////////// saveGenRCOJSON //////////
-void Generator::saveGenRCOJSON(const std::string& path,
+////////// saveGenCOJSON //////////
+void Generator::saveGenCOJSON(const std::string& path,
 	const std::vector<std::vector<std::array<double, 3>>>& objpoints,
 	const std::vector<std::vector<std::array<double, 3>>>& objdirections,
 	const std::vector<std::vector<std::array<double, 2>>>& imgpoints,
@@ -1102,7 +1102,7 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
+	saveGenCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
@@ -1241,7 +1241,7 @@ void Generator::genUntexturedRandomClip(
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
+	saveGenCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
@@ -1397,7 +1397,7 @@ void Generator::genTexturedRandomClip(
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
+	saveGenCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//texture settings
 	std::string edge_texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
@@ -1611,7 +1611,7 @@ void Generator::genTexturedSequentClip(
 		main_scene_.getIntrinsicCameraMatrix(), rmat, tvec, svec);
 
 	//saving objoints and imgpoints to json
-	saveGenRCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
+	saveGenCOJSON(gen_json_dir, objpoints, objdirections, imgpoints, imgdirections);
 
 	//texture settings
 	std::string edge_texture_path = data_path_ + src_dir_ + edges_dir_ + std::to_string(index);
@@ -1692,8 +1692,7 @@ void Generator::genTexturedSequentClip(
 	//make video from frames
 	std::cout << "Video making" << std::endl;
 	auto frame_video = cv::VideoWriter(gen_video_dir + "frames.mp4",
-		cv::VideoWriter::fourcc('P', 'I', 'M','1'), fps,
-		cv::Size(mask_source.cols, mask_source.rows));
+		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), fps, merged_frames[0].size());
 	for (const auto& frame : merged_frames)
 		frame_video.write(frame);
 	frame_video.release();

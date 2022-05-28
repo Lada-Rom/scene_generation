@@ -36,7 +36,7 @@ public:
 	void loadMainJSON();
 	void loadConfigJSON(const std::string& config_filename);
 	void saveMainJSON();
-	void saveGenRCOJSON(const std::string& path,
+	void saveGenCOJSON(const std::string& path,
 		const std::vector<std::vector<std::array<double, 3>>>& objpoints,
 		const std::vector<std::vector<std::array<double, 3>>>& objdirections,
 		const std::vector<std::vector<std::array<double, 2>>>& imgpoints,

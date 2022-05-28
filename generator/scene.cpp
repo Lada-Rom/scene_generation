@@ -806,8 +806,8 @@ void Scene::displayTexturedSequentClip() {
     //objects
     for (auto& daphnia : sequent_clip_objects_[frame_count_]) {
         drawSimplifiedReflection(daphnia, { 0.3, 0.3, 0.3 });
-        //daphnia.drawTextured();
-        daphnia.drawSimplified({ 0., 0., 0., 1. });
+        daphnia.drawTextured();
+        //daphnia.drawSimplified({ 0., 0., 0., 1. });
     }
 
     //write to file
