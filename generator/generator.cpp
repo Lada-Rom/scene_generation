@@ -1331,6 +1331,7 @@ void Generator::genTexturedRandomClip(
 		+ frames_mask_dir_ + frames_mask_objects_dir_;
 	std::string gen_mask_reflections_dir = path + RCO_generation_main_dir_ + generation_frames_dir_
 		+ frames_mask_dir_ + frames_mask_reflections_dir_;
+	std::string gen_heatmap_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_heatmap_dir_;
 	std::string gen_texture_dir = path + RCO_generation_main_dir_ + generation_textures_dir_;
 	std::string gen_video_dir = path + RCO_generation_main_dir_ + generation_video_dir_;
 	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
@@ -1342,6 +1343,7 @@ void Generator::genTexturedRandomClip(
 		generation_frames_dir_ + frames_merged_dir_,
 		generation_frames_dir_ + frames_mask_dir_ + frames_mask_objects_dir_,
 		generation_frames_dir_ + frames_mask_dir_ + frames_mask_reflections_dir_,
+		generation_frames_dir_ + frames_heatmap_dir_,
 		gen_texture_dir, gen_video_dir, generation_json_dir_);
 
 	//construct 3D params - coords, angles
@@ -1520,21 +1522,24 @@ void Generator::genTexturedRandomClip(
 	cv::Mat mask;
 	cv::threshold(mask_source, mask, 254, 255, cv::THRESH_BINARY);
 
-	std::vector<cv::Mat> merged_frames;
-	std::vector<cv::Mat> masked_frames;
-	std::string merged_filename;
-	std::string masked_filename;
+	std::vector<cv::Mat> merged_frames{ num_frames };
+	std::vector<cv::Mat> masked_frames{ num_frames };
+	std::vector<cv::Mat> heatmap_frames{ num_frames };
+	std::string merged_filename, masked_filename, heatmap_filename;
 	for (int frame = {}; frame < num_frames; ++frame) {
 		//background merging
 		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
-		merged_frames.push_back(
-			add_cv::mergeTexturedImageWithSource(mask, src_image,
-				gen_glut_dir + std::to_string(frame) + image_ending_));
+		merged_frames[frame] = add_cv::mergeTexturedImageWithSource(mask, src_image,
+			gen_glut_dir + std::to_string(frame) + image_ending_);
 
 		//object borders smoothing
 		masked_filename = gen_mask_objects_dir + std::to_string(frame) + image_ending_;
-		masked_frames.push_back(cv::imread(masked_filename, cv::IMREAD_GRAYSCALE));
+		masked_frames[frame] = cv::imread(masked_filename, cv::IMREAD_GRAYSCALE);
 		add_cv::smoothObjectBorders(merged_frames[frame], masked_frames[frame]);
+
+		//making heatmap
+		heatmap_filename = gen_heatmap_dir + std::to_string(frame) + image_ending_;
+		heatmap_frames[frame] = add_cv::makeHeatmap(masked_frames[frame], heatmap_filename);
 
 		//reflection borders smoothing
 		masked_filename = gen_mask_reflections_dir + std::to_string(frame) + image_ending_;
@@ -1543,17 +1548,9 @@ void Generator::genTexturedRandomClip(
 
 	//make video from frames
 	std::cout << "Video making" << std::endl;
-	auto video = cv::VideoWriter(gen_video_dir + "frames.mp4",
-		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 10, merged_frames[0].size());
-	for (const auto& frame : merged_frames)
-		video.write(frame);
-	video.release();
-
-	video = cv::VideoWriter(gen_video_dir + "masks.mp4",
-		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 10, masked_frames[0].size());
-	for (const auto& frame : masked_frames)
-		video.write(frame);
-	video.release();
+	writeFramesToVideo(gen_video_dir + "frames.mp4", merged_frames, 10);
+	writeFramesToVideo(gen_video_dir + "heatmaps.mp4", heatmap_frames, 10);
+	writeFramesToVideo(gen_video_dir + "masks.mp4", masked_frames, 10);
 
 	std::cout << "Successful end of program!" << std::endl;
 }
@@ -1841,7 +1838,6 @@ void Generator::genTexturedSequentClip(
 	writeFramesToVideo(gen_video_dir + "masks.mp4", masked_frames, fps);
 
 	std::cout << "Successful end of program!" << std::endl;
-
 }
 
 ////////// cvtMatToVector //////////
