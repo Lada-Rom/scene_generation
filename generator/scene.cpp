@@ -133,9 +133,14 @@ void Scene::setGenFramesPath(const std::string& path) {
     generation_frames_path_ = path;
 }
 
-////////// setGenMasksPath //////////
-void Scene::setGenMasksPath(const std::string& path) {
-    generation_masks_path_ = path;
+////////// setGenObjectMasksPath //////////
+void Scene::setGenObjectMasksPath(const std::string& path) {
+    generation_objects_masks_path_ = path;
+}
+
+////////// setGenReflectionMasksPath //////////
+void Scene::setGenReflectionMasksPath(const std::string& path) {
+    generation_reflections_masks_path_ = path;
 }
 
 ////////// resetFrameCount //////////
@@ -298,25 +303,51 @@ void Scene::drawAxis() {
 
 ////////// drawSimplifiedReflection //////////
 void Scene::drawSimplifiedReflection(const Daphnia& daphnia,
-    const std::array<double, 3>& color3d) {
+    const std::array<double, 4>& color4d) {
     std::array<double, 3> aq_size = aquarium_.getSize();
     std::array<double, 3> coords = daphnia.getCoords();
 
     //right plane
     if (coords[0] > 0.5 * aq_size[0] - reflection_distance_limit_)
-        drawRightPlaneReflection(daphnia, color3d);
+        drawRightPlaneReflection(daphnia, color4d);
 
     //left plane
     if (coords[0] < -0.5 * aq_size[0] + reflection_distance_limit_)
-        drawLeftPlaneReflection(daphnia, color3d);
+        drawLeftPlaneReflection(daphnia, color4d);
 
     //upper plane
     if (coords[1] > 0.5 * aq_size[1] - reflection_distance_limit_)
-        drawUpperPlaneReflection(daphnia, color3d);
+        drawUpperPlaneReflection(daphnia, color4d);
 
     //lower plane
     if (coords[1] < -0.5 * aq_size[1] + reflection_distance_limit_)
-        drawLowerPlaneReflection(daphnia, color3d);
+        drawLowerPlaneReflection(daphnia, color4d);
+}
+
+////////// drawSimplifiedReflection //////////
+void Scene::drawSimplifiedReflection(const Daphnia& daphnia,
+    const std::array<double, 4>& right,
+    const std::array<double, 4>& left,
+    const std::array<double, 4>& upper,
+    const std::array<double, 4>& lower) {
+    std::array<double, 3> aq_size = aquarium_.getSize();
+    std::array<double, 3> coords = daphnia.getCoords();
+
+    //right plane
+    if (coords[0] > 0.5 * aq_size[0] - reflection_distance_limit_)
+        drawRightPlaneReflection(daphnia, right);
+
+    //left plane
+    if (coords[0] < -0.5 * aq_size[0] + reflection_distance_limit_)
+        drawLeftPlaneReflection(daphnia, left);
+
+    //upper plane
+    if (coords[1] > 0.5 * aq_size[1] - reflection_distance_limit_)
+        drawUpperPlaneReflection(daphnia, upper);
+
+    //lower plane
+    if (coords[1] < -0.5 * aq_size[1] + reflection_distance_limit_)
+        drawLowerPlaneReflection(daphnia, lower);
 }
 
 ////////// drawComplicatedReflection //////////
@@ -346,7 +377,7 @@ void Scene::drawComplicatedReflection(const Daphnia& daphnia,
 
 ////////// drawRightPlaneReflection //////////
 void Scene::drawRightPlaneReflection(const Daphnia& daphnia,
-    const std::array<double, 3>& color3d) {
+    const std::array<double, 4>& color4d) {
     glEnable(GL_STENCIL_TEST);
 
     glColorMask(0, 0, 0, 0); //disable drawing colors
@@ -363,8 +394,7 @@ void Scene::drawRightPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[0]) - abs(coords[0]));
     daphnia.drawSimplifiedReflection(true,
-        { -0.5 * aq_size[0] - diff, coords[1], coords[2] },
-        { color3d[0], color3d[1], color3d[2], reflection_strength_});
+        { -0.5 * aq_size[0] - diff, coords[1], coords[2] }, color4d);
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
@@ -372,7 +402,7 @@ void Scene::drawRightPlaneReflection(const Daphnia& daphnia,
 
 ////////// drawLeftPlaneReflection //////////
 void Scene::drawLeftPlaneReflection(const Daphnia& daphnia,
-    const std::array<double, 3>& color3d) {
+    const std::array<double, 4>& color4d) {
     glEnable(GL_STENCIL_TEST);
 
     glColorMask(0, 0, 0, 0); //disable drawing colors
@@ -389,8 +419,7 @@ void Scene::drawLeftPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[0]) - abs(coords[0]));
     daphnia.drawSimplifiedReflection(true,
-        { 0.5 * aq_size[0] + diff, coords[1], coords[2] },
-        { color3d[0], color3d[1], color3d[2], reflection_strength_ });
+        { 0.5 * aq_size[0] + diff, coords[1], coords[2] }, color4d);
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
@@ -398,7 +427,7 @@ void Scene::drawLeftPlaneReflection(const Daphnia& daphnia,
 
 ////////// drawUpperPlaneReflection //////////
 void Scene::drawUpperPlaneReflection(const Daphnia& daphnia,
-    const std::array<double, 3>& color3d) {
+    const std::array<double, 4>& color4d) {
     glEnable(GL_STENCIL_TEST);
 
     glColorMask(0, 0, 0, 0); //disable drawing colors
@@ -415,8 +444,7 @@ void Scene::drawUpperPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[1]) - abs(coords[1]));
     daphnia.drawSimplifiedReflection(false,
-        { coords[0], -0.5 * aq_size[1] - diff, coords[2] },
-        { color3d[0], color3d[1], color3d[2], reflection_strength_ });
+        { coords[0], -0.5 * aq_size[1] - diff, coords[2] }, color4d);
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
@@ -424,7 +452,7 @@ void Scene::drawUpperPlaneReflection(const Daphnia& daphnia,
 
 ////////// drawLowerPlaneReflection //////////
 void Scene::drawLowerPlaneReflection(const Daphnia& daphnia,
-    const std::array<double, 3>& color3d) {
+    const std::array<double, 4>& color4d) {
     glEnable(GL_STENCIL_TEST);
 
     glColorMask(0, 0, 0, 0); //disable drawing colors
@@ -441,8 +469,7 @@ void Scene::drawLowerPlaneReflection(const Daphnia& daphnia,
     std::array<double, 3> coords = daphnia.getCoords();
     double diff = abs(abs(0.5 * aq_size[1]) - abs(coords[1]));
     daphnia.drawSimplifiedReflection(false,
-        { coords[0], 0.5 * aq_size[1] + diff, coords[2] },
-        { color3d[0], color3d[1], color3d[2], reflection_strength_ });
+        { coords[0], 0.5 * aq_size[1] + diff, coords[2] }, color4d);
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
@@ -673,7 +700,7 @@ void Scene::displayUntexturedRandomClip() {
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
         daphnia.drawSimplified({ 0., 0., 0., 1. });
-        drawSimplifiedReflection(daphnia, { 0., 0., 0. });
+        drawSimplifiedReflection(daphnia, { 0., 0., 0., reflection_strength_ });
     }
 
     //aquarium
@@ -719,7 +746,7 @@ void Scene::displayTexturedRandomClip() {
 
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
-        drawSimplifiedReflection(daphnia, { 0.3, 0.3, 0.3});
+        drawSimplifiedReflection(daphnia, { 0.3, 0.3, 0.3, reflection_strength_ });
         daphnia.drawTextured();
         //daphnia.drawSimplified({ 0., 0., 0., 0.3 });
     }
@@ -736,8 +763,8 @@ void Scene::displayTexturedRandomClip() {
         glutLeaveMainLoop();
 }
 
-////////// displayMaskRandomClip //////////
-void Scene::displayMaskRandomClip() {
+////////// displayObjectMaskRandomClip //////////
+void Scene::displayObjectMaskRandomClip() {
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -758,21 +785,53 @@ void Scene::displayMaskRandomClip() {
         camera_.getSVec()[2]);
 
     //object
-    random_clip_objects_[frame_count_][object_count_].drawSimplified({1, 1, 1, 1});
+    for (auto& daphnia : random_clip_objects_[frame_count_])
+        daphnia.drawSimplified({1, 1, 1, 1}, false);
 
     //write to file
-    saveImage(viewport[2], viewport[3], generation_masks_path_
-        + std::to_string(frame_count_) + "." + std::to_string(object_count_)
-        + generation_frames_ending_);
-    ++object_count_;
+    saveImage(viewport[2], viewport[3], generation_objects_masks_path_
+        + std::to_string(frame_count_) + generation_frames_ending_);
+    ++frame_count_;
 
     glutSwapBuffers();
     glutPostRedisplay();
 
-    if (object_count_ == random_clip_objects_[frame_count_].size()) {
-        ++frame_count_;
-        object_count_ = 0;
-    }
+    if (frame_count_ == random_clip_objects_.size())
+        glutLeaveMainLoop();
+}
+
+////////// displayReflectionMaskRandomClip //////////
+void Scene::displayReflectionMaskRandomClip() {
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    gluLookAt(0, 0, 0,
+              0, 0, -1,
+              0, 1, 0);
+
+    glLoadMatrixd(&camera_.getRMat()[0][0]);
+    glTranslated(
+        camera_.getTVec()[0],
+        -camera_.getTVec()[1],
+        -abs(camera_.getTVec()[2]));
+    glTranslated(
+        camera_.getSVec()[0],
+        camera_.getSVec()[1],
+        camera_.getSVec()[2]);
+
+    //object
+    for (auto& daphnia : random_clip_objects_[frame_count_])
+        drawSimplifiedReflection(daphnia, { 1, 1, 1, 1 });
+
+    //write to file
+    saveImage(viewport[2], viewport[3], generation_reflections_masks_path_
+        + std::to_string(frame_count_) + generation_frames_ending_);
+    ++frame_count_;
+
+    glutSwapBuffers();
+    glutPostRedisplay();
 
     if (frame_count_ == random_clip_objects_.size())
         glutLeaveMainLoop();
@@ -805,7 +864,11 @@ void Scene::displayTexturedSequentClip() {
 
     //objects
     for (auto& daphnia : sequent_clip_objects_[frame_count_]) {
-        drawSimplifiedReflection(daphnia, { 0.3, 0.3, 0.3 });
+        drawSimplifiedReflection(daphnia,
+            { 0.3, 0.3, 0.3, reflection_strength_ }, //right
+            { 0.3, 0.3, 0.3, reflection_strength_ }, //left
+            { 0.55, 0.55, 0.55, reflection_strength_ }, //upper
+            { 0.55, 0.55, 0.55, reflection_strength_ }); //lower
         daphnia.drawTextured();
         //daphnia.drawSimplified({ 0., 0., 0., 1. });
     }
@@ -822,8 +885,8 @@ void Scene::displayTexturedSequentClip() {
         glutLeaveMainLoop();
 }
 
-////////// displayMaskSequentClip //////////
-void Scene::displayMaskSequentClip() {
+////////// displayObjectMaskSequentClip //////////
+void Scene::displayObjectMaskSequentClip() {
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -848,7 +911,44 @@ void Scene::displayMaskSequentClip() {
         daphnia.drawSimplified({ 1, 1, 1, 1 }, false);
 
     //write to file
-    saveImage(viewport[2], viewport[3], generation_masks_path_
+    saveImage(viewport[2], viewport[3], generation_objects_masks_path_
+        + std::to_string(frame_count_) + generation_frames_ending_);
+    ++frame_count_;
+
+    glutSwapBuffers();
+    glutPostRedisplay();
+
+    if (frame_count_ == sequent_clip_objects_.size())
+        glutLeaveMainLoop();
+}
+
+////////// displayReflectionMaskSequentClip //////////
+void Scene::displayReflectionMaskSequentClip() {
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    gluLookAt(0, 0, 0,
+        0, 0, -1,
+        0, 1, 0);
+
+    glLoadMatrixd(&camera_.getRMat()[0][0]);
+    glTranslated(
+        camera_.getTVec()[0],
+        -camera_.getTVec()[1],
+        -abs(camera_.getTVec()[2]));
+    glTranslated(
+        camera_.getSVec()[0],
+        camera_.getSVec()[1],
+        camera_.getSVec()[2]);
+
+    //objects
+    for (auto& daphnia : sequent_clip_objects_[frame_count_])
+        drawSimplifiedReflection(daphnia, { 1, 1, 1, 1 });
+
+    //write to file
+    saveImage(viewport[2], viewport[3], generation_reflections_masks_path_
         + std::to_string(frame_count_) + generation_frames_ending_);
     ++frame_count_;
 

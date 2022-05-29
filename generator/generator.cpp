@@ -1303,16 +1303,22 @@ void Generator::genTexturedRandomClip(
 	}
 	std::string gen_glut_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
 	std::string gen_merged_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
-	std::string gen_mask_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_mask_dir_;
+	std::string gen_mask_objects_dir = path + RCO_generation_main_dir_ + generation_frames_dir_
+		+ frames_mask_dir_ + frames_mask_objects_dir_;
+	std::string gen_mask_reflections_dir = path + RCO_generation_main_dir_ + generation_frames_dir_
+		+ frames_mask_dir_ + frames_mask_reflections_dir_;
 	std::string gen_texture_dir = path + RCO_generation_main_dir_ + generation_textures_dir_;
+	std::string gen_video_dir = path + RCO_generation_main_dir_ + generation_video_dir_;
 	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
 	main_scene_.setGenFramesPath(gen_glut_dir);
-	main_scene_.setGenMasksPath(gen_mask_dir);
+	main_scene_.setGenObjectMasksPath(gen_mask_objects_dir);
+	main_scene_.setGenReflectionMasksPath(gen_mask_reflections_dir);
 	makeGenFileTree(data_path_, RCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_,
-		generation_frames_dir_ + frames_mask_dir_,
-		gen_texture_dir, generation_json_dir_);
+		generation_frames_dir_ + frames_mask_dir_ + frames_mask_objects_dir_,
+		generation_frames_dir_ + frames_mask_dir_ + frames_mask_reflections_dir_,
+		gen_texture_dir, gen_video_dir, generation_json_dir_);
 
 	//construct 3D params - coords, angles
 	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
@@ -1450,22 +1456,80 @@ void Generator::genTexturedRandomClip(
 	main_scene_.initGLUT();
 	glutMainLoop();
 
+	//glut object mask rendering
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Objects' masks");
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayObjectMaskRandomClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT(0, 0, 0);
+	glutMainLoop();
+
+	//glut reflection mask rendering
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Reflections' masks");
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayReflectionMaskRandomClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT(0, 0, 0);
+	glutMainLoop();
+
 	//merge glut scene with source image
-	std::cout << "OpenCV background merging" << std::endl;
+	std::cout << "OpenCV smoothing and background merging" << std::endl;
 	cv::Mat mask_source = cv::imread(gen_glut_dir + "0" + image_ending_, cv::IMREAD_GRAYSCALE);
 	cv::Mat mask;
 	cv::threshold(mask_source, mask, 254, 255, cv::THRESH_BINARY);
 
 	std::vector<cv::Mat> merged_frames;
+	std::vector<cv::Mat> masked_frames;
 	std::string merged_filename;
+	std::string masked_filename;
 	for (int frame = {}; frame < num_frames; ++frame) {
+		//background merging
 		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
-		//merged_frames.push_back(
-		//	add_cv::mergeTexturedImageWithSource(mask, src_image,
-		//		gen_glut_dir + std::to_string(frame) + image_ending_));
-		add_cv::mergeTexturedImageWithSource(mask, src_image,
-			gen_glut_dir + std::to_string(frame) + image_ending_, merged_filename);
+		merged_frames.push_back(
+			add_cv::mergeTexturedImageWithSource(mask, src_image,
+				gen_glut_dir + std::to_string(frame) + image_ending_));
+
+		//object borders smoothing
+		masked_filename = gen_mask_objects_dir + std::to_string(frame) + image_ending_;
+		masked_frames.push_back(cv::imread(masked_filename, cv::IMREAD_GRAYSCALE));
+		add_cv::smoothObjectBorders(merged_frames[frame], masked_frames[frame]);
+
+		//reflection borders smoothing
+		masked_filename = gen_mask_reflections_dir + std::to_string(frame) + image_ending_;
+		add_cv::smoothReflectionBorders(merged_frames[frame], masked_filename, merged_filename);
 	}
+
+	//make video from frames
+	std::cout << "Video making" << std::endl;
+	auto video = cv::VideoWriter(gen_video_dir + "frames.mp4",
+		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 10, merged_frames[0].size());
+	for (const auto& frame : merged_frames)
+		video.write(frame);
+	video.release();
+
+	video = cv::VideoWriter(gen_video_dir + "masks.mp4",
+		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 10, masked_frames[0].size());
+	for (const auto& frame : masked_frames)
+		video.write(frame);
+	video.release();
 
 	std::cout << "Successful end of program!" << std::endl;
 }
@@ -1504,16 +1568,21 @@ void Generator::genTexturedSequentClip(
 	}
 	std::string gen_glut_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
 	std::string gen_merged_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
-	std::string gen_mask_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_mask_dir_;
+	std::string gen_mask_objects_dir = path + SCO_generation_main_dir_ + generation_frames_dir_
+		+ frames_mask_dir_ + frames_mask_objects_dir_;
+	std::string gen_mask_reflections_dir = path + SCO_generation_main_dir_ + generation_frames_dir_
+		+ frames_mask_dir_ + frames_mask_reflections_dir_;
 	std::string gen_texture_dir = path + SCO_generation_main_dir_ + generation_textures_dir_;
 	std::string gen_json_dir = path + SCO_generation_main_dir_ + generation_json_dir_;
 	std::string gen_video_dir = path + SCO_generation_main_dir_ + generation_video_dir_;
 	main_scene_.setGenFramesPath(gen_glut_dir);
-	main_scene_.setGenMasksPath(gen_mask_dir);
+	main_scene_.setGenObjectMasksPath(gen_mask_objects_dir);
+	main_scene_.setGenReflectionMasksPath(gen_mask_reflections_dir);
 	makeGenFileTree(data_path_, SCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_,
-		generation_frames_dir_ + frames_mask_dir_,
+		generation_frames_dir_ + frames_mask_dir_ + frames_mask_objects_dir_,
+		generation_frames_dir_ + frames_mask_dir_ + frames_mask_reflections_dir_,
 		gen_texture_dir, gen_video_dir, generation_json_dir_);
 
 	//construct 3D params - coords, directions
@@ -1573,8 +1642,8 @@ void Generator::genTexturedSequentClip(
 	}
 
 	//other frames
-	angles_dis = std::uniform_real_distribution<> (0., 10.);
-	double min_shift{ 0. }, max_shift{ 0.2 };
+	angles_dis = std::uniform_real_distribution<> (0., 100. / fps);
+	double min_shift{ 0. }, max_shift{ 2 / fps };
 	double shift{};
 	std::normal_distribution<> shift_dis(
 		(min_shift + max_shift) * 0.5, (max_shift - min_shift) / 6);
@@ -1635,7 +1704,7 @@ void Generator::genTexturedSequentClip(
 	std::cout << "Daphnia textures brightness leveling off" << std::endl;
 	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
 	std::uniform_int_distribution<> texture_index_dis(0, num_glut_textures - 1);
-	unsigned int size{ 64 };
+	unsigned int size{ 40 };
 	cv::Mat sup_src_image = add_cv::supplementImage(src_image, size);
 
 	//gen texture number and set for each object on all frames
@@ -1658,14 +1727,14 @@ void Generator::genTexturedSequentClip(
 		}
 	}
 
-	//glut rendering
+	//glut frame rendering
 	std::cout << "GLUT frames rendering" << std::endl;
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize(
 		main_scene_.getRenderImageSize().width,
 		main_scene_.getRenderImageSize().height);
 	glutInitWindowPosition(0, 0);
-	glutCreateWindow("Point array");
+	glutCreateWindow("Frames");
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
 	glutDisplayFunc(Generator::displayTexturedSequentClip);
@@ -1674,6 +1743,7 @@ void Generator::genTexturedSequentClip(
 	main_scene_.initGLUT();
 	glutMainLoop();
 
+	//glut object mask rendering
 	if (!glutGet(GLUT_INIT_STATE))
 		glutInit(&argc_, argv_);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
@@ -1681,28 +1751,57 @@ void Generator::genTexturedSequentClip(
 		main_scene_.getRenderImageSize().width,
 		main_scene_.getRenderImageSize().height);
 	glutInitWindowPosition(0, 0);
-	glutCreateWindow("Point array");
+	glutCreateWindow("Objects' masks");
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
-	glutDisplayFunc(Generator::displayMaskSequentClip);
+	glutDisplayFunc(Generator::displayObjectMaskSequentClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT(0, 0, 0);
+	glutMainLoop();
+
+	//glut reflection mask rendering
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Reflections' masks");
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayReflectionMaskSequentClip);
 	glutReshapeFunc(Generator::reshape);
 	main_scene_.resetFrameCount();
 	main_scene_.initGLUT(0, 0, 0);
 	glutMainLoop();
 
 	//merge glut scene with source image
-	std::cout << "OpenCV background merging" << std::endl;
+	std::cout << "OpenCV smoothing and background merging" << std::endl;
 	cv::Mat mask_source = cv::imread(gen_glut_dir + "0" + image_ending_, cv::IMREAD_GRAYSCALE);
 	cv::Mat mask;
 	cv::threshold(mask_source, mask, 254, 255, cv::THRESH_BINARY);
 
 	std::vector<cv::Mat> merged_frames;
+	std::vector<cv::Mat> masked_frames;
 	std::string merged_filename;
+	std::string masked_filename;
 	for (int frame = {}; frame < num_frames; ++frame) {
+		//background merging
 		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
 		merged_frames.push_back(
 			add_cv::mergeTexturedImageWithSource(mask, src_image,
-				gen_glut_dir + std::to_string(frame) + image_ending_, merged_filename));
+				gen_glut_dir + std::to_string(frame) + image_ending_));
+
+		//object borders smoothing
+		masked_filename = gen_mask_objects_dir + std::to_string(frame) + image_ending_;
+		masked_frames.push_back(cv::imread(masked_filename, cv::IMREAD_GRAYSCALE));
+		add_cv::smoothObjectBorders(merged_frames[frame], masked_frames[frame]);
+
+		//reflection borders smoothing
+		masked_filename = gen_mask_reflections_dir + std::to_string(frame) + image_ending_;
+		add_cv::smoothReflectionBorders(merged_frames[frame], masked_filename, merged_filename);
 	}
 
 	//make video from frames
@@ -1713,12 +1812,6 @@ void Generator::genTexturedSequentClip(
 		video.write(frame);
 	video.release();
 
-	std::vector<cv::Mat> masked_frames;
-	std::string masked_filename;
-	for (int i{}; i < num_frames; ++i) {
-		masked_filename = gen_mask_dir + std::to_string(i) + image_ending_;
-		masked_frames.push_back(cv::imread(masked_filename, cv::IMREAD_GRAYSCALE));
-	}
 	video = cv::VideoWriter(gen_video_dir + "masks.mp4",
 		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), fps, masked_frames[0].size());
 	for (const auto& frame : masked_frames)
@@ -1758,9 +1851,14 @@ void Generator::displayTexturedRandomClip() {
 	curr_this_->main_scene_.displayTexturedRandomClip();
 }
 
-////////// displayMaskRandomClip //////////
-void Generator::displayMaskRandomClip() {
-	curr_this_->main_scene_.displayMaskRandomClip();
+////////// displayObjectMaskRandomClip //////////
+void Generator::displayObjectMaskRandomClip() {
+	curr_this_->main_scene_.displayObjectMaskRandomClip();
+}
+
+////////// displayReflectionMaskRandomClip //////////
+void Generator::displayReflectionMaskRandomClip() {
+	curr_this_->main_scene_.displayReflectionMaskRandomClip();
 }
 
 ////////// displayTexturedSequentClip //////////
@@ -1768,9 +1866,14 @@ void Generator::displayTexturedSequentClip() {
 	curr_this_->main_scene_.displayTexturedSequentClip();
 }
 
-////////// displayMaskSequentClip //////////
-void Generator::displayMaskSequentClip() {
-	curr_this_->main_scene_.displayMaskSequentClip();
+////////// displayObjectMaskSequentClip //////////
+void Generator::displayObjectMaskSequentClip() {
+	curr_this_->main_scene_.displayObjectMaskSequentClip();
+}
+
+////////// displayReflectionMaskSequentClip //////////
+void Generator::displayReflectionMaskSequentClip() {
+	curr_this_->main_scene_.displayReflectionMaskSequentClip();
 }
 
 ////////// reshape //////////

@@ -124,10 +124,12 @@ private:
 	static void displayPointGrid();
 	static void displayUntexturedRandomClip();
 	static void displayTexturedRandomClip();
-	static void displayMaskRandomClip();
+	static void displayObjectMaskRandomClip();
+	static void displayReflectionMaskRandomClip();
 
 	static void displayTexturedSequentClip();
-	static void displayMaskSequentClip();
+	static void displayObjectMaskSequentClip();
+	static void displayReflectionMaskSequentClip();
 
 	static void reshape(int, int);
 	static void controlKey(unsigned char key, int x, int y);
@@ -135,44 +137,46 @@ private:
 
 	double normDistGenInRange(std::normal_distribution<>, const double&, const double&);
 
-	const std::string main_json_filename_		{ "../../data/json/generator_params.json" };
-	const std::string json_dir_					{ "json/" };
+	const std::string main_json_filename_			{ "../../data/json/generator_params.json" };
+	const std::string json_dir_						{ "json/" };
 
-	const std::string config_json_dir_			{ "config/" };
-	const std::string config_json_name_			{ "config" };
+	const std::string config_json_dir_				{ "config/" };
+	const std::string config_json_name_				{ "config" };
 
-	const std::string src_dir_					{ "src/" };
-	const std::string edges_dir_				{ "edges/" };
-	const std::string right_edge_name_			{ ".right" };
-	const std::string left_edge_name_			{ ".left" };
-	const std::string upper_edge_name_			{ ".upper" };
-	const std::string lower_edge_name_			{ ".lower" };
-	const std::string bottom_edge_name_			{ ".bottom" };
+	const std::string src_dir_						{ "src/" };
+	const std::string edges_dir_					{ "edges/" };
+	const std::string right_edge_name_				{ ".right" };
+	const std::string left_edge_name_				{ ".left" };
+	const std::string upper_edge_name_				{ ".upper" };
+	const std::string lower_edge_name_				{ ".lower" };
+	const std::string bottom_edge_name_				{ ".bottom" };
 
-	const std::string daphnia_texture_dir_		{ "daphnia/" };
-	const std::string daphnia_ovoid_dir_		{ "ovoid/" };
-	const std::string daphnia_circle_dir_		{ "circle/" };
-	const std::string daphnia_glut_dir_			{ "glut/" };
+	const std::string daphnia_texture_dir_			{ "daphnia/" };
+	const std::string daphnia_ovoid_dir_			{ "ovoid/" };
+	const std::string daphnia_circle_dir_			{ "circle/" };
+	const std::string daphnia_glut_dir_				{ "glut/" };
 
-	const std::string generation_json_name_		{ "gen_annotation" };
-	const std::string json_ending_				{ ".json" };
+	const std::string generation_json_name_			{ "gen_annotation" };
+	const std::string json_ending_					{ ".json" };
 
-	const std::string data_path_				{ "../../data/" };
-	const std::string image_ending_				{ ".png" };
+	const std::string data_path_					{ "../../data/" };
+	const std::string image_ending_					{ ".png" };
 
-	const std::string grid_dir_					{ "grid/" };
-	const std::string grid_glut_name_			{ "grid_glut" };
-	const std::string grid_merged_name_			{ "grid_merged" };
+	const std::string grid_dir_						{ "grid/" };
+	const std::string grid_glut_name_				{ "grid_glut" };
+	const std::string grid_merged_name_				{ "grid_merged" };
 
-	const std::string RCO_generation_main_dir_	{ "RCO_generation/" };
-	const std::string SCO_generation_main_dir_	{ "SCO_generation/" };
-	const std::string generation_frames_dir_	{ "frames/" };
-	const std::string generation_video_dir_		{ "video/" };
-	const std::string generation_json_dir_		{ "json/" };
-	const std::string generation_textures_dir_	{ "textures/" };
-	const std::string frames_glut_dir_			{ "glut/" };
-	const std::string frames_merged_dir_		{ "merged/" };
-	const std::string frames_mask_dir_			{ "mask/" };
+	const std::string RCO_generation_main_dir_		{ "RCO_generation/" };
+	const std::string SCO_generation_main_dir_		{ "SCO_generation/" };
+	const std::string generation_frames_dir_		{ "frames/" };
+	const std::string generation_video_dir_			{ "video/" };
+	const std::string generation_json_dir_			{ "json/" };
+	const std::string generation_textures_dir_		{ "textures/" };
+	const std::string frames_glut_dir_				{ "glut/" };
+	const std::string frames_merged_dir_			{ "merged/" };
+	const std::string frames_mask_dir_				{ "mask/" };
+	const std::string frames_mask_objects_dir_		{ "objects/" };
+	const std::string frames_mask_reflections_dir_	{ "reflections/" };
 
 	unsigned int texture_size_{ 128 };
 
