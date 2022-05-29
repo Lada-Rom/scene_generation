@@ -60,10 +60,16 @@ public:
 		std::array<double, 2>& num_objects_range,
 		std::array<double, 2>& size_objects_range,
 		const std::string& filename);
+	void readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
+		std::array<double, 2>& num_objects_range,
+		std::array<double, 2>& size_objects_range,
+		bool& make_packs, const std::string& filename);
 
 	void writeCameraRMat(const cv::Mat&, size_t);
 	void writeCameraTVec(const cv::Mat&, size_t);
 	void writeCameraSVec(std::array<double, 3>, size_t);
+	void writeFramesToVideo(const std::string& filename,
+		const std::vector<cv::Mat>& frames, double fps);
 
 	bool checkIfInputExists(const std::string&);
 	void addInputToMainJSON(const std::string&, const std::string&);
@@ -175,6 +181,7 @@ private:
 	const std::string frames_glut_dir_				{ "glut/" };
 	const std::string frames_merged_dir_			{ "merged/" };
 	const std::string frames_mask_dir_				{ "mask/" };
+	const std::string frames_heatmap_dir_			{ "heatmap/" };
 	const std::string frames_mask_objects_dir_		{ "objects/" };
 	const std::string frames_mask_reflections_dir_	{ "reflections/" };
 

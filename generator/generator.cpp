@@ -190,6 +190,20 @@ void Generator::readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames
 	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
 }
 
+////////// readConfigSCOJSON //////////
+void Generator::readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
+	std::array<double, 2>& num_objects_range,
+	std::array<double, 2>& size_objects_range,
+	bool& make_packs, const std::string& filename) {
+	loadConfigJSON(filename);
+	index = config_json_["camera_params_index"].get<size_t>();
+	fps = config_json_["fps"].get<int>();
+	num_frames = config_json_["duration"].get<int>() * fps;
+	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
+	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
+	make_packs = config_json_["make_packs"].get<bool>();
+}
+
 ////////// writeCameraRMat //////////
 void Generator::writeCameraRMat(const cv::Mat& rmat, size_t i) {
 	main_json_["camera"][i]["rmat"] = cvtMatToVector(rmat);
@@ -203,6 +217,16 @@ void Generator::writeCameraTVec(const cv::Mat& rvec, size_t i) {
 ////////// writeCameraSVec //////////
 void Generator::writeCameraSVec(std::array<double, 3> svec, size_t i) {
 	main_json_["camera"][i]["svec"] = svec;
+}
+
+////////// writeFramesToVideo //////////
+void Generator::writeFramesToVideo(const std::string& filename,
+	const std::vector<cv::Mat>& frames, double fps) {
+	auto video = cv::VideoWriter(filename, cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
+		fps, frames[0].size());
+	for (const auto& frame : frames)
+		video.write(frame);
+	video.release();
 }
 
 ////////// checkIfInputExists //////////
@@ -1540,6 +1564,7 @@ void Generator::genTexturedSequentClip(
 	//read params from config json
 	size_t index;
 	double fps;
+	bool make_packs;
 	size_t num_frames;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
@@ -1572,6 +1597,7 @@ void Generator::genTexturedSequentClip(
 		+ frames_mask_dir_ + frames_mask_objects_dir_;
 	std::string gen_mask_reflections_dir = path + SCO_generation_main_dir_ + generation_frames_dir_
 		+ frames_mask_dir_ + frames_mask_reflections_dir_;
+	std::string gen_heatmap_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_heatmap_dir_;
 	std::string gen_texture_dir = path + SCO_generation_main_dir_ + generation_textures_dir_;
 	std::string gen_json_dir = path + SCO_generation_main_dir_ + generation_json_dir_;
 	std::string gen_video_dir = path + SCO_generation_main_dir_ + generation_video_dir_;
@@ -1583,6 +1609,7 @@ void Generator::genTexturedSequentClip(
 		generation_frames_dir_ + frames_merged_dir_,
 		generation_frames_dir_ + frames_mask_dir_ + frames_mask_objects_dir_,
 		generation_frames_dir_ + frames_mask_dir_ + frames_mask_reflections_dir_,
+		generation_frames_dir_ + frames_heatmap_dir_,
 		gen_texture_dir, gen_video_dir, generation_json_dir_);
 
 	//construct 3D params - coords, directions
@@ -1783,21 +1810,24 @@ void Generator::genTexturedSequentClip(
 	cv::Mat mask;
 	cv::threshold(mask_source, mask, 254, 255, cv::THRESH_BINARY);
 
-	std::vector<cv::Mat> merged_frames;
-	std::vector<cv::Mat> masked_frames;
-	std::string merged_filename;
-	std::string masked_filename;
+	std::vector<cv::Mat> merged_frames{ num_frames };
+	std::vector<cv::Mat> masked_frames{ num_frames };
+	std::vector<cv::Mat> heatmap_frames{ num_frames };
+	std::string merged_filename, masked_filename, heatmap_filename;
 	for (int frame = {}; frame < num_frames; ++frame) {
 		//background merging
 		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
-		merged_frames.push_back(
-			add_cv::mergeTexturedImageWithSource(mask, src_image,
-				gen_glut_dir + std::to_string(frame) + image_ending_));
+		merged_frames[frame] = add_cv::mergeTexturedImageWithSource(mask, src_image,
+				gen_glut_dir + std::to_string(frame) + image_ending_);
 
 		//object borders smoothing
 		masked_filename = gen_mask_objects_dir + std::to_string(frame) + image_ending_;
-		masked_frames.push_back(cv::imread(masked_filename, cv::IMREAD_GRAYSCALE));
+		masked_frames[frame] = cv::imread(masked_filename, cv::IMREAD_GRAYSCALE);
 		add_cv::smoothObjectBorders(merged_frames[frame], masked_frames[frame]);
+
+		//making heatmap
+		heatmap_filename = gen_heatmap_dir + std::to_string(frame) + image_ending_;
+		heatmap_frames[frame] = add_cv::makeHeatmap(masked_frames[frame], heatmap_filename);
 
 		//reflection borders smoothing
 		masked_filename = gen_mask_reflections_dir + std::to_string(frame) + image_ending_;
@@ -1806,17 +1836,9 @@ void Generator::genTexturedSequentClip(
 
 	//make video from frames
 	std::cout << "Video making" << std::endl;
-	auto video = cv::VideoWriter(gen_video_dir + "frames.mp4",
-		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), fps, merged_frames[0].size());
-	for (const auto& frame : merged_frames)
-		video.write(frame);
-	video.release();
-
-	video = cv::VideoWriter(gen_video_dir + "masks.mp4",
-		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), fps, masked_frames[0].size());
-	for (const auto& frame : masked_frames)
-		video.write(frame);
-	video.release();
+	writeFramesToVideo(gen_video_dir + "frames.mp4", merged_frames, fps);
+	writeFramesToVideo(gen_video_dir + "heatmaps.mp4", heatmap_frames, fps);
+	writeFramesToVideo(gen_video_dir + "masks.mp4", masked_frames, fps);
 
 	std::cout << "Successful end of program!" << std::endl;
 

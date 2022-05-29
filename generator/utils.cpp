@@ -236,32 +236,6 @@ void textureDaphnia(cv::Mat& img, cv::Mat& obj_texture,
 	cv::Mat mean_roi = cv::Mat::zeros(img_roi.size(), img_roi.type());
 	mean_roi += cv::mean(img_roi).val[0];
 
-	//rotate by direction
-	//std::array<double, 2> normalized_direction = {
-	//	direction[0] / std::sqrt(direction[0] * direction[0] + direction[1] * direction[1]),
-	//	direction[1] / std::sqrt(direction[0] * direction[0] + direction[1] * direction[1])
-	//};
-	//double radian_angle = std::acos(normalized_direction[0] * 1. + normalized_direction[1] * 0.);
-	//double degree_angle = 180. * radian_angle / std::acos(-1.);
-	//cv::RotatedRect          dst = cv::RotatedRect(
-	//	cv::Point2f(res_obj_texture.cols - 1, res_obj_texture.rows - 1),
-	//	cv::Size2f(res_obj_texture.cols * 2, res_obj_texture.rows * 2), int(degree_angle));
-	//cv::Point2f dst_[4];
-	//std::vector<cv::Point2f> dst__;
-	//dst.points(dst_);
-	//for (int i = 0; i < 4; i++) {
-	//	dst__.push_back(dst_[i]);
-	//}
-	//std::vector<cv::Point2f> src_;
-	//src_.push_back(cv::Point2f(0, res_obj_texture.rows - 1));
-	//src_.push_back(cv::Point2f(0, 0));
-	//src_.push_back(cv::Point2f(res_obj_texture.cols - 1, 0));
-	//src_.push_back(cv::Point2f(res_obj_texture.cols, res_obj_texture.rows));
-	//cv::Mat H = cv::findHomography(src_, dst__);
-	//cv::Mat daphnia(cv::Size(res_obj_texture.cols * 2, res_obj_texture.rows * 2), CV_64FC1);
-	//cv::warpPerspective(res_obj_texture, res_obj_texture, H,
-	//	cv::Size(res_obj_texture.cols * 2, res_obj_texture.rows * 2));
-
 	//level off brightness
 	double min_val, max_val;
 	cv::minMaxIdx(img, &min_val, &max_val);
@@ -346,6 +320,15 @@ void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json
 
 	//write image to file
 	cv::imwrite(dst_filename, img);
+}
+
+cv::Mat makeHeatmap(const cv::Mat& mask, const std::string& filename) {
+	cv::Mat heatmap;
+	cv::distanceTransform(mask, heatmap, cv::DIST_L1, 3);
+	cv::normalize(heatmap, heatmap, 1, 0, cv::NORM_MINMAX);
+	heatmap.convertTo(heatmap, CV_8UC1, 255, 0);
+	cv::imwrite(filename, heatmap);
+	return heatmap;
 }
 
 } //namespace add_cv
@@ -550,6 +533,35 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	fs::create_directories(path + main_dir + merged_dir);
 	fs::create_directories(path + main_dir + obj_mask_dir);
 	fs::create_directories(path + main_dir + refl_mask_dir);
+	fs::create_directories(path + main_dir + tex_dir);
+	fs::create_directories(path + main_dir + json_dir);
+	fs::create_directories(path + main_dir + video_dir);
+}
+
+////////// makeGenFileTree //////////
+void makeGenFileTree(const std::string& path, const std::string& main_dir,
+	const std::string& glut_dir, const std::string& merged_dir,
+	const std::string& obj_mask_dir, const std::string& refl_mask_dir,
+	const std::string& heatmap_dir,
+	const std::string& tex_dir, const std::string& video_dir,
+	const std::string& json_dir) {
+	namespace fs = std::filesystem;
+
+	//check if path exists
+	fs::file_status s = fs::file_status{};
+	if (!fs::exists(path))
+		throw std::invalid_argument("Path does not exists");
+
+	//check if main_dir exists
+	if (fs::exists(path + main_dir))
+		fs::remove_all(path + main_dir);
+
+	//making subdirectories
+	fs::create_directories(path + main_dir + glut_dir);
+	fs::create_directories(path + main_dir + merged_dir);
+	fs::create_directories(path + main_dir + obj_mask_dir);
+	fs::create_directories(path + main_dir + refl_mask_dir);
+	fs::create_directories(path + main_dir + heatmap_dir);
 	fs::create_directories(path + main_dir + tex_dir);
 	fs::create_directories(path + main_dir + json_dir);
 	fs::create_directories(path + main_dir + video_dir);
