@@ -100,6 +100,37 @@ cv::Mat mergeTexturedImageWithSource(
 	return glut_image;
 }
 
+////////// smoothObjectBorders //////////
+void smoothObjectBorders(cv::Mat& image, const cv::Mat& mask) {
+	cv::Mat image_copy = image.clone();
+	cv::GaussianBlur(image_copy, image_copy, { 3, 3 }, 0, 0);
+	cv::Mat common = 0.7 * image + 0.3 * image_copy;
+	common.copyTo(image, mask);
+
+	cv::Mat extended_mask;
+	cv::GaussianBlur(mask, extended_mask, { 3, 3 }, 0, 0);
+	cv::threshold(extended_mask, extended_mask, 0, 255, cv::THRESH_BINARY);
+	extended_mask -= mask;
+	image_copy.copyTo(image, extended_mask);
+}
+
+////////// smoothObjectBorders //////////
+void smoothObjectBorders(cv::Mat& image, const cv::Mat& mask,
+	const std::string& dst_filename) {
+	cv::Mat image_copy = image.clone();
+	cv::GaussianBlur(image_copy, image_copy, { 3, 3 }, 0, 0);
+	cv::Mat common = 0.7 * image + 0.3 * image_copy;
+	common.copyTo(image, mask);
+
+	cv::Mat extended_mask;
+	cv::GaussianBlur(mask, extended_mask, { 3, 3 }, 0, 0);
+	cv::threshold(extended_mask, extended_mask, 0, 255, cv::THRESH_BINARY);
+	extended_mask -= mask;
+	image_copy.copyTo(image, extended_mask);
+
+	cv::imwrite(dst_filename, image);
+}
+
 ////////// supplementImage //////////
 cv::Mat supplementImage(const cv::Mat& src, unsigned int size) {
 	cv::Mat dst = cv::Mat(src.rows + size, src.cols + size, src.type());

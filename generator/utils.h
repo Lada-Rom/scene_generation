@@ -41,6 +41,9 @@ cv::Mat mergeTexturedImageWithSource(
 	const cv::Mat& mask, const cv::Mat& src_image,
 	const std::string& glut_filename, const std::string& dst_filename);
 
+void smoothObjectBorders(cv::Mat& image, const cv::Mat& mask);
+void smoothObjectBorders(cv::Mat& image, const cv::Mat& mask, const std::string& dst_filename);
+
 cv::Mat supplementImage(const cv::Mat& src, unsigned int size);
 
 void textureDaphnia(cv::Mat& img, cv::Mat& obj_texture,

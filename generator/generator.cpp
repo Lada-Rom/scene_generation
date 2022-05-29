@@ -1697,12 +1697,18 @@ void Generator::genTexturedSequentClip(
 	cv::threshold(mask_source, mask, 254, 255, cv::THRESH_BINARY);
 
 	std::vector<cv::Mat> merged_frames;
+	std::vector<cv::Mat> masked_frames;
 	std::string merged_filename;
+	std::string masked_filename;
 	for (int frame = {}; frame < num_frames; ++frame) {
 		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
 		merged_frames.push_back(
 			add_cv::mergeTexturedImageWithSource(mask, src_image,
-				gen_glut_dir + std::to_string(frame) + image_ending_, merged_filename));
+				gen_glut_dir + std::to_string(frame) + image_ending_));
+
+		masked_filename = gen_mask_dir + std::to_string(frame) + image_ending_;
+		masked_frames.push_back(cv::imread(masked_filename, cv::IMREAD_GRAYSCALE));
+		add_cv::smoothObjectBorders(merged_frames[frame], masked_frames[frame], merged_filename);
 	}
 
 	//make video from frames
@@ -1713,12 +1719,6 @@ void Generator::genTexturedSequentClip(
 		video.write(frame);
 	video.release();
 
-	std::vector<cv::Mat> masked_frames;
-	std::string masked_filename;
-	for (int i{}; i < num_frames; ++i) {
-		masked_filename = gen_mask_dir + std::to_string(i) + image_ending_;
-		masked_frames.push_back(cv::imread(masked_filename, cv::IMREAD_GRAYSCALE));
-	}
 	video = cv::VideoWriter(gen_video_dir + "masks.mp4",
 		cv::VideoWriter::fourcc('a', 'v', 'c', '1'), fps, masked_frames[0].size());
 	for (const auto& frame : masked_frames)
