@@ -763,8 +763,8 @@ void Scene::displayTexturedRandomClip() {
         glutLeaveMainLoop();
 }
 
-////////// displayMaskRandomClip //////////
-void Scene::displayMaskRandomClip() {
+////////// displayObjectMaskRandomClip //////////
+void Scene::displayObjectMaskRandomClip() {
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -785,21 +785,53 @@ void Scene::displayMaskRandomClip() {
         camera_.getSVec()[2]);
 
     //object
-    random_clip_objects_[frame_count_][object_count_].drawSimplified({1, 1, 1, 1});
+    for (auto& daphnia : random_clip_objects_[frame_count_])
+        daphnia.drawSimplified({1, 1, 1, 1}, false);
 
     //write to file
     saveImage(viewport[2], viewport[3], generation_objects_masks_path_
-        + std::to_string(frame_count_) + "." + std::to_string(object_count_)
-        + generation_frames_ending_);
-    ++object_count_;
+        + std::to_string(frame_count_) + generation_frames_ending_);
+    ++frame_count_;
 
     glutSwapBuffers();
     glutPostRedisplay();
 
-    if (object_count_ == random_clip_objects_[frame_count_].size()) {
-        ++frame_count_;
-        object_count_ = 0;
-    }
+    if (frame_count_ == random_clip_objects_.size())
+        glutLeaveMainLoop();
+}
+
+////////// displayReflectionMaskRandomClip //////////
+void Scene::displayReflectionMaskRandomClip() {
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    gluLookAt(0, 0, 0,
+              0, 0, -1,
+              0, 1, 0);
+
+    glLoadMatrixd(&camera_.getRMat()[0][0]);
+    glTranslated(
+        camera_.getTVec()[0],
+        -camera_.getTVec()[1],
+        -abs(camera_.getTVec()[2]));
+    glTranslated(
+        camera_.getSVec()[0],
+        camera_.getSVec()[1],
+        camera_.getSVec()[2]);
+
+    //object
+    for (auto& daphnia : random_clip_objects_[frame_count_])
+        drawSimplifiedReflection(daphnia, { 1, 1, 1, 1 });
+
+    //write to file
+    saveImage(viewport[2], viewport[3], generation_reflections_masks_path_
+        + std::to_string(frame_count_) + generation_frames_ending_);
+    ++frame_count_;
+
+    glutSwapBuffers();
+    glutPostRedisplay();
 
     if (frame_count_ == random_clip_objects_.size())
         glutLeaveMainLoop();
@@ -835,8 +867,8 @@ void Scene::displayTexturedSequentClip() {
         drawSimplifiedReflection(daphnia,
             { 0.3, 0.3, 0.3, reflection_strength_ }, //right
             { 0.3, 0.3, 0.3, reflection_strength_ }, //left
-            { 0.5, 0.5, 0.5, reflection_strength_ }, //upper
-            { 0.5, 0.5, 0.5, reflection_strength_ }); //lower
+            { 0.55, 0.55, 0.55, reflection_strength_ }, //upper
+            { 0.55, 0.55, 0.55, reflection_strength_ }); //lower
         daphnia.drawTextured();
         //daphnia.drawSimplified({ 0., 0., 0., 1. });
     }
@@ -913,7 +945,7 @@ void Scene::displayReflectionMaskSequentClip() {
 
     //objects
     for (auto& daphnia : sequent_clip_objects_[frame_count_])
-        drawSimplifiedReflection(daphnia, { 1, 1, 1, 1 }); //upper, lower
+        drawSimplifiedReflection(daphnia, { 1, 1, 1, 1 });
 
     //write to file
     saveImage(viewport[2], viewport[3], generation_reflections_masks_path_

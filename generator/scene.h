@@ -121,7 +121,8 @@ public:
 	void displayPointGrid();
 	void displayUntexturedRandomClip();
 	void displayTexturedRandomClip();
-	void displayMaskRandomClip();
+	void displayObjectMaskRandomClip();
+	void displayReflectionMaskRandomClip();
 	void displayTexturedSequentClip();
 	void displayObjectMaskSequentClip();
 	void displayReflectionMaskSequentClip();

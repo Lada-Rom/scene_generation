@@ -124,7 +124,8 @@ private:
 	static void displayPointGrid();
 	static void displayUntexturedRandomClip();
 	static void displayTexturedRandomClip();
-	static void displayMaskRandomClip();
+	static void displayObjectMaskRandomClip();
+	static void displayReflectionMaskRandomClip();
 
 	static void displayTexturedSequentClip();
 	static void displayObjectMaskSequentClip();
