@@ -1,6 +1,6 @@
 {
     "duration": 5,
-	"fps": 15,
+	"fps": 10,
 	"camera_params_index": 0,
     "object_quantity_range": [
         3.0,

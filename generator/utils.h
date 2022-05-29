@@ -43,6 +43,8 @@ cv::Mat mergeTexturedImageWithSource(
 
 void smoothObjectBorders(cv::Mat& image, const cv::Mat& mask);
 void smoothObjectBorders(cv::Mat& image, const cv::Mat& mask, const std::string& dst_filename);
+void smoothReflectionBorders(cv::Mat& image, const std::string& mask_filename);
+void smoothReflectionBorders(cv::Mat& image, const std::string& mask_filename, const std::string& dst_filename);
 
 cv::Mat supplementImage(const cv::Mat& src, unsigned int size);
 
@@ -86,5 +88,10 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	const std::string& glut_dir, const std::string& merged_dir,
 	const std::string& mask_dir, const std::string& tex_dir,
 	const std::string& video_dir, const std::string& json_dir);
+void makeGenFileTree(const std::string& path, const std::string& main_dir,
+	const std::string& glut_dir, const std::string& merged_dir,
+	const std::string& obj_mask_dir, const std::string& refl_mask_dir,
+	const std::string& tex_dir, const std::string& video_dir,
+	const std::string& json_dir);
 
 #endif

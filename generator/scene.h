@@ -51,7 +51,8 @@ public:
 	void setRCODaphniaTextureFilename(size_t frame, size_t object,
 		const std::string& filename);
 	void setGenFramesPath(const std::string& path);
-	void setGenMasksPath(const std::string& path);
+	void setGenObjectMasksPath(const std::string& path);
+	void setGenReflectionMasksPath(const std::string& path);
 	void resetFrameCount();
 	void resetObjectCount();
 
@@ -76,20 +77,25 @@ public:
 	void drawAxis();
 
 	void drawSimplifiedReflection(const Daphnia& daphnia,
-		const std::array<double, 3>& color3d);
+		const std::array<double, 4>& color4d);
+	void drawSimplifiedReflection(const Daphnia& daphnia,
+		const std::array<double, 4>& right,
+		const std::array<double, 4>& left,
+		const std::array<double, 4>& upper,
+		const std::array<double, 4>& lower);
 	void drawComplicatedReflection(const Daphnia& daphnia,
 		const std::array<double, 4>& color_inner,
 		const std::array<double, 4>& color_outer,
 		const std::array<double, 4>& color_head);
 
 	void drawRightPlaneReflection(const Daphnia& daphnia,
-		const std::array<double, 3>& color3d);
+		const std::array<double, 4>& color4d);
 	void drawLeftPlaneReflection(const Daphnia& daphnia,
-		const std::array<double, 3>& color3d);
+		const std::array<double, 4>& color4d);
 	void drawUpperPlaneReflection(const Daphnia& daphnia,
-		const std::array<double, 3>& color3d);
+		const std::array<double, 4>& color4d);
 	void drawLowerPlaneReflection(const Daphnia& daphnia,
-		const std::array<double, 3>& color3d);
+		const std::array<double, 4>& color4d);
 
 	void drawRightPlaneComplicatedReflection(const Daphnia& daphnia,
 		const std::array<double, 4>& color_inner,
@@ -117,7 +123,8 @@ public:
 	void displayTexturedRandomClip();
 	void displayMaskRandomClip();
 	void displayTexturedSequentClip();
-	void displayMaskSequentClip();
+	void displayObjectMaskSequentClip();
+	void displayReflectionMaskSequentClip();
 
 private:
 	cv::Size2i render_image_size_{ 1280, 1024 };
@@ -133,14 +140,13 @@ private:
 	std::string grid_filename_{ };
 
 	std::vector<std::vector<Daphnia>> random_clip_objects_{ }; //RCO
+	std::vector<std::vector<Daphnia>> sequent_clip_objects_{ }; //SCO
 	std::string generation_frames_path_{ };
-	std::string generation_masks_path_{ };
+	std::string generation_objects_masks_path_{ };
+	std::string generation_reflections_masks_path_{ };
 	std::string generation_frames_ending_{ ".png" };
 	size_t frame_count_{ };
 	size_t object_count_{ };
-
-	//std::vector<Daphnia> sequent_clip_objects_{ }; //SCO
-	std::vector<std::vector<Daphnia>> sequent_clip_objects_{ }; //SCO
 
 	double test_x{};
 	double test_y{};

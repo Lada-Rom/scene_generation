@@ -1307,7 +1307,7 @@ void Generator::genTexturedRandomClip(
 	std::string gen_texture_dir = path + RCO_generation_main_dir_ + generation_textures_dir_;
 	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
 	main_scene_.setGenFramesPath(gen_glut_dir);
-	main_scene_.setGenMasksPath(gen_mask_dir);
+	main_scene_.setGenObjectMasksPath(gen_mask_dir);
 	makeGenFileTree(data_path_, RCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_,
@@ -1504,16 +1504,21 @@ void Generator::genTexturedSequentClip(
 	}
 	std::string gen_glut_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_glut_dir_;
 	std::string gen_merged_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
-	std::string gen_mask_dir = path + SCO_generation_main_dir_ + generation_frames_dir_ + frames_mask_dir_;
+	std::string gen_mask_objects_dir = path + SCO_generation_main_dir_ + generation_frames_dir_
+		+ frames_mask_dir_ + frames_mask_objects_dir_;
+	std::string gen_mask_reflections_dir = path + SCO_generation_main_dir_ + generation_frames_dir_
+		+ frames_mask_dir_ + frames_mask_reflections_dir_;
 	std::string gen_texture_dir = path + SCO_generation_main_dir_ + generation_textures_dir_;
 	std::string gen_json_dir = path + SCO_generation_main_dir_ + generation_json_dir_;
 	std::string gen_video_dir = path + SCO_generation_main_dir_ + generation_video_dir_;
 	main_scene_.setGenFramesPath(gen_glut_dir);
-	main_scene_.setGenMasksPath(gen_mask_dir);
+	main_scene_.setGenObjectMasksPath(gen_mask_objects_dir);
+	main_scene_.setGenReflectionMasksPath(gen_mask_reflections_dir);
 	makeGenFileTree(data_path_, SCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_,
-		generation_frames_dir_ + frames_mask_dir_,
+		generation_frames_dir_ + frames_mask_dir_ + frames_mask_objects_dir_,
+		generation_frames_dir_ + frames_mask_dir_ + frames_mask_reflections_dir_,
 		gen_texture_dir, gen_video_dir, generation_json_dir_);
 
 	//construct 3D params - coords, directions
@@ -1684,7 +1689,23 @@ void Generator::genTexturedSequentClip(
 	glutCreateWindow("Point array");
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
-	glutDisplayFunc(Generator::displayMaskSequentClip);
+	glutDisplayFunc(Generator::displayObjectMaskSequentClip);
+	glutReshapeFunc(Generator::reshape);
+	main_scene_.resetFrameCount();
+	main_scene_.initGLUT(0, 0, 0);
+	glutMainLoop();
+
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitWindowSize(
+		main_scene_.getRenderImageSize().width,
+		main_scene_.getRenderImageSize().height);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("Point array");
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+	curr_this_ = this;
+	glutDisplayFunc(Generator::displayReflectionMaskSequentClip);
 	glutReshapeFunc(Generator::reshape);
 	main_scene_.resetFrameCount();
 	main_scene_.initGLUT(0, 0, 0);
@@ -1701,14 +1722,20 @@ void Generator::genTexturedSequentClip(
 	std::string merged_filename;
 	std::string masked_filename;
 	for (int frame = {}; frame < num_frames; ++frame) {
+		//background merging
 		merged_filename = gen_merged_dir + std::to_string(frame) + image_ending_;
 		merged_frames.push_back(
 			add_cv::mergeTexturedImageWithSource(mask, src_image,
 				gen_glut_dir + std::to_string(frame) + image_ending_));
 
-		masked_filename = gen_mask_dir + std::to_string(frame) + image_ending_;
+		//object borders smoothing
+		masked_filename = gen_mask_objects_dir + std::to_string(frame) + image_ending_;
 		masked_frames.push_back(cv::imread(masked_filename, cv::IMREAD_GRAYSCALE));
-		add_cv::smoothObjectBorders(merged_frames[frame], masked_frames[frame], merged_filename);
+		add_cv::smoothObjectBorders(merged_frames[frame], masked_frames[frame]);
+
+		//reflection borders smoothing
+		masked_filename = gen_mask_reflections_dir + std::to_string(frame) + image_ending_;
+		add_cv::smoothReflectionBorders(merged_frames[frame], masked_filename, merged_filename);
 	}
 
 	//make video from frames
@@ -1768,9 +1795,14 @@ void Generator::displayTexturedSequentClip() {
 	curr_this_->main_scene_.displayTexturedSequentClip();
 }
 
-////////// displayMaskSequentClip //////////
-void Generator::displayMaskSequentClip() {
-	curr_this_->main_scene_.displayMaskSequentClip();
+////////// displayObjectMaskSequentClip //////////
+void Generator::displayObjectMaskSequentClip() {
+	curr_this_->main_scene_.displayObjectMaskSequentClip();
+}
+
+////////// displayReflectionMaskSequentClip //////////
+void Generator::displayReflectionMaskSequentClip() {
+	curr_this_->main_scene_.displayReflectionMaskSequentClip();
 }
 
 ////////// reshape //////////
