@@ -1728,7 +1728,7 @@ void Generator::genTexturedSequentClip(
 	std::cout << "Daphnia textures brightness leveling off" << std::endl;
 	cv::Mat src_image = cv::imread(image_filename, cv::IMREAD_GRAYSCALE);
 	std::uniform_int_distribution<> texture_index_dis(0, num_glut_textures - 1);
-	unsigned int size{ 40 };
+	unsigned int size{ 32 };
 	cv::Mat sup_src_image = add_cv::supplementImage(src_image, size);
 
 	//gen texture number and set for each object on all frames
