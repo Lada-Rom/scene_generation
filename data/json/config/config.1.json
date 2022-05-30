@@ -10,5 +10,6 @@
         0.5,
         0.5
     ],
-	"make_packs": true
+	"make_packs": true,
+	"minibatch_size": 4
 }

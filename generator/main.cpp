@@ -31,8 +31,8 @@ try{
 	//generator.makeCVDaphniaMask(true);
 	//generator.makeCVDaphniaMask(false);
 
-	generator.genTexturedRandomClip("../../data/json/config/config.0.json");
-	//generator.genTexturedSequentClip("../../data/json/config/config.1.json");
+	//generator.genTexturedRandomClip("../../data/json/config/config.0.json");
+	generator.genTexturedSequentClip("../../data/json/config/config.1.json");
 }
 catch (const std::exception& exc) {
 	std::cout << exc.what() << std::endl;

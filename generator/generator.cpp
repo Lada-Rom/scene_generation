@@ -90,8 +90,8 @@ void Generator::saveGenCOJSON(const std::string& path,
 	const std::vector<std::vector<std::array<double, 2>>>& imgpoints,
 	const std::vector<std::vector<std::array<double, 2>>>& imgdirections) {
 	
-	gen_RCO_json_["3D_points"] = json::array();
-	gen_RCO_json_["2D_points"] = json::array();
+	gen_json_["3D_points"] = json::array();
+	gen_json_["2D_points"] = json::array();
 
 	json object_3d, object_2d;
 	for (int frame{}; frame < objpoints.size(); ++frame) {
@@ -100,13 +100,13 @@ void Generator::saveGenCOJSON(const std::string& path,
 			object_3d["direction"] = objdirections[frame][object];
 			object_2d["coords"] = imgpoints[frame][object];
 			object_2d["direction"] = imgdirections[frame][object];
-			gen_RCO_json_["3D_points"][frame].push_back(object_3d);
-			gen_RCO_json_["2D_points"][frame].push_back(object_2d);
+			gen_json_["3D_points"][frame].push_back(object_3d);
+			gen_json_["2D_points"][frame].push_back(object_2d);
 		}
 	}
 
 	std::ofstream file(path + generation_json_name_ + json_ending_);
-	file << gen_RCO_json_.dump(4) << std::endl;
+	file << gen_json_.dump(4) << std::endl;
 }
 
 ////////// readInputImgpointsD //////////
@@ -1565,7 +1565,7 @@ void Generator::genTexturedSequentClip(
 	size_t num_frames;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
-	readConfigSCOJSON(index, fps, num_frames, num_objects_range, size_objects_range, config_filename);
+	readConfigSCOJSON(index, fps, num_frames, num_objects_range, size_objects_range, make_packs, config_filename);
 
 	//read info from main json and set params
 	std::string image_filename = readInputImage(index);
@@ -1836,6 +1836,33 @@ void Generator::genTexturedSequentClip(
 	writeFramesToVideo(gen_video_dir + "frames.mp4", merged_frames, fps);
 	writeFramesToVideo(gen_video_dir + "heatmaps.mp4", heatmap_frames, fps);
 	writeFramesToVideo(gen_video_dir + "masks.mp4", masked_frames, fps);
+
+	if (make_packs) {
+		std::cout << "Splitting frames to packs" << std::endl;
+		std::string packs_dir = path + SCO_generation_main_dir_ + generation_packs_dir_;
+		std::string pack_dir = packs_dir + "pack";
+		std::string pack_frames_dir, pack_gaussians_dir, pack_masks_dir;
+		unsigned int image_index;
+		unsigned int minibatch_size = config_json_["minibatch_size"].get<unsigned int>();
+		for (int pack{}; pack < std::ceil(num_frames / minibatch_size); ++pack) {
+			pack_frames_dir = pack_dir + "_" + std::to_string(pack) + "/" + "frames/";
+			pack_gaussians_dir = pack_dir + "_" + std::to_string(pack) + "/" + "gaussians/";
+			pack_masks_dir = pack_dir + "_" + std::to_string(pack) + "/" + "masks/";
+			std::filesystem::create_directories(pack_frames_dir);
+			std::filesystem::create_directories(pack_gaussians_dir);
+			std::filesystem::create_directories(pack_masks_dir);
+
+			for (int i{}; i < minibatch_size; ++i) {
+				image_index = pack * minibatch_size + i;
+				merged_filename = gen_merged_dir + std::to_string(image_index) + image_ending_;
+				masked_filename = gen_mask_objects_dir + std::to_string(image_index) + image_ending_;
+				heatmap_filename = gen_heatmap_dir + std::to_string(image_index) + image_ending_;
+				std::filesystem::copy(merged_filename, pack_frames_dir + std::to_string(image_index) + image_ending_);
+				std::filesystem::copy(masked_filename, pack_masks_dir + std::to_string(image_index) + image_ending_);
+				std::filesystem::copy(heatmap_filename, pack_gaussians_dir + std::to_string(image_index) + image_ending_);
+			}
+		}
+	}
 
 	std::cout << "Successful end of program!" << std::endl;
 }

@@ -178,6 +178,7 @@ private:
 	const std::string generation_video_dir_			{ "video/" };
 	const std::string generation_json_dir_			{ "json/" };
 	const std::string generation_textures_dir_		{ "textures/" };
+	const std::string generation_packs_dir_			{ "packs/" };
 	const std::string frames_glut_dir_				{ "glut/" };
 	const std::string frames_merged_dir_			{ "merged/" };
 	const std::string frames_mask_dir_				{ "mask/" };
@@ -189,7 +190,7 @@ private:
 
 	json main_json_{ };
 	json config_json_{ };
-	json gen_RCO_json_{ };
+	json gen_json_{ };
 	Scene main_scene_{ };
 };
 
