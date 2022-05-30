@@ -322,11 +322,25 @@ void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json
 	cv::imwrite(dst_filename, img);
 }
 
+////////// makeHeatmap //////////
 cv::Mat makeHeatmap(const cv::Mat& mask, const std::string& filename) {
 	cv::Mat heatmap;
 	cv::distanceTransform(mask, heatmap, cv::DIST_L1, 3);
 	cv::normalize(heatmap, heatmap, 1, 0, cv::NORM_MINMAX);
 	heatmap.convertTo(heatmap, CV_8UC1, 255, 0);
+	cv::imwrite(filename, heatmap);
+	return heatmap;
+}
+
+////////// makeHeatmap //////////
+cv::Mat makeHeatmap(const cv::Mat& mask, std::vector<std::array<double, 2>>& points,
+	const std::string& filename) {
+	cv::Mat gauss;
+	cv::GaussianBlur(mask, gauss, { 7, 7 }, 0, 0);
+	cv::Mat heatmap = cv::Mat::zeros(mask.size(), CV_8UC1);
+	gauss.copyTo(heatmap, mask);
+	for (const auto& point : points)
+		heatmap.at<uchar>(point[1], point[0]) = 255;
 	cv::imwrite(filename, heatmap);
 	return heatmap;
 }

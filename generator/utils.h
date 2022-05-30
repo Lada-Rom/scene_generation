@@ -55,6 +55,8 @@ void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json
 	const std::string& dst_filename, const std::string& format);
 
 cv::Mat makeHeatmap(const cv::Mat& mask, const std::string& filename);
+cv::Mat makeHeatmap(const cv::Mat& mask, std::vector<std::array<double, 2>>& points,
+	const std::string& filename);
 
 } //namespace add_cv
 

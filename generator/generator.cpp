@@ -1824,7 +1824,7 @@ void Generator::genTexturedSequentClip(
 
 		//making heatmap
 		heatmap_filename = gen_heatmap_dir + std::to_string(frame) + image_ending_;
-		heatmap_frames[frame] = add_cv::makeHeatmap(masked_frames[frame], heatmap_filename);
+		heatmap_frames[frame] = add_cv::makeHeatmap(masked_frames[frame], imgpoints[frame], heatmap_filename);
 
 		//reflection borders smoothing
 		masked_filename = gen_mask_reflections_dir + std::to_string(frame) + image_ending_;
