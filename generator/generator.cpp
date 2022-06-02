@@ -25,6 +25,7 @@ void Generator::constructMainJSON(bool load) {
 	json params;
 	params["input"] = json::array();
 	params["camera"] = json::array();
+	params["aquarium_size"] = json::array();
 
 	std::ofstream file(getMainJSONFilename());
 	file << params.dump(4) << std::endl;
@@ -153,6 +154,11 @@ std::array<double, 3> Generator::readCameraSVec(size_t index) {
 	return main_json_["camera"][index]["svec"].get<std::array<double, 3>>();
 }
 
+////////// readAquariumSize //////////
+std::array<double, 3> Generator::readAquariumSize(size_t index) {
+	return main_json_["aquarium_size"][index].get<std::array<double, 3>>();
+}
+
 ////////// readConfigRCOJSON //////////
 void Generator::readConfigRCOJSON(size_t& index, size_t& num_frames,
 	std::array<double, 2>& num_objects_range,
@@ -163,6 +169,19 @@ void Generator::readConfigRCOJSON(size_t& index, size_t& num_frames,
 	num_frames = config_json_["num_frames"].get<size_t>();
 	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
 	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
+}
+
+////////// readConfigRCOJSON //////////
+void Generator::readConfigRCOJSON(size_t& index, size_t& num_frames,
+	std::array<double, 2>& num_objects_range,
+	std::array<double, 2>& size_objects_range,
+	bool& make_packs, const std::string& filename) {
+	loadConfigJSON(filename);
+	index = config_json_["camera_params_index"].get<size_t>();
+	num_frames = config_json_["num_frames"].get<size_t>();
+	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
+	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
+	make_packs = config_json_["make_packs"].get<bool>();
 }
 
 ////////// readConfigSCOJSON //////////
@@ -215,8 +234,13 @@ void Generator::writeCameraTVec(const cv::Mat& rvec, size_t i) {
 }
 
 ////////// writeCameraSVec //////////
-void Generator::writeCameraSVec(std::array<double, 3> svec, size_t i) {
+void Generator::writeCameraSVec(const std::array<double, 3>& svec, size_t i) {
 	main_json_["camera"][i]["svec"] = svec;
+}
+
+////////// writeAquariumSize //////////
+void Generator::writeAquariumSize(const std::array<double, 3>& aq_size, size_t index) {
+	main_json_["aquarium_size"][index] = aq_size;
 }
 
 ////////// writeFramesToVideo //////////
@@ -295,6 +319,33 @@ void Generator::addCameraParamsToMainJSON(size_t index) {
 	writeCameraRMat(rmat, index);
 	writeCameraTVec(tvec, index);
 	writeCameraSVec({0., 0., 0.}, index);
+	writeAquariumSize(main_scene_.getAquariumSize(), index);
+	saveMainJSON();
+}
+
+////////// addCameraParamsToMainJSON //////////
+void Generator::addCameraParamsToMainJSON(size_t index, const std::array<double, 3>& aq_size) {
+	main_scene_.setAquariumSize(aq_size);
+
+	//get imgpoints
+	std::vector<cv::Point2d> imgpoints = readInputImgpointsD(index);
+
+	//calc outer camera params
+	cv::Mat camera_mat = cv::Mat(3, 3, CV_64FC1, main_scene_.getIntrinsicCameraMatrix().data());
+	cv::Mat dcoeffs, rvec, rmat, tvec;
+
+	main_scene_.calcOuterCameraParams(imgpoints, camera_mat, dcoeffs, rvec, tvec);
+	cv::Rodrigues(rvec, rmat);
+
+	//write result to main json
+	if (main_json_["camera"].size() < index) //difference more than 1 element
+		throw std::out_of_range("Too short main_json[\"camera\"] array");
+	if (main_json_["camera"].size() == index) //difference exactly 1 element
+		main_json_["camera"].push_back(json::object());
+	writeCameraRMat(rmat, index);
+	writeCameraTVec(tvec, index);
+	writeCameraSVec({ 0., 0., 0. }, index);
+	writeAquariumSize(aq_size, index);
 	saveMainJSON();
 }
 
@@ -844,9 +895,11 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 	std::string image_filename = readInputImage(index);
 	std::array<double, 9> rmat = readCameraRMat(index);
 	std::array<double, 3> tvec = readCameraTVec(index);
+	std::array<double, 3> aq_size = readAquariumSize(index);
 	main_scene_.setCameraRMat(rmat);
 	main_scene_.setCameraTVec(tvec);
 	main_scene_.setCameraSVec(shift);
+	main_scene_.setAquariumSize(aq_size);
 
 	std::cout << "Rotation matrix:\n" << rmat << std::endl;
 	std::cout << "Translation vector:\t" << tvec << std::endl;
@@ -931,9 +984,11 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 	std::string image_filename = readInputImage(index);
 	std::array<double, 9> rmat = readCameraRMat(index);
 	std::array<double, 3> tvec = readCameraTVec(index);
+	std::array<double, 3> aq_size = readAquariumSize(index);
 	main_scene_.setCameraRMat(rmat);
 	main_scene_.setCameraTVec(tvec);
 	main_scene_.setCameraSVec(shift);
+	main_scene_.setAquariumSize(aq_size);
 
 	std::cout << "Rotation matrix:\n" << rmat << std::endl;
 	std::cout << "Translation vector:\t" << tvec << std::endl;
@@ -953,8 +1008,8 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 
 	//constructing 3D points
 	std::vector<cv::Point3d> objgridpoints;
-	double aquarium_width = main_scene_.getAquariumSize()[0];
-	double aquarium_height = main_scene_.getAquariumSize()[1];
+	double aquarium_width = aq_size[0];
+	double aquarium_height = aq_size[1];
 	double width_step = aquarium_width / (quantity.width - 1);
 	double height_step = aquarium_height / (quantity.height - 1);
 	for (int i{}; i < quantity.width; ++i) {
@@ -1032,9 +1087,11 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 	std::array<double, 9> rmat = readCameraRMat(index);
 	std::array<double, 3> tvec = readCameraTVec(index);
 	std::array<double, 3> svec = readCameraSVec(index);
+	std::array<double, 3> aq_size = readAquariumSize(index);
 	main_scene_.setCameraRMat(rmat);
 	main_scene_.setCameraTVec(tvec);
 	main_scene_.setCameraSVec(svec);
+	main_scene_.setAquariumSize(aq_size);
 
 	std::cout << "Rotation matrix:\n" << rmat << std::endl;
 	std::cout << "Translation vector:\t" << tvec << std::endl;
@@ -1057,7 +1114,6 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 		generation_frames_dir_ + frames_merged_dir_, generation_json_dir_);
 
 	//construct 3D params - coords, angles
-	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
 	size_t num_objects;
 	std::uniform_int_distribution<>	num_obj;
 
@@ -1171,9 +1227,11 @@ void Generator::genUntexturedRandomClip(
 	std::array<double, 9> rmat = readCameraRMat(index);
 	std::array<double, 3> tvec = readCameraTVec(index);
 	std::array<double, 3> svec = readCameraSVec(index);
+	std::array<double, 3> aq_size = readAquariumSize(index);
 	main_scene_.setCameraRMat(rmat);
 	main_scene_.setCameraTVec(tvec);
 	main_scene_.setCameraSVec(svec);
+	main_scene_.setAquariumSize(aq_size);
 
 	std::cout << "Rotation matrix:\n" << rmat << std::endl;
 	std::cout << "Translation vector:\t" << tvec << std::endl;
@@ -1196,7 +1254,6 @@ void Generator::genUntexturedRandomClip(
 		generation_frames_dir_ + frames_merged_dir_, generation_json_dir_);
 
 	//construct 3D params - coords, angles
-	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
 	size_t num_objects;
 	std::uniform_int_distribution<>	num_obj;
 
@@ -1300,18 +1357,21 @@ void Generator::genTexturedRandomClip(
 	//read params from config json
 	size_t index;
 	size_t num_frames;
+	bool make_packs;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
-	readConfigRCOJSON(index, num_frames, num_objects_range, size_objects_range, config_filename);
+	readConfigRCOJSON(index, num_frames, num_objects_range, size_objects_range, make_packs, config_filename);
 
 	//read info from main json and set params
 	std::string image_filename = readInputImage(index);
 	std::array<double, 9> rmat = readCameraRMat(index);
 	std::array<double, 3> tvec = readCameraTVec(index);
 	std::array<double, 3> svec = readCameraSVec(index);
+	std::array<double, 3> aq_size = readAquariumSize(index);
 	main_scene_.setCameraRMat(rmat);
 	main_scene_.setCameraTVec(tvec);
 	main_scene_.setCameraSVec(svec);
+	main_scene_.setAquariumSize(aq_size);
 
 	std::cout << "Rotation matrix:\n" << rmat << std::endl;
 	std::cout << "Translation vector:\t" << tvec << std::endl;
@@ -1347,7 +1407,6 @@ void Generator::genTexturedRandomClip(
 		gen_texture_dir, gen_video_dir, generation_json_dir_);
 
 	//construct 3D params - coords, angles
-	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
 	size_t num_objects;
 	double object_size;
 	std::uniform_int_distribution<>	num_obj;
@@ -1539,7 +1598,7 @@ void Generator::genTexturedRandomClip(
 
 		//making heatmap
 		heatmap_filename = gen_heatmap_dir + std::to_string(frame) + image_ending_;
-		heatmap_frames[frame] = add_cv::makeHeatmap(masked_frames[frame], heatmap_filename);
+		heatmap_frames[frame] = add_cv::makeHeatmap(masked_frames[frame], imgpoints[frame], heatmap_filename);
 
 		//reflection borders smoothing
 		masked_filename = gen_mask_reflections_dir + std::to_string(frame) + image_ending_;
@@ -1551,6 +1610,35 @@ void Generator::genTexturedRandomClip(
 	writeFramesToVideo(gen_video_dir + "frames.mp4", merged_frames, 10);
 	writeFramesToVideo(gen_video_dir + "heatmaps.mp4", heatmap_frames, 10);
 	writeFramesToVideo(gen_video_dir + "masks.mp4", masked_frames, 10);
+
+	if (make_packs) {
+		std::cout << "Splitting frames to packs" << std::endl;
+		std::string packs_dir = path + RCO_generation_main_dir_ + generation_packs_dir_;
+		std::string pack_dir = packs_dir + "pack";
+		std::string pack_frames_dir, pack_gaussians_dir, pack_masks_dir;
+		unsigned int image_index;
+		unsigned int minibatch_size = config_json_["minibatch_size"].get<unsigned int>();
+		for (int pack{}; pack < std::ceil(1. * num_frames / minibatch_size); ++pack) {
+			pack_frames_dir = pack_dir + "_" + std::to_string(pack) + "/" + "frames/";
+			pack_gaussians_dir = pack_dir + "_" + std::to_string(pack) + "/" + "gaussians/";
+			pack_masks_dir = pack_dir + "_" + std::to_string(pack) + "/" + "masks/";
+			std::filesystem::create_directories(pack_frames_dir);
+			std::filesystem::create_directories(pack_gaussians_dir);
+			std::filesystem::create_directories(pack_masks_dir);
+
+			for (int i{}; i < minibatch_size; ++i) {
+				image_index = pack * minibatch_size + i;
+				if (image_index >= num_frames)
+					break;
+				merged_filename = gen_merged_dir + std::to_string(image_index) + image_ending_;
+				masked_filename = gen_mask_objects_dir + std::to_string(image_index) + image_ending_;
+				heatmap_filename = gen_heatmap_dir + std::to_string(image_index) + image_ending_;
+				std::filesystem::copy(merged_filename, pack_frames_dir + std::to_string(image_index) + image_ending_);
+				std::filesystem::copy(masked_filename, pack_masks_dir + std::to_string(image_index) + image_ending_);
+				std::filesystem::copy(heatmap_filename, pack_gaussians_dir + std::to_string(image_index) + image_ending_);
+			}
+		}
+	}
 
 	std::cout << "Successful end of program!" << std::endl;
 }
@@ -1572,9 +1660,11 @@ void Generator::genTexturedSequentClip(
 	std::array<double, 9> rmat = readCameraRMat(index);
 	std::array<double, 3> tvec = readCameraTVec(index);
 	std::array<double, 3> svec = readCameraSVec(index);
+	std::array<double, 3> aq_size = readAquariumSize(index);
 	main_scene_.setCameraRMat(rmat);
 	main_scene_.setCameraTVec(tvec);
 	main_scene_.setCameraSVec(svec);
+	main_scene_.setAquariumSize(aq_size);
 
 	std::cout << "Rotation matrix:\n" << rmat << std::endl;
 	std::cout << "Translation vector:\t" << tvec << std::endl;
@@ -1610,8 +1700,6 @@ void Generator::genTexturedSequentClip(
 		gen_texture_dir, gen_video_dir, generation_json_dir_);
 
 	//construct 3D params - coords, directions
-	std::array<double, 3> aq_size = main_scene_.getAquariumSize();
-
 	size_t num_objects;
 	std::uniform_int_distribution<>	num_obj;
 	num_objects = (num_objects_range[0] == num_objects_range[1])
@@ -1844,7 +1932,7 @@ void Generator::genTexturedSequentClip(
 		std::string pack_frames_dir, pack_gaussians_dir, pack_masks_dir;
 		unsigned int image_index;
 		unsigned int minibatch_size = config_json_["minibatch_size"].get<unsigned int>();
-		for (int pack{}; pack < std::ceil(num_frames / minibatch_size); ++pack) {
+		for (int pack{}; pack < std::ceil(1. * num_frames / minibatch_size); ++pack) {
 			pack_frames_dir = pack_dir + "_" + std::to_string(pack) + "/" + "frames/";
 			pack_gaussians_dir = pack_dir + "_" + std::to_string(pack) + "/" + "gaussians/";
 			pack_masks_dir = pack_dir + "_" + std::to_string(pack) + "/" + "masks/";
@@ -1854,6 +1942,8 @@ void Generator::genTexturedSequentClip(
 
 			for (int i{}; i < minibatch_size; ++i) {
 				image_index = pack * minibatch_size + i;
+				if (image_index >= num_frames)
+					break;
 				merged_filename = gen_merged_dir + std::to_string(image_index) + image_ending_;
 				masked_filename = gen_mask_objects_dir + std::to_string(image_index) + image_ending_;
 				heatmap_filename = gen_heatmap_dir + std::to_string(image_index) + image_ending_;

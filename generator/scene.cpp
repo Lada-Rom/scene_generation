@@ -81,6 +81,11 @@ void Scene::setGridFilename(const std::string& filename) {
     grid_filename_ = filename;
 }
 
+////////// setAquariumSize //////////
+void Scene::setAquariumSize(const std::array<double, 3>& aq_size) {
+    aquarium_.setSize(aq_size);
+}
+
 ////////// setAquariumEdgeTextureFilename //////////
 void Scene::setAquariumEdgeTextureFilename(
     const std::string& edge, const std::string& filename) {

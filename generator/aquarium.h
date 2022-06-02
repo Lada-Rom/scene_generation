@@ -21,6 +21,7 @@ public:
 	std::vector<cv::Point3d> getObjpoints();
 	std::vector<cv::Point3d> getObjpoints(double scale);
 
+	void setSize(const std::array<double, 3>& size);
 	void setTextureFilename(const std::string& plane, const std::string& filename);
 
 	void calcVerticies();

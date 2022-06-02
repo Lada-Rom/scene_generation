@@ -48,10 +48,15 @@ public:
 	std::array<double, 9> readCameraRMat(size_t index);
 	std::array<double, 3> readCameraTVec(size_t index);
 	std::array<double, 3> readCameraSVec(size_t index);
+	std::array<double, 3> readAquariumSize(size_t index);
 	void readConfigRCOJSON(size_t& index, size_t& num_frames,
 		std::array<double, 2>& num_objects_range, 
 		std::array<double, 2>& size_objects_range,
 		const std::string& filename);
+	void readConfigRCOJSON(size_t& index, size_t& num_frames,
+		std::array<double, 2>& num_objects_range,
+		std::array<double, 2>& size_objects_range,
+		bool& make_packs, const std::string& filename);
 	void readConfigSCOJSON(size_t& index, size_t& num_frames,
 		std::array<double, 2>& num_objects_range,
 		std::array<double, 2>& size_objects_range,
@@ -65,15 +70,17 @@ public:
 		std::array<double, 2>& size_objects_range,
 		bool& make_packs, const std::string& filename);
 
-	void writeCameraRMat(const cv::Mat&, size_t);
-	void writeCameraTVec(const cv::Mat&, size_t);
-	void writeCameraSVec(std::array<double, 3>, size_t);
+	void writeCameraRMat(const cv::Mat& rmat, size_t index);
+	void writeCameraTVec(const cv::Mat& tvec, size_t index);
+	void writeCameraSVec(const std::array<double, 3>&  svec, size_t index);
+	void writeAquariumSize(const std::array<double, 3>& aq_size, size_t index);
 	void writeFramesToVideo(const std::string& filename,
 		const std::vector<cv::Mat>& frames, double fps);
 
 	bool checkIfInputExists(const std::string&);
 	void addInputToMainJSON(const std::string&, const std::string&);
-	void addCameraParamsToMainJSON(size_t);
+	void addCameraParamsToMainJSON(size_t index);
+	void addCameraParamsToMainJSON(size_t index, const std::array<double, 3>& aq_size);
 
 	void makeBackground(const std::string& video_filename, const std::string& bckg_filename);
 	void makeTestTexture(const std::string& filename);

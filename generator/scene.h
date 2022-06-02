@@ -37,6 +37,7 @@ public:
 	void setObjGridPoints(const std::vector<cv::Point3d>& objgridpoints);
 	void setGridFilename(const std::string& filename);
 
+	void setAquariumSize(const std::array<double, 3>& aq_size);
 	void setAquariumEdgeTextureFilename(
 		const std::string& edge, const std::string& filename);
 
