@@ -5,8 +5,15 @@ build/
 bin.*/
 *.bak
 *.vcxproj.user
-data/params_selection/
+
 data/grid/
+data/params_selection/
 data/RCO_generation/
 data/SCO_generation/
 /data/src/daphnia/
+/data/src/frames/
+
+/data/src/video/1.avi
+/data/src/video/2.avi
+/data/src/video/3.avi
+/data/src/video/4.avi
