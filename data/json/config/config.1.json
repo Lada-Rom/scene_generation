@@ -3,8 +3,8 @@
 	"fps": 10,
 	"camera_params_index": 1,
     "object_quantity_range": [
-        100.0,
-        100.0
+        3.0,
+        5.0
     ],
     "object_size_range": [
         0.6,
@@ -26,6 +26,6 @@
 		0.5,
 		1.0
 	],
-	"make_packs": false,
+	"make_packs": true,
 	"minibatch_size": 4
 }
