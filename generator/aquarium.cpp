@@ -34,6 +34,12 @@ std::vector<cv::Point3d> Aquarium::getObjpoints(double scale) {
     return objpoints;
 }
 
+////////// setSize //////////
+void Aquarium::setSize(const std::array<double, 3>& size) {
+    size_ = size;
+    calcVerticies();
+}
+
 ////////// setTextureFilename //////////
 void Aquarium::setTextureFilename(
     const std::string& plane, const std::string& filename) {

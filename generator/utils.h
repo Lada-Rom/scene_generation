@@ -54,6 +54,10 @@ void textureFrameDaphnias(size_t frame_index, cv::Mat& img, const json& gen_json
 	std::random_device& rd, const std::string& texture_path,
 	const std::string& dst_filename, const std::string& format);
 
+cv::Mat makeHeatmap(const cv::Mat& mask, const std::string& filename);
+cv::Mat makeHeatmap(const cv::Mat& mask, std::vector<std::array<double, 2>>& points,
+	const std::string& filename);
+
 } //namespace add_cv
 
 namespace glm {
@@ -91,6 +95,12 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	const std::string& glut_dir, const std::string& merged_dir,
 	const std::string& obj_mask_dir, const std::string& refl_mask_dir,
+	const std::string& tex_dir, const std::string& video_dir,
+	const std::string& json_dir);
+void makeGenFileTree(const std::string& path, const std::string& main_dir,
+	const std::string& glut_dir, const std::string& merged_dir,
+	const std::string& obj_mask_dir, const std::string& refl_mask_dir,
+	const std::string& heatmap_dir,
 	const std::string& tex_dir, const std::string& video_dir,
 	const std::string& json_dir);
 

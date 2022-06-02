@@ -37,6 +37,10 @@ public:
 	void setObjGridPoints(const std::vector<cv::Point3d>& objgridpoints);
 	void setGridFilename(const std::string& filename);
 
+	void setObjectColor(const std::array<double, 2>& color);
+	void setObjectHorReflectionColor(const std::array<double, 2>& color);
+	void setObjectVerReflectionColor(const std::array<double, 2>& color);
+	void setAquariumSize(const std::array<double, 3>& aq_size);
 	void setAquariumEdgeTextureFilename(
 		const std::string& edge, const std::string& filename);
 
@@ -132,7 +136,7 @@ private:
 	std::array<double, 2> z_plane_{ 0.8, 1000 };
 	double scale_{ 0.9 };
 	double reflection_distance_limit_{ 2. };
-	double reflection_strength_{ 0.3 };
+	//double reflection_strength_{ 0.3 };
 
 	Camera camera_{ };
 	Aquarium aquarium_{ };
@@ -148,6 +152,10 @@ private:
 	std::string generation_frames_ending_{ ".png" };
 	size_t frame_count_{ };
 	size_t object_count_{ };
+
+	std::array<double, 4> object_color_alpha_{ 0., 0., 0., 1. };
+	std::array<double, 4> object_hor_reflection_color_alpha_{ 0., 0., 0., 0.3 };
+	std::array<double, 4> object_ver_reflection_color_alpha_{ 0., 0., 0., 0.3 };
 
 	double test_x{};
 	double test_y{};

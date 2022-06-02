@@ -48,26 +48,51 @@ public:
 	std::array<double, 9> readCameraRMat(size_t index);
 	std::array<double, 3> readCameraTVec(size_t index);
 	std::array<double, 3> readCameraSVec(size_t index);
+	std::array<double, 3> readAquariumSize(size_t index);
 	void readConfigRCOJSON(size_t& index, size_t& num_frames,
 		std::array<double, 2>& num_objects_range, 
 		std::array<double, 2>& size_objects_range,
 		const std::string& filename);
-	void readConfigSCOJSON(size_t& index, size_t& num_frames,
+	void readConfigRCOJSON(size_t& index, size_t& num_frames,
+		std::array<double, 2>& num_objects_range,
+		std::array<double, 2>& size_objects_range,
+		bool& make_packs, const std::string& filename);
+	void readConfigRCOJSON(size_t& index, size_t& num_frames,
+		std::array<double, 2>& num_objects_range,
+		std::array<double, 2>& size_objects_range,
+		std::array<double, 2>& object_color_alpha,
+		std::array<double, 2>& object_texture_brightness,
+		std::array<double, 2>& object_hor_reflection_color_alpha,
+		std::array<double, 2>& object_ver_reflection_color_alpha,
+		bool& make_packs, const std::string& filename);
+	void readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
 		std::array<double, 2>& num_objects_range,
 		std::array<double, 2>& size_objects_range,
 		const std::string& filename);
 	void readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
 		std::array<double, 2>& num_objects_range,
 		std::array<double, 2>& size_objects_range,
-		const std::string& filename);
+		bool& make_packs, const std::string& filename);
+	void readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
+		std::array<double, 2>& num_objects_range,
+		std::array<double, 2>& size_objects_range,
+		std::array<double, 2>& object_color_alpha,
+		std::array<double, 2>& object_texture_brightness,
+		std::array<double, 2>& object_hor_reflection_color_alpha,
+		std::array<double, 2>& object_ver_reflection_color_alpha,
+		bool& make_packs, const std::string& filename);
 
-	void writeCameraRMat(const cv::Mat&, size_t);
-	void writeCameraTVec(const cv::Mat&, size_t);
-	void writeCameraSVec(std::array<double, 3>, size_t);
+	void writeCameraRMat(const cv::Mat& rmat, size_t index);
+	void writeCameraTVec(const cv::Mat& tvec, size_t index);
+	void writeCameraSVec(const std::array<double, 3>&  svec, size_t index);
+	void writeAquariumSize(const std::array<double, 3>& aq_size, size_t index);
+	void writeFramesToVideo(const std::string& filename,
+		const std::vector<cv::Mat>& frames, double fps);
 
 	bool checkIfInputExists(const std::string&);
 	void addInputToMainJSON(const std::string&, const std::string&);
-	void addCameraParamsToMainJSON(size_t);
+	void addCameraParamsToMainJSON(size_t index);
+	void addCameraParamsToMainJSON(size_t index, const std::array<double, 3>& aq_size);
 
 	void makeBackground(const std::string& video_filename, const std::string& bckg_filename);
 	void makeTestTexture(const std::string& filename);
@@ -172,17 +197,20 @@ private:
 	const std::string generation_video_dir_			{ "video/" };
 	const std::string generation_json_dir_			{ "json/" };
 	const std::string generation_textures_dir_		{ "textures/" };
+	const std::string generation_packs_dir_			{ "packs/" };
 	const std::string frames_glut_dir_				{ "glut/" };
 	const std::string frames_merged_dir_			{ "merged/" };
 	const std::string frames_mask_dir_				{ "mask/" };
+	const std::string frames_heatmap_dir_			{ "heatmap/" };
 	const std::string frames_mask_objects_dir_		{ "objects/" };
 	const std::string frames_mask_reflections_dir_	{ "reflections/" };
 
-	unsigned int texture_size_{ 128 };
+	unsigned int object_texture_size_{ 128 };
+	std::array<double, 2> object_texture_brightness_{};
 
 	json main_json_{ };
 	json config_json_{ };
-	json gen_RCO_json_{ };
+	json gen_json_{ };
 	Scene main_scene_{ };
 };
 

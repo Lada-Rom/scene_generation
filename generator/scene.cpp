@@ -81,6 +81,26 @@ void Scene::setGridFilename(const std::string& filename) {
     grid_filename_ = filename;
 }
 
+////////// setAquariumSize //////////
+void Scene::setAquariumSize(const std::array<double, 3>& aq_size) {
+    aquarium_.setSize(aq_size);
+}
+
+////////// setObjectColor //////////
+void Scene::setObjectColor(const std::array<double, 2>& color) {
+    object_color_alpha_ = { color[0], color[0], color[0], color[1] };
+}
+
+////////// setObjectHorReflectionColor //////////
+void Scene::setObjectHorReflectionColor(const std::array<double, 2>& color) {
+    object_hor_reflection_color_alpha_ = { color[0], color[0], color[0], color[1] };
+}
+
+////////// setObjectVerReflectionColor //////////
+void Scene::setObjectVerReflectionColor(const std::array<double, 2>& color) {
+    object_ver_reflection_color_alpha_ = { color[0], color[0], color[0], color[1] };
+}
+
 ////////// setAquariumEdgeTextureFilename //////////
 void Scene::setAquariumEdgeTextureFilename(
     const std::string& edge, const std::string& filename) {
@@ -699,8 +719,8 @@ void Scene::displayUntexturedRandomClip() {
 
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
-        daphnia.drawSimplified({ 0., 0., 0., 1. });
-        drawSimplifiedReflection(daphnia, { 0., 0., 0., reflection_strength_ });
+        daphnia.drawSimplified(object_color_alpha_);
+        drawSimplifiedReflection(daphnia, object_hor_reflection_color_alpha_);
     }
 
     //aquarium
@@ -746,8 +766,8 @@ void Scene::displayTexturedRandomClip() {
 
     //objects
     for (auto& daphnia : random_clip_objects_[frame_count_]) {
-        drawSimplifiedReflection(daphnia, { 0.3, 0.3, 0.3, reflection_strength_ });
-        daphnia.drawTextured();
+        drawSimplifiedReflection(daphnia, object_hor_reflection_color_alpha_);
+        daphnia.drawTextured(object_color_alpha_);
         //daphnia.drawSimplified({ 0., 0., 0., 0.3 });
     }
 
@@ -865,10 +885,10 @@ void Scene::displayTexturedSequentClip() {
     //objects
     for (auto& daphnia : sequent_clip_objects_[frame_count_]) {
         drawSimplifiedReflection(daphnia,
-            { 0.3, 0.3, 0.3, reflection_strength_ }, //right
-            { 0.3, 0.3, 0.3, reflection_strength_ }, //left
-            { 0.55, 0.55, 0.55, reflection_strength_ }, //upper
-            { 0.55, 0.55, 0.55, reflection_strength_ }); //lower
+            object_hor_reflection_color_alpha_, //right
+            object_hor_reflection_color_alpha_, //left
+            object_ver_reflection_color_alpha_, //upper
+            object_ver_reflection_color_alpha_); //lower
         daphnia.drawTextured();
         //daphnia.drawSimplified({ 0., 0., 0., 1. });
     }
