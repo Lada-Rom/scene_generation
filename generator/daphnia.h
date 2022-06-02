@@ -40,7 +40,7 @@ public:
 		const std::array<double, 4>& color_inner,
 		const std::array<double, 4>& color_outer,
 		const std::array<double, 4>& color_head);
-	void drawTextured();
+	void drawTextured(const std::array<double, 4> color = { 0., 0., 0., 1. });
 	void drawSimplifiedReflection(bool horizontal,
 		const std::array<double, 3>& coords,
 		const std::array<double, 4>& color4d) const;

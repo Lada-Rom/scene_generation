@@ -184,16 +184,32 @@ void Generator::readConfigRCOJSON(size_t& index, size_t& num_frames,
 	make_packs = config_json_["make_packs"].get<bool>();
 }
 
-////////// readConfigSCOJSON //////////
-void Generator::readConfigSCOJSON(size_t& index, size_t& num_frames,
+////////// readConfigRCOJSON //////////
+void Generator::readConfigRCOJSON(size_t& index, size_t& num_frames,
 	std::array<double, 2>& num_objects_range,
 	std::array<double, 2>& size_objects_range,
-	const std::string& filename) {
+	std::array<double, 2>& object_color_alpha,
+	std::array<double, 2>& object_texture_brightness,
+	std::array<double, 2>& object_hor_reflection_color_alpha,
+	std::array<double, 2>& object_ver_reflection_color_alpha,
+	bool& make_packs, const std::string& filename) {
+
 	loadConfigJSON(filename);
+
 	index = config_json_["camera_params_index"].get<size_t>();
-	num_frames = config_json_["duration"].get<int>() * config_json_["fps"].get<int>();
+	num_frames = config_json_["num_frames"].get<size_t>();
+
 	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
 	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
+
+	object_color_alpha = config_json_["object_color_alpha"].get<std::array<double, 2>>();
+	object_hor_reflection_color_alpha
+		= config_json_["object_horizontal_reflection_color_alpha"].get<std::array<double, 2>>();
+	object_ver_reflection_color_alpha
+		= config_json_["object_vertical_reflection_color_alpha"].get<std::array<double, 2>>();
+	object_texture_brightness = config_json_["object_texture_brightness"].get<std::array<double, 2>>();
+
+	make_packs = config_json_["make_packs"].get<bool>();
 }
 
 ////////// readConfigSCOJSON //////////
@@ -220,6 +236,35 @@ void Generator::readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames
 	num_frames = config_json_["duration"].get<int>() * fps;
 	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
 	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
+	make_packs = config_json_["make_packs"].get<bool>();
+}
+
+////////// readConfigSCOJSON //////////
+void Generator::readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
+	std::array<double, 2>& num_objects_range,
+	std::array<double, 2>& size_objects_range,
+	std::array<double, 2>& object_color_alpha,
+	std::array<double, 2>& object_texture_brightness,
+	std::array<double, 2>& object_hor_reflection_color_alpha,
+	std::array<double, 2>& object_ver_reflection_color_alpha,
+	bool& make_packs, const std::string& filename) {
+
+	loadConfigJSON(filename);
+
+	index = config_json_["camera_params_index"].get<size_t>();
+	fps = config_json_["fps"].get<int>();
+	num_frames = config_json_["duration"].get<int>() * fps;
+
+	num_objects_range = config_json_["object_quantity_range"].get<std::array<double, 2>>();
+	size_objects_range = config_json_["object_size_range"].get<std::array<double, 2>>();
+
+	object_color_alpha = config_json_["object_color_alpha"].get<std::array<double, 2>>();
+	object_hor_reflection_color_alpha
+		= config_json_["object_horizontal_reflection_color_alpha"].get<std::array<double, 2>>();
+	object_ver_reflection_color_alpha
+		= config_json_["object_vertical_reflection_color_alpha"].get<std::array<double, 2>>();
+	object_texture_brightness = config_json_["object_texture_brightness"].get<std::array<double, 2>>();
+
 	make_packs = config_json_["make_packs"].get<bool>();
 }
 
@@ -494,7 +539,7 @@ void Generator::makeCVDaphniaTexture(size_t index, bool ovoid) {
 	if (!std::filesystem::exists(directory))
 		std::filesystem::create_directories(directory);
 
-	const int  size = texture_size_;
+	const int  size = object_texture_size_;
 	cv::Mat    img = cv::Mat::zeros(size, size, CV_8UC1);
 
 	float      t = 0.3f;
@@ -590,7 +635,7 @@ void Generator::makeCVDaphniaMask(bool ovoid) {
 	if (!std::filesystem::exists(directory))
 		std::filesystem::create_directories(directory);
 
-	const int  size = texture_size_;
+	const int  size = object_texture_size_;
 	cv::Mat    img = cv::Mat::zeros(size, size, CV_8UC1);
 
 	float      t = 0.3f;
@@ -625,7 +670,7 @@ void Generator::makeGLUTDaphniaTexture(size_t index) {
 	if (!std::filesystem::exists(directory))
 		std::filesystem::create_directories(directory);
 	
-	const int  size = texture_size_;
+	const int  size = object_texture_size_;
 	cv::Mat    img = cv::Mat::zeros(size + 2, size, CV_8UC1);
 
 	float      t = 0.3f;
@@ -703,7 +748,8 @@ void Generator::makeGLUTDaphniaTexture(size_t index) {
 		= dst(cv::Range(size - img_dt_res.rows, size), cv::Range(0, 2 * size)).mul(img_dt_res);
 
 	//writing texture template
-	cv::normalize(dst, dst, 1.0f, 0.5f, cv::NormTypes::NORM_MINMAX);
+	cv::normalize(dst, dst,
+		object_texture_brightness_[1], object_texture_brightness_[0], cv::NormTypes::NORM_MINMAX);
 	dst.convertTo(dst, CV_8UC1, 255, 0);
 	cv::flip(dst, dst, 0);
 	
@@ -1218,9 +1264,19 @@ void Generator::genUntexturedRandomClip(
 	//read params from config json
 	size_t index;
 	size_t num_frames;
+	bool make_packs;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
-	readConfigRCOJSON(index, num_frames, num_objects_range, size_objects_range, config_filename);
+	std::array<double, 2> object_color_alpha;
+	std::array<double, 2> object_hor_reflection_color_alpha;
+	std::array<double, 2> object_ver_reflection_color_alpha;
+	readConfigRCOJSON(index, num_frames, num_objects_range, size_objects_range,
+		object_color_alpha, object_texture_brightness_,
+		object_hor_reflection_color_alpha, object_ver_reflection_color_alpha,
+		make_packs, config_filename);
+	main_scene_.setObjectColor(object_color_alpha);
+	main_scene_.setObjectHorReflectionColor(object_hor_reflection_color_alpha);
+	main_scene_.setObjectVerReflectionColor(object_ver_reflection_color_alpha);
 
 	//read info from main json and set params
 	std::string image_filename = readInputImage(index);
@@ -1360,7 +1416,16 @@ void Generator::genTexturedRandomClip(
 	bool make_packs;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
-	readConfigRCOJSON(index, num_frames, num_objects_range, size_objects_range, make_packs, config_filename);
+	std::array<double, 2> object_color_alpha;
+	std::array<double, 2> object_hor_reflection_color_alpha;
+	std::array<double, 2> object_ver_reflection_color_alpha;
+	readConfigRCOJSON(index, num_frames, num_objects_range, size_objects_range,
+		object_color_alpha, object_texture_brightness_,
+		object_hor_reflection_color_alpha, object_ver_reflection_color_alpha,
+		make_packs, config_filename);
+	main_scene_.setObjectColor(object_color_alpha);
+	main_scene_.setObjectHorReflectionColor(object_hor_reflection_color_alpha);
+	main_scene_.setObjectVerReflectionColor(object_ver_reflection_color_alpha);
 
 	//read info from main json and set params
 	std::string image_filename = readInputImage(index);
@@ -1653,7 +1718,16 @@ void Generator::genTexturedSequentClip(
 	size_t num_frames;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
-	readConfigSCOJSON(index, fps, num_frames, num_objects_range, size_objects_range, make_packs, config_filename);
+	std::array<double, 2> object_color_alpha;
+	std::array<double, 2> object_hor_reflection_color_alpha;
+	std::array<double, 2> object_ver_reflection_color_alpha;
+	readConfigSCOJSON(index, fps, num_frames, num_objects_range, size_objects_range,
+		object_color_alpha, object_texture_brightness_,
+		object_hor_reflection_color_alpha, object_ver_reflection_color_alpha,
+		make_packs, config_filename);
+	main_scene_.setObjectColor(object_color_alpha);
+	main_scene_.setObjectHorReflectionColor(object_hor_reflection_color_alpha);
+	main_scene_.setObjectVerReflectionColor(object_ver_reflection_color_alpha);
 
 	//read info from main json and set params
 	std::string image_filename = readInputImage(index);

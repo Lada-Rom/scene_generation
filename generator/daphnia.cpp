@@ -154,7 +154,7 @@ void Daphnia::drawComplicated(
 }
 
 ////////// drawTextured //////////
-void Daphnia::drawTextured() {
+void Daphnia::drawTextured(const std::array<double, 4> color) {
 	glPushMatrix();
 		glTranslated(coords_[0], coords_[1], coords_[2]);
 
@@ -179,7 +179,7 @@ void Daphnia::drawTextured() {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-		glColor4d(0., 0., 0., 1.);
+		glColor4dv(color.data());
 		glPushMatrix();
 			glScaled(scale_, scale_, scale_);
 			glScaled(length_ratio_, 1., 1.);

@@ -57,10 +57,14 @@ public:
 		std::array<double, 2>& num_objects_range,
 		std::array<double, 2>& size_objects_range,
 		bool& make_packs, const std::string& filename);
-	void readConfigSCOJSON(size_t& index, size_t& num_frames,
+	void readConfigRCOJSON(size_t& index, size_t& num_frames,
 		std::array<double, 2>& num_objects_range,
 		std::array<double, 2>& size_objects_range,
-		const std::string& filename);
+		std::array<double, 2>& object_color_alpha,
+		std::array<double, 2>& object_texture_brightness,
+		std::array<double, 2>& object_hor_reflection_color_alpha,
+		std::array<double, 2>& object_ver_reflection_color_alpha,
+		bool& make_packs, const std::string& filename);
 	void readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
 		std::array<double, 2>& num_objects_range,
 		std::array<double, 2>& size_objects_range,
@@ -68,6 +72,14 @@ public:
 	void readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
 		std::array<double, 2>& num_objects_range,
 		std::array<double, 2>& size_objects_range,
+		bool& make_packs, const std::string& filename);
+	void readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
+		std::array<double, 2>& num_objects_range,
+		std::array<double, 2>& size_objects_range,
+		std::array<double, 2>& object_color_alpha,
+		std::array<double, 2>& object_texture_brightness,
+		std::array<double, 2>& object_hor_reflection_color_alpha,
+		std::array<double, 2>& object_ver_reflection_color_alpha,
 		bool& make_packs, const std::string& filename);
 
 	void writeCameraRMat(const cv::Mat& rmat, size_t index);
@@ -193,7 +205,8 @@ private:
 	const std::string frames_mask_objects_dir_		{ "objects/" };
 	const std::string frames_mask_reflections_dir_	{ "reflections/" };
 
-	unsigned int texture_size_{ 128 };
+	unsigned int object_texture_size_{ 128 };
+	std::array<double, 2> object_texture_brightness_{};
 
 	json main_json_{ };
 	json config_json_{ };

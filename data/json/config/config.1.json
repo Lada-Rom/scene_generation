@@ -10,6 +10,22 @@
         0.6,
         0.7
     ],
+	"object_color_alpha": [
+		0.0,
+		1.0
+	],
+	"object_horizontal_reflection_color_alpha": [
+		0.3,
+		0.3
+	],
+	"object_vertical_reflection_color_alpha": [
+		0.55,
+		0.3
+	],
+	"object_texture_brightness": [
+		0.5,
+		1.0
+	],
 	"make_packs": false,
 	"minibatch_size": 4
 }
