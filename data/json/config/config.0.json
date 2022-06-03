@@ -1,6 +1,17 @@
 {
-    "num_frames": 100,
-	"camera_params_index": 1,
+    "camera_params_index": 7,
+    "gen_video": false,
+    "make_packs": false,
+    "minibatch_size": 4,
+    "num_frames": 32,
+    "object_color_alpha": [
+        0.0,
+        1.0
+    ],
+    "object_horizontal_reflection_color_alpha": [
+        0.3,
+        0.3
+    ],
     "object_quantity_range": [
         100.0,
         100.0
@@ -9,22 +20,12 @@
         0.7,
         0.7
     ],
-	"object_color_alpha": [
-		0.0,
-		1.0
-	],
-	"object_horizontal_reflection_color_alpha": [
-		0.3,
-		0.3
-	],
-	"object_vertical_reflection_color_alpha": [
-		0.55,
-		0.3
-	],
-	"object_texture_brightness": [
-		0.5,
-		1.0
-	],
-	"make_packs": false,
-	"minibatch_size": 4
+    "object_texture_brightness": [
+        0.5,
+        1.0
+    ],
+    "object_vertical_reflection_color_alpha": [
+        0.55,
+        0.3
+    ]
 }

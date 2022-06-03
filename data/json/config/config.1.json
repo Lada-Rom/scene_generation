@@ -26,6 +26,7 @@
 		0.5,
 		1.0
 	],
-	"make_packs": false,
+	"gen_video": true,
+	"make_packs": true,
 	"minibatch_size": 4
 }

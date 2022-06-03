@@ -338,7 +338,8 @@ cv::Mat makeHeatmap(const cv::Mat& mask, std::vector<std::array<double, 2>>& poi
 	cv::Mat gauss;
 	cv::GaussianBlur(mask, gauss, { 7, 7 }, 0, 0);
 	cv::Mat heatmap = cv::Mat::zeros(mask.size(), CV_8UC1);
-	gauss.copyTo(heatmap, mask);
+	cv::normalize(gauss, heatmap, 254, 0, cv::NORM_MINMAX);
+	//gauss.copyTo(heatmap, mask);
 	for (const auto& point : points)
 		heatmap.at<uchar>(point[1], point[0]) = 255;
 	cv::imwrite(filename, heatmap);
@@ -484,7 +485,6 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	namespace fs = std::filesystem;
 
 	//check if path exists
-	fs::file_status s = fs::file_status{};
 	if (!fs::exists(path))
 		throw std::invalid_argument("Path does not exists");
 
@@ -508,7 +508,6 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	namespace fs = std::filesystem;
 
 	//check if path exists
-	fs::file_status s = fs::file_status{};
 	if (!fs::exists(path))
 		throw std::invalid_argument("Path does not exists");
 
@@ -534,7 +533,6 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	namespace fs = std::filesystem;
 
 	//check if path exists
-	fs::file_status s = fs::file_status{};
 	if (!fs::exists(path))
 		throw std::invalid_argument("Path does not exists");
 
@@ -562,7 +560,6 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	namespace fs = std::filesystem;
 
 	//check if path exists
-	fs::file_status s = fs::file_status{};
 	if (!fs::exists(path))
 		throw std::invalid_argument("Path does not exists");
 
