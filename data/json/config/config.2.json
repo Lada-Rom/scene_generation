@@ -1,0 +1,18 @@
+{
+	"num_packs": 3,
+	"pack_size": 4,
+	"start_index": 0,
+	"camera_params_index_mask": [
+		false,
+		false,
+		true,
+		false,
+		false,
+		true,
+		false,
+		false
+	],
+	"RCO_config_filename": "../../data/json/config/config.0.json",
+	"SCO_config_filename": "../../data/json/config/config.1.json",
+	"gen_random": true
+}

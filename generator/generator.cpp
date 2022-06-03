@@ -66,6 +66,21 @@ void Generator::constructConfigRCOJSON(size_t config_index, size_t num_frames,
 	config_json_ = config;
 }
 
+////////// constructConfigPacks //////////
+void Generator::constructConfigPacks(size_t config_index) {
+	json config;
+	config["num_packs"] = 0;
+	config["pack_size"] = 0;
+	config["start_index"] = 0;
+	config["camera_params_index_mask"] = json::array();
+	config["RCO_config_filename"] = "";
+	config["SCO_config_filename"] = "";
+	config["gen_random"] = true;
+	std::ofstream file(data_path_ + json_dir_ + config_json_dir_
+		+ config_json_name_ + "." + std::to_string(config_index) + json_ending_);
+	file << config.dump(4) << std::endl;
+}
+
 ////////// loadMainJSON //////////
 void Generator::loadMainJSON() {
 	std::ifstream file(getMainJSONFilename());
@@ -192,7 +207,7 @@ void Generator::readConfigRCOJSON(size_t& index, size_t& num_frames,
 	std::array<double, 2>& object_texture_brightness,
 	std::array<double, 2>& object_hor_reflection_color_alpha,
 	std::array<double, 2>& object_ver_reflection_color_alpha,
-	bool& make_packs, const std::string& filename) {
+	bool& gen_video, bool& make_packs, const std::string& filename) {
 
 	loadConfigJSON(filename);
 
@@ -210,6 +225,7 @@ void Generator::readConfigRCOJSON(size_t& index, size_t& num_frames,
 	object_texture_brightness = config_json_["object_texture_brightness"].get<std::array<double, 2>>();
 
 	make_packs = config_json_["make_packs"].get<bool>();
+	gen_video = config_json_["gen_video"].get<bool>();
 }
 
 ////////// readConfigSCOJSON //////////
@@ -247,7 +263,7 @@ void Generator::readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames
 	std::array<double, 2>& object_texture_brightness,
 	std::array<double, 2>& object_hor_reflection_color_alpha,
 	std::array<double, 2>& object_ver_reflection_color_alpha,
-	bool& make_packs, const std::string& filename) {
+	bool& gen_video, bool& make_packs, const std::string& filename) {
 
 	loadConfigJSON(filename);
 
@@ -266,6 +282,24 @@ void Generator::readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames
 	object_texture_brightness = config_json_["object_texture_brightness"].get<std::array<double, 2>>();
 
 	make_packs = config_json_["make_packs"].get<bool>();
+	gen_video = config_json_["gen_video"].get<bool>();
+}
+
+////////// readConfigPacksJSON //////////
+void Generator::readConfigPacksJSON(const std::string& filename,
+	int& num_packs, int& pack_size, int& start_index, std::vector<bool>& camera_params_index_mask,
+	std::string& RCO_config_filename, std::string& SCO_config_filename, bool& gen_random) {
+
+	loadConfigJSON(filename);
+	num_packs = config_json_["num_packs"].get<unsigned int>();
+	pack_size = config_json_["pack_size"].get<unsigned int>();
+	start_index = config_json_["start_index"].get<unsigned int>();
+	camera_params_index_mask
+		= config_json_["camera_params_index_mask"].get<std::vector<bool>>();
+
+	RCO_config_filename = config_json_["RCO_config_filename"].get<std::string>();
+	SCO_config_filename = config_json_["SCO_config_filename"].get<std::string>();
+	gen_random = config_json_["gen_random"].get<bool>();
 }
 
 ////////// writeCameraRMat //////////
@@ -296,6 +330,62 @@ void Generator::writeFramesToVideo(const std::string& filename,
 	for (const auto& frame : frames)
 		video.write(frame);
 	video.release();
+}
+
+////////// writeNumFrames //////////
+void Generator::writeNumFrames(size_t num_frames, const std::string& filename) {
+	json config;
+	std::ifstream ifile(filename);
+	ifile >> config;
+
+	std::ofstream ofile(filename);
+	config["num_frames"] = num_frames;
+	ofile << config.dump(4) << std::endl;
+}
+
+////////// writeNumFrames //////////
+void Generator::writeNumFrames(double duration, double fps, const std::string& filename) {
+	json config;
+	std::ifstream ifile(filename);
+	ifile >> config;
+
+	std::ofstream ofile(filename);
+	config["duration"] = duration;
+	config["fps"] = fps;
+	ofile << config.dump(4) << std::endl;
+}
+
+////////// writeCameraParamsIndex //////////
+void Generator::writeCameraParamsIndex(size_t index, const std::string& filename) {
+	json config;
+	std::ifstream ifile(filename);
+	ifile >> config;
+
+	std::ofstream ofile(filename);
+	config["camera_params_index"] = index;
+	ofile << config.dump(4) << std::endl;
+}
+
+////////// writeMakePacks //////////
+void Generator::writeMakePacks(bool make_packs, const std::string& filename) {
+	json config;
+	std::ifstream ifile(filename);
+	ifile >> config;
+	
+	std::ofstream ofile(filename);
+	config["make_packs"] = make_packs;
+	ofile << config.dump(4) << std::endl;
+}
+
+////////// writeGenVideo //////////
+void Generator::writeGenVideo(bool gen_video, const std::string& filename) {
+	json config;
+	std::ifstream ifile(filename);
+	ifile >> config;
+
+	std::ofstream ofile(filename);
+	config["gen_video"] = gen_video;
+	ofile << config.dump(4) << std::endl;
 }
 
 ////////// checkIfInputExists //////////
@@ -1086,7 +1176,6 @@ void Generator::showPointGrid(size_t index, const cv::Size& quantity, double z,
 		main_scene_.getRenderImageSize().height);
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Point array");
-
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
 	glutDisplayFunc(Generator::displayPointGrid);
@@ -1155,7 +1244,7 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 	std::string gen_merged_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
 	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
 	main_scene_.setGenFramesPath(gen_glut_dir);
-	makeGenFileTree(data_path_, RCO_generation_main_dir_,
+	makeGenFileTree(path, RCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_, generation_json_dir_);
 
@@ -1232,13 +1321,14 @@ void Generator::genUntexturedRandomClip(size_t index, size_t num_frames,
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowSize(
 		main_scene_.getRenderImageSize().width,
 		main_scene_.getRenderImageSize().height);
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Point array");
-
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
 	glutDisplayFunc(Generator::displayUntexturedRandomClip);
@@ -1264,6 +1354,7 @@ void Generator::genUntexturedRandomClip(
 	//read params from config json
 	size_t index;
 	size_t num_frames;
+	bool gen_video;
 	bool make_packs;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
@@ -1273,7 +1364,7 @@ void Generator::genUntexturedRandomClip(
 	readConfigRCOJSON(index, num_frames, num_objects_range, size_objects_range,
 		object_color_alpha, object_texture_brightness_,
 		object_hor_reflection_color_alpha, object_ver_reflection_color_alpha,
-		make_packs, config_filename);
+		gen_video, make_packs, config_filename);
 	main_scene_.setObjectColor(object_color_alpha);
 	main_scene_.setObjectHorReflectionColor(object_hor_reflection_color_alpha);
 	main_scene_.setObjectVerReflectionColor(object_ver_reflection_color_alpha);
@@ -1305,7 +1396,7 @@ void Generator::genUntexturedRandomClip(
 	std::string gen_merged_dir = path + RCO_generation_main_dir_ + generation_frames_dir_ + frames_merged_dir_;
 	std::string gen_json_dir = path + RCO_generation_main_dir_ + generation_json_dir_;
 	main_scene_.setGenFramesPath(gen_glut_dir);
-	makeGenFileTree(data_path_, RCO_generation_main_dir_,
+	makeGenFileTree(path, RCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_, generation_json_dir_);
 
@@ -1382,13 +1473,14 @@ void Generator::genUntexturedRandomClip(
 
 	//glut rendering
 	std::cout << "GLUT rendering" << std::endl;
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize(
 		main_scene_.getRenderImageSize().width,
 		main_scene_.getRenderImageSize().height);
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Point array");
-
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	curr_this_ = this;
 	glutDisplayFunc(Generator::displayUntexturedRandomClip);
@@ -1413,6 +1505,7 @@ void Generator::genTexturedRandomClip(
 	//read params from config json
 	size_t index;
 	size_t num_frames;
+	bool gen_video;
 	bool make_packs;
 	std::array<double, 2> num_objects_range;
 	std::array<double, 2> size_objects_range;
@@ -1422,7 +1515,7 @@ void Generator::genTexturedRandomClip(
 	readConfigRCOJSON(index, num_frames, num_objects_range, size_objects_range,
 		object_color_alpha, object_texture_brightness_,
 		object_hor_reflection_color_alpha, object_ver_reflection_color_alpha,
-		make_packs, config_filename);
+		gen_video, make_packs, config_filename);
 	main_scene_.setObjectColor(object_color_alpha);
 	main_scene_.setObjectHorReflectionColor(object_hor_reflection_color_alpha);
 	main_scene_.setObjectVerReflectionColor(object_ver_reflection_color_alpha);
@@ -1463,13 +1556,13 @@ void Generator::genTexturedRandomClip(
 	main_scene_.setGenFramesPath(gen_glut_dir);
 	main_scene_.setGenObjectMasksPath(gen_mask_objects_dir);
 	main_scene_.setGenReflectionMasksPath(gen_mask_reflections_dir);
-	makeGenFileTree(data_path_, RCO_generation_main_dir_,
+	makeGenFileTree(path, RCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_,
 		generation_frames_dir_ + frames_mask_dir_ + frames_mask_objects_dir_,
 		generation_frames_dir_ + frames_mask_dir_ + frames_mask_reflections_dir_,
 		generation_frames_dir_ + frames_heatmap_dir_,
-		gen_texture_dir, gen_video_dir, generation_json_dir_);
+		generation_textures_dir_, generation_video_dir_, generation_json_dir_);
 
 	//construct 3D params - coords, angles
 	size_t num_objects;
@@ -1592,6 +1685,8 @@ void Generator::genTexturedRandomClip(
 
 	//glut rendering
 	std::cout << "GLUT frames rendering" << std::endl;
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize(
 		main_scene_.getRenderImageSize().width,
@@ -1671,38 +1766,19 @@ void Generator::genTexturedRandomClip(
 	}
 
 	//make video from frames
-	std::cout << "Video making" << std::endl;
-	writeFramesToVideo(gen_video_dir + "frames.mp4", merged_frames, 10);
-	writeFramesToVideo(gen_video_dir + "heatmaps.mp4", heatmap_frames, 10);
-	writeFramesToVideo(gen_video_dir + "masks.mp4", masked_frames, 10);
+	if (gen_video) {
+		std::cout << "Video making" << std::endl;
+		writeFramesToVideo(gen_video_dir + "frames.mp4", merged_frames, 10);
+		writeFramesToVideo(gen_video_dir + "heatmaps.mp4", heatmap_frames, 10);
+		writeFramesToVideo(gen_video_dir + "masks.mp4", masked_frames, 10);
+	}
 
 	if (make_packs) {
 		std::cout << "Splitting frames to packs" << std::endl;
-		std::string packs_dir = path + RCO_generation_main_dir_ + generation_packs_dir_;
-		std::string pack_dir = packs_dir + "pack";
-		std::string pack_frames_dir, pack_gaussians_dir, pack_masks_dir;
-		unsigned int image_index;
+		std::string packs_dir = path + SCO_generation_main_dir_ + generation_packs_dir_;
 		unsigned int minibatch_size = config_json_["minibatch_size"].get<unsigned int>();
-		for (int pack{}; pack < std::ceil(1. * num_frames / minibatch_size); ++pack) {
-			pack_frames_dir = pack_dir + "_" + std::to_string(pack) + "/" + "frames/";
-			pack_gaussians_dir = pack_dir + "_" + std::to_string(pack) + "/" + "gaussians/";
-			pack_masks_dir = pack_dir + "_" + std::to_string(pack) + "/" + "masks/";
-			std::filesystem::create_directories(pack_frames_dir);
-			std::filesystem::create_directories(pack_gaussians_dir);
-			std::filesystem::create_directories(pack_masks_dir);
-
-			for (int i{}; i < minibatch_size; ++i) {
-				image_index = pack * minibatch_size + i;
-				if (image_index >= num_frames)
-					break;
-				merged_filename = gen_merged_dir + std::to_string(image_index) + image_ending_;
-				masked_filename = gen_mask_objects_dir + std::to_string(image_index) + image_ending_;
-				heatmap_filename = gen_heatmap_dir + std::to_string(image_index) + image_ending_;
-				std::filesystem::copy(merged_filename, pack_frames_dir + std::to_string(image_index) + image_ending_);
-				std::filesystem::copy(masked_filename, pack_masks_dir + std::to_string(image_index) + image_ending_);
-				std::filesystem::copy(heatmap_filename, pack_gaussians_dir + std::to_string(image_index) + image_ending_);
-			}
-		}
+		constructPacksFromFiles(num_frames, minibatch_size, packs_dir,
+			gen_merged_dir, gen_mask_objects_dir, gen_heatmap_dir);
 	}
 
 	std::cout << "Successful end of program!" << std::endl;
@@ -1714,6 +1790,7 @@ void Generator::genTexturedSequentClip(
 	//read params from config json
 	size_t index;
 	double fps;
+	bool gen_video;
 	bool make_packs;
 	size_t num_frames;
 	std::array<double, 2> num_objects_range;
@@ -1724,7 +1801,7 @@ void Generator::genTexturedSequentClip(
 	readConfigSCOJSON(index, fps, num_frames, num_objects_range, size_objects_range,
 		object_color_alpha, object_texture_brightness_,
 		object_hor_reflection_color_alpha, object_ver_reflection_color_alpha,
-		make_packs, config_filename);
+		gen_video, make_packs, config_filename);
 	main_scene_.setObjectColor(object_color_alpha);
 	main_scene_.setObjectHorReflectionColor(object_hor_reflection_color_alpha);
 	main_scene_.setObjectVerReflectionColor(object_ver_reflection_color_alpha);
@@ -1765,13 +1842,13 @@ void Generator::genTexturedSequentClip(
 	main_scene_.setGenFramesPath(gen_glut_dir);
 	main_scene_.setGenObjectMasksPath(gen_mask_objects_dir);
 	main_scene_.setGenReflectionMasksPath(gen_mask_reflections_dir);
-	makeGenFileTree(data_path_, SCO_generation_main_dir_,
+	makeGenFileTree(path, SCO_generation_main_dir_,
 		generation_frames_dir_ + frames_glut_dir_,
 		generation_frames_dir_ + frames_merged_dir_,
 		generation_frames_dir_ + frames_mask_dir_ + frames_mask_objects_dir_,
 		generation_frames_dir_ + frames_mask_dir_ + frames_mask_reflections_dir_,
 		generation_frames_dir_ + frames_heatmap_dir_,
-		gen_texture_dir, gen_video_dir, generation_json_dir_);
+		generation_textures_dir_, generation_video_dir_, generation_json_dir_);
 
 	//construct 3D params - coords, directions
 	size_t num_objects;
@@ -1915,6 +1992,8 @@ void Generator::genTexturedSequentClip(
 
 	//glut frame rendering
 	std::cout << "GLUT frames rendering" << std::endl;
+	if (!glutGet(GLUT_INIT_STATE))
+		glutInit(&argc_, argv_);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowSize(
 		main_scene_.getRenderImageSize().width,
@@ -1994,41 +2073,188 @@ void Generator::genTexturedSequentClip(
 	}
 
 	//make video from frames
-	std::cout << "Video making" << std::endl;
-	writeFramesToVideo(gen_video_dir + "frames.mp4", merged_frames, fps);
-	writeFramesToVideo(gen_video_dir + "heatmaps.mp4", heatmap_frames, fps);
-	writeFramesToVideo(gen_video_dir + "masks.mp4", masked_frames, fps);
+	if (gen_video) {
+		std::cout << "Video making" << std::endl;
+		writeFramesToVideo(gen_video_dir + "frames.mp4", merged_frames, fps);
+		writeFramesToVideo(gen_video_dir + "heatmaps.mp4", heatmap_frames, fps);
+		writeFramesToVideo(gen_video_dir + "masks.mp4", masked_frames, fps);
+	}
 
 	if (make_packs) {
 		std::cout << "Splitting frames to packs" << std::endl;
 		std::string packs_dir = path + SCO_generation_main_dir_ + generation_packs_dir_;
-		std::string pack_dir = packs_dir + "pack";
-		std::string pack_frames_dir, pack_gaussians_dir, pack_masks_dir;
-		unsigned int image_index;
 		unsigned int minibatch_size = config_json_["minibatch_size"].get<unsigned int>();
-		for (int pack{}; pack < std::ceil(1. * num_frames / minibatch_size); ++pack) {
-			pack_frames_dir = pack_dir + "_" + std::to_string(pack) + "/" + "frames/";
-			pack_gaussians_dir = pack_dir + "_" + std::to_string(pack) + "/" + "gaussians/";
-			pack_masks_dir = pack_dir + "_" + std::to_string(pack) + "/" + "masks/";
-			std::filesystem::create_directories(pack_frames_dir);
-			std::filesystem::create_directories(pack_gaussians_dir);
-			std::filesystem::create_directories(pack_masks_dir);
-
-			for (int i{}; i < minibatch_size; ++i) {
-				image_index = pack * minibatch_size + i;
-				if (image_index >= num_frames)
-					break;
-				merged_filename = gen_merged_dir + std::to_string(image_index) + image_ending_;
-				masked_filename = gen_mask_objects_dir + std::to_string(image_index) + image_ending_;
-				heatmap_filename = gen_heatmap_dir + std::to_string(image_index) + image_ending_;
-				std::filesystem::copy(merged_filename, pack_frames_dir + std::to_string(image_index) + image_ending_);
-				std::filesystem::copy(masked_filename, pack_masks_dir + std::to_string(image_index) + image_ending_);
-				std::filesystem::copy(heatmap_filename, pack_gaussians_dir + std::to_string(image_index) + image_ending_);
-			}
-		}
+		constructPacksFromFiles(num_frames, minibatch_size, packs_dir,
+			gen_merged_dir, gen_mask_objects_dir, gen_heatmap_dir);
 	}
 
 	std::cout << "Successful end of program!" << std::endl;
+}
+
+////////// constructPacksFromFiles //////////
+void Generator::constructPacksFromFiles(size_t num_frames, size_t minibatch_size,
+	const std::string& packs_dir,
+	const std::string& gen_merged_dir,
+	const std::string& gen_mask_objects_dir,
+	const std::string& gen_heatmap_dir,
+	size_t start_index) {
+
+	std::string pack_dir = packs_dir + "pack";
+	std::string pack_frames_dir, pack_gaussians_dir, pack_masks_dir;
+	std::string image_name;
+	unsigned int image_index;
+
+	std::string merged_filename, masked_filename, heatmap_filename;
+	//std::vector<std::string> image_names;
+	//for (const auto& entry : std::filesystem::directory_iterator(gen_merged_dir)) {
+	//	image_names.push_back(entry.path().filename().string());
+	//	std::cout << image_names[image_names.size() - 1] << std::endl;
+	//}
+
+	for (int pack{ (int)start_index }; pack < start_index + std::ceil(1. * num_frames / minibatch_size); ++pack) {
+		pack_frames_dir = pack_dir + "_" + std::to_string(pack) + "/" + "frames/";
+		pack_gaussians_dir = pack_dir + "_" + std::to_string(pack) + "/" + "gaussians/";
+		pack_masks_dir = pack_dir + "_" + std::to_string(pack) + "/" + "masks/";
+		std::filesystem::create_directories(pack_frames_dir);
+		std::filesystem::create_directories(pack_gaussians_dir);
+		std::filesystem::create_directories(pack_masks_dir);
+
+		//std::string merged_filename, masked_filename, heatmap_filename;
+		for (int i{}; i < minibatch_size; ++i) {
+			image_index = (pack - start_index) * minibatch_size + i;
+			if (image_index >= num_frames)
+				break;
+			merged_filename = gen_merged_dir + std::to_string(image_index) + image_ending_;
+			masked_filename = gen_mask_objects_dir + std::to_string(image_index) + image_ending_;
+			heatmap_filename = gen_heatmap_dir + std::to_string(image_index) + image_ending_;
+			std::filesystem::copy(merged_filename, pack_frames_dir + std::to_string(image_index) + image_ending_);
+			std::filesystem::copy(masked_filename, pack_masks_dir + std::to_string(image_index) + image_ending_);
+			std::filesystem::copy(heatmap_filename, pack_gaussians_dir + std::to_string(image_index) + image_ending_);
+		}
+
+		//for (int i{}; i < minibatch_size; ++i) {
+		//	image_index = pack * minibatch_size + i;
+		//	if (image_index >= num_frames)
+		//		break;
+		//	merged_filename = gen_merged_dir + std::to_string(image_index) + image_ending_;
+		//	masked_filename = gen_mask_objects_dir + std::to_string(image_index) + image_ending_;
+		//	heatmap_filename = gen_heatmap_dir + std::to_string(image_index) + image_ending_;
+		//	std::filesystem::copy(merged_filename, pack_frames_dir + std::to_string(image_index) + image_ending_);
+		//	std::filesystem::copy(masked_filename, pack_masks_dir + std::to_string(image_index) + image_ending_);
+		//	std::filesystem::copy(heatmap_filename, pack_gaussians_dir + std::to_string(image_index) + image_ending_);
+		//}
+	}
+}
+
+////////// genPacks //////////
+void Generator::genPacks(const std::string& json_filename, std::string path) {
+	int num_packs;
+	int pack_size;
+	int start_index;
+	std::vector<bool> camera_params_index_mask;
+	std::string RCO_config_filename;
+	std::string SCO_config_filename;
+	bool gen_random;
+	readConfigPacksJSON(json_filename, num_packs, pack_size, start_index,
+		camera_params_index_mask, RCO_config_filename, SCO_config_filename, gen_random);
+	
+	//how much elements in vector and how much of them are true
+	int true_indices_count{};
+	int params_vector_size{};
+	for (auto& element : camera_params_index_mask) {
+		++params_vector_size;
+		if (element)
+			++true_indices_count;
+	}
+
+	//get number of packs for each camera params index
+	int count_true_indices{};
+	bool last_index_set = false;
+	std::vector<int> indices_num_pack;
+	for (int i{}; i < params_vector_size; ++i) {
+		if (camera_params_index_mask[i]) {
+			indices_num_pack.push_back(num_packs / true_indices_count);
+			++count_true_indices;
+		}
+		else
+			indices_num_pack.push_back(0);
+		if ((count_true_indices == true_indices_count) && !last_index_set) {
+			indices_num_pack[i] = num_packs - (true_indices_count - 1)
+				* (int)(num_packs / true_indices_count);
+			last_index_set = true;
+		}
+	}
+
+	//writing frames number to json for generation
+	if (gen_random) {
+		writeNumFrames((int)(num_packs / true_indices_count) * pack_size, RCO_config_filename);
+		writeMakePacks(false, RCO_config_filename);
+		writeGenVideo(false, RCO_config_filename);
+	}
+	else {
+		writeNumFrames((int)(num_packs / true_indices_count) * pack_size / 10, 10, SCO_config_filename);
+		writeMakePacks(false, SCO_config_filename);
+		writeGenVideo(false, SCO_config_filename);
+	}
+
+	//for each true index gen frames
+	path = (path.empty()) ? data_path_ : path;
+	if (!std::filesystem::exists(path))
+		throw std::invalid_argument("Path does not exists");
+	path += packs_generation_dir_;
+	if (std::filesystem::exists(path))
+		std::filesystem::remove_all(path);
+
+	std::string frames_dir = path + "frames/";
+	std::string curr_frame_dir;
+	int num_frames;
+	count_true_indices = 0;
+	last_index_set = false;
+	for (int i{}; i < params_vector_size; ++i) {
+		if (!camera_params_index_mask[i])
+			continue;
+		++count_true_indices;
+
+		//specify last index
+		num_frames = indices_num_pack[i] * pack_size;
+		if ((count_true_indices == true_indices_count) && !last_index_set) {
+			if (gen_random)
+				writeNumFrames(num_frames, RCO_config_filename);
+			else
+				writeNumFrames(num_frames / 10, 10, SCO_config_filename);
+			last_index_set = true;
+		}
+
+		//gen frames with masks and heatmaps
+		curr_frame_dir = frames_dir + std::to_string(i) + "/";
+		if (!std::filesystem::exists(curr_frame_dir))
+			std::filesystem::create_directories(curr_frame_dir);
+		if (gen_random) {
+			writeCameraParamsIndex(i, RCO_config_filename);
+			genTexturedRandomClip(RCO_config_filename, curr_frame_dir);
+		}
+		else {
+			writeCameraParamsIndex(i, SCO_config_filename);
+			genTexturedSequentClip(SCO_config_filename, curr_frame_dir);
+		}
+	}
+
+	//for each true index construct its packs
+	int start_pack_index{};
+	std::string packs_dir = path + "packs/";
+	std::string generation_mode = (gen_random) ? RCO_generation_main_dir_ : SCO_generation_main_dir_;
+	for (int i{}; i < params_vector_size; ++i) {
+		if (!camera_params_index_mask[i])
+			continue;
+
+		num_frames = indices_num_pack[i] * pack_size;
+		constructPacksFromFiles(num_frames, pack_size, packs_dir,
+			frames_dir + std::to_string(i) + "/" + generation_mode + generation_frames_dir_ + frames_merged_dir_,
+			frames_dir + std::to_string(i) + "/" + generation_mode + generation_frames_dir_ + frames_mask_dir_ + frames_mask_objects_dir_,
+			frames_dir + std::to_string(i) + "/" + generation_mode + generation_frames_dir_ + frames_heatmap_dir_,
+			start_pack_index + 1);
+		start_pack_index += indices_num_pack[i];
+	}
 }
 
 ////////// cvtMatToVector //////////

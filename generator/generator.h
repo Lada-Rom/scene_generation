@@ -33,6 +33,7 @@ public:
 	void constructConfigRCOJSON(size_t config_index, size_t num_frames,
 		const std::array<double, 2>& num_object_range,
 		const std::array<double, 2>& size_object_range);
+	void constructConfigPacks(size_t config_index);
 	void loadMainJSON();
 	void loadConfigJSON(const std::string& config_filename);
 	void saveMainJSON();
@@ -64,7 +65,7 @@ public:
 		std::array<double, 2>& object_texture_brightness,
 		std::array<double, 2>& object_hor_reflection_color_alpha,
 		std::array<double, 2>& object_ver_reflection_color_alpha,
-		bool& make_packs, const std::string& filename);
+		bool& gen_video, bool& make_packs, const std::string& filename);
 	void readConfigSCOJSON(size_t& index, double& fps, size_t& num_frames,
 		std::array<double, 2>& num_objects_range,
 		std::array<double, 2>& size_objects_range,
@@ -80,7 +81,10 @@ public:
 		std::array<double, 2>& object_texture_brightness,
 		std::array<double, 2>& object_hor_reflection_color_alpha,
 		std::array<double, 2>& object_ver_reflection_color_alpha,
-		bool& make_packs, const std::string& filename);
+		bool& gen_video, bool& make_packs, const std::string& filename);
+	void readConfigPacksJSON(const std::string& filename,
+		int& num_packs, int& pack_size, int& start_index, std::vector<bool>& camera_params_index_mask,
+		std::string& RCO_config_filename, std::string& SCO_config_filename, bool& gen_random);
 
 	void writeCameraRMat(const cv::Mat& rmat, size_t index);
 	void writeCameraTVec(const cv::Mat& tvec, size_t index);
@@ -88,6 +92,11 @@ public:
 	void writeAquariumSize(const std::array<double, 3>& aq_size, size_t index);
 	void writeFramesToVideo(const std::string& filename,
 		const std::vector<cv::Mat>& frames, double fps);
+	void writeNumFrames(size_t num_frames, const std::string& filename);
+	void writeNumFrames(double duration, double fps, const std::string& filename);
+	void writeCameraParamsIndex(size_t index, const std::string& filename);
+	void writeMakePacks(bool make_packs, const std::string& filename);
+	void writeGenVideo(bool gen_video, const std::string& filename);
 
 	bool checkIfInputExists(const std::string&);
 	void addInputToMainJSON(const std::string&, const std::string&);
@@ -136,6 +145,14 @@ public:
 		const std::string& config_filename, std::string path = {});
 	void genTexturedSequentClip(
 		const std::string& config_filename, std::string path = {});
+
+	void constructPacksFromFiles(size_t num_frames, size_t minibatch_size,
+		const std::string& packs_dir,
+		const std::string& gen_merged_dir,
+		const std::string& gen_mask_objects_dir,
+		const std::string& gen_heatmap_dir,
+		size_t start_index = 0);
+	void genPacks(const std::string& json_filename, std::string path = {});
 
 	std::vector<double> cvtMatToVector(const cv::Mat&);
 
@@ -191,6 +208,7 @@ private:
 	const std::string grid_glut_name_				{ "grid_glut" };
 	const std::string grid_merged_name_				{ "grid_merged" };
 
+	const std::string packs_generation_dir_			{ "packs_generation/" };
 	const std::string RCO_generation_main_dir_		{ "RCO_generation/" };
 	const std::string SCO_generation_main_dir_		{ "SCO_generation/" };
 	const std::string generation_frames_dir_		{ "frames/" };

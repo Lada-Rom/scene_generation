@@ -8,6 +8,7 @@ bin.*/
 
 data/grid/
 data/params_selection/
+data/packs_generation/
 data/RCO_generation/
 data/SCO_generation/
 /data/src/daphnia/

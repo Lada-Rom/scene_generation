@@ -485,7 +485,6 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	namespace fs = std::filesystem;
 
 	//check if path exists
-	fs::file_status s = fs::file_status{};
 	if (!fs::exists(path))
 		throw std::invalid_argument("Path does not exists");
 
@@ -509,7 +508,6 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	namespace fs = std::filesystem;
 
 	//check if path exists
-	fs::file_status s = fs::file_status{};
 	if (!fs::exists(path))
 		throw std::invalid_argument("Path does not exists");
 
@@ -535,7 +533,6 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	namespace fs = std::filesystem;
 
 	//check if path exists
-	fs::file_status s = fs::file_status{};
 	if (!fs::exists(path))
 		throw std::invalid_argument("Path does not exists");
 
@@ -563,7 +560,6 @@ void makeGenFileTree(const std::string& path, const std::string& main_dir,
 	namespace fs = std::filesystem;
 
 	//check if path exists
-	fs::file_status s = fs::file_status{};
 	if (!fs::exists(path))
 		throw std::invalid_argument("Path does not exists");
 
