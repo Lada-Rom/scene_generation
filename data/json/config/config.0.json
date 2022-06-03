@@ -1,9 +1,9 @@
 {
-    "camera_params_index": 5,
+    "camera_params_index": 7,
     "gen_video": false,
     "make_packs": false,
     "minibatch_size": 4,
-    "num_frames": 8,
+    "num_frames": 32,
     "object_color_alpha": [
         0.0,
         1.0

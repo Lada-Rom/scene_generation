@@ -2240,7 +2240,7 @@ void Generator::genPacks(const std::string& json_filename, std::string path) {
 	}
 
 	//for each true index construct its packs
-	int start_pack_index{};
+	int start_pack_index{ start_index };
 	std::string packs_dir = path + "packs/";
 	std::string generation_mode = (gen_random) ? RCO_generation_main_dir_ : SCO_generation_main_dir_;
 	for (int i{}; i < params_vector_size; ++i) {
@@ -2252,9 +2252,12 @@ void Generator::genPacks(const std::string& json_filename, std::string path) {
 			frames_dir + std::to_string(i) + "/" + generation_mode + generation_frames_dir_ + frames_merged_dir_,
 			frames_dir + std::to_string(i) + "/" + generation_mode + generation_frames_dir_ + frames_mask_dir_ + frames_mask_objects_dir_,
 			frames_dir + std::to_string(i) + "/" + generation_mode + generation_frames_dir_ + frames_heatmap_dir_,
-			start_pack_index + 1);
+			start_pack_index);
 		start_pack_index += indices_num_pack[i];
 	}
+
+	//delete frames directory
+	std::filesystem::remove_all(frames_dir);
 }
 
 ////////// cvtMatToVector //////////
